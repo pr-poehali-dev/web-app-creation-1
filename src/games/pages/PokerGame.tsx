@@ -12,6 +12,7 @@ import { getGameRoom, GameRoomDetail, startPokerTable } from '../utils/gameRooms
 import { sendPokerAction, PokerState } from '../utils/gamePoker';
 import { getChatMessages, ChatMessage } from '../utils/gameChat';
 import GameChatPanel from '../components/GameChatPanel';
+import RoomNotifyHint from '../components/RoomNotifyHint';
 import PlayerAvatar from '../components/PlayerAvatar';
 import { notifyOpponent } from '../utils/gameNotify';
 
@@ -176,6 +177,7 @@ export default function PokerGame() {
 
   return (
     <GameLayout user={user}>
+      <RoomNotifyHint />
       <button
         onClick={() => navigate('/games')}
         className="mb-4 flex items-center gap-1.5 text-sm text-slate-400 hover:text-slate-200 transition-colors"

@@ -10,6 +10,7 @@ import os
 import base64
 import uuid
 import boto3
+import requests
 from typing import Dict, Any, Optional
 import psycopg2
 from psycopg2.extras import RealDictCursor
@@ -20,6 +21,34 @@ DB_SCHEMA = os.environ.get('DB_SCHEMA', 't_p42562714_web_app_creation_1')
 JWT_SECRET = os.environ.get('JWT_SECRET_KEY', '')
 JWT_ALGORITHM = 'HS256'
 GAME_JWT_ISSUER = 'games-section'
+
+PUSH_SEND_URL = 'https://functions.poehali.dev/a1c8fafd-b64f-45e5-b9b9-0a050cca4f7a'
+GAME_TITLES = {'chess': 'Шахматы', 'checkers': 'Шашки', 'poker': 'Покер'}
+PUSH_COOLDOWN_SECONDS = 20
+
+
+def notify_chat_message(room_id: int, recipients, sender: str, game_type: str, message: str, media_type) -> None:
+    if media_type == 'image':
+        preview = 'отправил(а) фото'
+    elif media_type == 'audio':
+        preview = 'отправил(а) голосовое сообщение'
+    else:
+        preview = message[:100]
+    for uid in recipients:
+        try:
+            requests.post(
+                PUSH_SEND_URL,
+                json={
+                    'userId': f'game_{uid}',
+                    'title': f'💬 {sender} · {GAME_TITLES.get(game_type, "Игра")}',
+                    'message': preview,
+                    'url': f'/games/room/{room_id}',
+                    'type': 'game_chat',
+                },
+                timeout=3,
+            )
+        except Exception:
+            pass
 
 
 def get_db_connection():
@@ -149,6 +178,14 @@ def handler(event: Dict[str, Any], context: Any) -> Dict[str, Any]:
                 if not cur.fetchone():
                     return error_response(403, 'Вы не участник этой комнаты')
 
+                cur.execute(
+                    f"""SELECT COUNT(*) AS n FROM {DB_SCHEMA}.game_chat_messages
+                       WHERE room_id = %s AND user_id = %s AND is_system = FALSE
+                         AND created_at > NOW() - INTERVAL '{PUSH_COOLDOWN_SECONDS} seconds'""",
+                    (room_id, user['id'])
+                )
+                recently_sent = cur.fetchone()['n'] > 0
+
                 media_type = None
                 media_url = None
                 if media:
@@ -166,6 +203,17 @@ def handler(event: Dict[str, Any], context: Any) -> Dict[str, Any]:
                 )
                 result = cur.fetchone()
                 conn.commit()
+
+                if not recently_sent:
+                    cur.execute(
+                        f"""SELECT p.user_id, r.game_type FROM {DB_SCHEMA}.game_room_players p
+                           JOIN {DB_SCHEMA}.game_rooms r ON r.id = p.room_id
+                           WHERE p.room_id = %s AND p.user_id <> %s""",
+                        (room_id, user['id'])
+                    )
+                    rows = cur.fetchall()
+                    if rows:
+                        notify_chat_message(room_id, [r['user_id'] for r in rows], user['nickname'], rows[0]['game_type'], message, media_type)
 
                 return {
                     'statusCode': 200,

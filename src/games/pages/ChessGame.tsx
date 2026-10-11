@@ -12,6 +12,7 @@ import { getGameRoom, GameRoomDetail } from '../utils/gameRooms';
 import { sendChessMove } from '../utils/gameChess';
 import { getChatMessages, ChatMessage } from '../utils/gameChat';
 import GameChatPanel from '../components/GameChatPanel';
+import RoomNotifyHint from '../components/RoomNotifyHint';
 import PlayerAvatar from '../components/PlayerAvatar';
 import { notifyOpponent } from '../utils/gameNotify';
 
@@ -149,6 +150,7 @@ export default function ChessGame() {
 
   return (
     <GameLayout user={user}>
+      <RoomNotifyHint />
       <button
         onClick={() => navigate('/games')}
         className="mb-4 flex items-center gap-1.5 text-sm text-slate-400 hover:text-slate-200 transition-colors"
