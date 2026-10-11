@@ -1,4 +1,4 @@
-import { useState, useEffect, useCallback } from 'react';
+import { useState, useEffect, useCallback, useRef } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import Icon from '@/components/ui/icon';
 import { Button } from '@/components/ui/button';
@@ -77,6 +77,34 @@ export default function DurakGame() {
   }, [user, loadRoom, loadChat, navigate]);
 
   const state = room?.state as unknown as DurakState | undefined;
+  const [secondsLeft, setSecondsLeft] = useState<number | null>(null);
+  const endsAtRef = useRef<number | null>(null);
+  const timeoutSentRef = useRef(false);
+  const turnKey = `${room?.current_turn_user_id}-${state?.round}-${state?.table?.length}-${state?.table?.filter((p) => p.d).length}-${state?.taking}-${state?.passed?.length}`;
+
+  useEffect(() => {
+    timeoutSentRef.current = false;
+    endsAtRef.current = state?.turn_left != null ? Date.now() + state.turn_left * 1000 : null;
+    setSecondsLeft(state?.turn_left ?? null);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [turnKey]);
+
+  useEffect(() => {
+    const timer = setInterval(() => {
+      if (endsAtRef.current == null) {
+        setSecondsLeft(null);
+        return;
+      }
+      const left = Math.max(0, Math.ceil((endsAtRef.current - Date.now()) / 1000));
+      setSecondsLeft(left);
+      if (left === 0 && !timeoutSentRef.current) {
+        timeoutSentRef.current = true;
+        sendDurakAction(numericRoomId, 'timeout').then(loadRoom);
+      }
+    }, 500);
+    return () => clearInterval(timer);
+  }, [numericRoomId, loadRoom]);
+
   const hasGame = !!state?.hands;
   const myUid = String(user?.id ?? '');
   const myHand = hasGame ? sortHand(state!.hands[myUid] || [], state!.trump) : [];
@@ -185,6 +213,8 @@ export default function DurakGame() {
       case 'bito': return 'Бито';
       case 'out': return `${who} вышел из игры`;
       case 'left': return `${who} покинул игру`;
+      case 'timeout': return `${who} не успел — ход сделан автоматически`;
+      case 'forfeit': return `${who} долго не отвечал и проиграл`;
       case 'deal': return `Карты розданы, ходит ${who}`;
       default: return i === 0 ? '' : '';
     }
@@ -243,6 +273,14 @@ export default function DurakGame() {
                       Начать игру
                     </Button>
                   )}
+                </div>
+              )}
+              {playing && secondsLeft != null && (
+                <div className={`flex items-center gap-1.5 rounded-full px-3 py-1.5 text-sm font-semibold ${
+                  secondsLeft <= 10 ? 'bg-red-500/20 text-red-300' : 'bg-slate-800 text-slate-300'
+                }`}>
+                  <Icon name="Timer" size={14} />
+                  {isMyTurn ? 'Ваш ход' : `Ходит ${turnPlayer?.nickname || ''}`} · {secondsLeft} с
                 </div>
               )}
               {playing && turnPlayer && !isMyTurn && (

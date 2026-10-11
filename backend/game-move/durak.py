@@ -10,6 +10,8 @@ RANKS = '6789TJQKA'
 SUITS = 'SHDC'
 HAND_SIZE = 6
 MAX_ATTACKS = 6
+TURN_SECONDS = 40
+MAX_SKIPS = 3
 
 
 def rank(card: str) -> int:
@@ -287,3 +289,21 @@ def apply_action(s, uid: str, action: str, body: Dict[str, Any]) -> Optional[str
 
     resolve(s)
     return None
+
+
+def auto_move(s, uid: str):
+    if uid == s['defender']:
+        return 'take', {}
+    if not s['table']:
+        hand = sorted(s['hands'][uid], key=lambda c: (suit(c) == s['trump'], rank(c)))
+        return 'attack', {'card': hand[0]}
+    return 'pass', {}
+
+
+def forfeit(s, uid: str):
+    s['phase'] = 'finished'
+    s['loser'] = uid
+    s['table'] = []
+    s['passed'] = []
+    s['taking'] = False
+    _log(s, t='forfeit', by=uid)

@@ -3,7 +3,7 @@ import { getGameToken } from './gameAuth';
 
 const GAME_MOVE_API = (func2url as Record<string, string>)['game-move'] || '';
 
-export type DurakAction = 'start' | 'attack' | 'defend' | 'transfer' | 'take' | 'pass';
+export type DurakAction = 'start' | 'attack' | 'defend' | 'transfer' | 'take' | 'pass' | 'timeout';
 
 export interface DurakPair {
   a: string;
@@ -36,6 +36,7 @@ export interface DurakState {
   round: number;
   discard: number;
   log: DurakLogEvent[];
+  turn_left: number | null;
 }
 
 const RANKS = '6789TJQKA';

@@ -9,6 +9,7 @@ import json
 import os
 import random
 import string
+import time
 from typing import Dict, Any, Optional
 import psycopg2
 from psycopg2.extras import RealDictCursor
@@ -106,6 +107,9 @@ def _sanitize_durak_state(state: Dict[str, Any], viewer_user_id: int) -> Dict[st
     if isinstance(hands, dict):
         sanitized['counts'] = {uid: len(h) for uid, h in hands.items()}
         sanitized['hands'] = {uid: h for uid, h in hands.items() if uid == str(viewer_user_id)}
+    deadline = sanitized.pop('deadline', None)
+    sanitized['turn_left'] = max(0, int(deadline - time.time())) if deadline and sanitized.get('phase') == 'playing' else None
+    sanitized.pop('skips', None)
     sanitized['deck_count'] = len(sanitized.pop('deck', []) or [])
     return sanitized
 
