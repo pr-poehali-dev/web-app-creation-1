@@ -121,7 +121,7 @@ def build_og_html(og: dict, redirect_url: str) -> str:
     desc = escape_html(og.get('description', 'Единая Региональная Товарно-Торговая Площадка'))
     image = escape_html(og.get('image', ''))
     url = escape_html(og.get('url', redirect_url))
-    site_name = 'ЕРТТП'
+    site_name = og.get('site_name', 'ЕРТТП')
     logo = 'https://cdn.poehali.dev/projects/1a60f89a-b726-4c33-8dad-d42db554ed3e/bucket/ac1dbacf-5483-41dc-8ccd-fcd52e894f1b.png'
     og_image = image if image else logo
 
@@ -159,8 +159,17 @@ _BRAIN_BOOSTER_OG = {
     'url': f'{SITE_URL}/brain-booster',
 }
 
+_GAMES_OG = {
+    'title': 'Игровой клуб — шахматы, шашки и покер онлайн',
+    'description': 'Играй с друзьями онлайн: шахматы, шашки, покер на виртуальные фишки. Заходи и присоединяйся!',
+    'image': f'{SITE_URL}/games-og.jpg',
+    'url': f'{SITE_URL}/games',
+    'site_name': 'Игровой клуб ЕРТТП',
+}
+
 STATIC_OG = {
     f'{SITE_URL}/brain-booster': _BRAIN_BOOSTER_OG,
+    f'{SITE_URL}/games': _GAMES_OG,
 }
 
 def get_static_og(url: str) -> dict:
@@ -168,6 +177,8 @@ def get_static_og(url: str) -> dict:
     clean = url.split('?')[0].rstrip('/')
     if clean in STATIC_OG:
         return STATIC_OG[clean]
+    if clean.startswith(f'{SITE_URL}/games'):
+        return {**_GAMES_OG, 'url': clean}
     # Проверяем по началу URL (для og-proxy с параметрами)
     for key, val in STATIC_OG.items():
         if clean.startswith(key):

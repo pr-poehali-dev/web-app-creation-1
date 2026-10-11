@@ -7,7 +7,7 @@ import { useToast } from '@/hooks/use-toast';
 import GameLayout from '../components/GameLayout';
 import RoomNotifyHint from '../components/RoomNotifyHint';
 import { getGameSession, GameUser } from '../utils/gameAuth';
-import { buildInviteUrl, buildClubUrl } from '../utils/gameLinks';
+import { buildInviteUrl, buildClubUrl, makeShareUrl } from '../utils/gameLinks';
 import {
   listGameRooms,
   createGameRoom,
@@ -102,7 +102,7 @@ export default function GameLobby() {
 
   const handleShareRoom = async (room: GameRoomListItem) => {
     if (!room.invite_code) return;
-    const inviteUrl = buildInviteUrl(room.invite_code);
+    const inviteUrl = await makeShareUrl(buildInviteUrl(room.invite_code));
 
     if (navigator.share) {
       try {
@@ -123,7 +123,7 @@ export default function GameLobby() {
   };
 
   const handleShareClub = async () => {
-    const clubUrl = buildClubUrl();
+    const clubUrl = await makeShareUrl(buildClubUrl());
 
     // Передаём только url (без text) — иначе мессенджеры (Telegram и т.д.) показывают
     // ДВЕ ссылки: саму url и вложенный в text домен-подобный текст, распознанный как ссылка,

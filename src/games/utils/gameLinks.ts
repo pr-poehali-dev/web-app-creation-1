@@ -1,3 +1,5 @@
+import func2url from '../../../backend/func2url.json';
+
 const CANONICAL_ORIGIN = 'https://erttp.ru';
 
 export const getGamesOrigin = (): string => {
@@ -8,3 +10,21 @@ export const getGamesOrigin = (): string => {
 
 export const buildInviteUrl = (inviteCode: string): string => `${getGamesOrigin()}/games/invite/${inviteCode}`;
 export const buildClubUrl = (): string => `${getGamesOrigin()}/games`;
+
+
+export const makeShareUrl = async (url: string): Promise<string> => {
+  const base = (func2url as Record<string, string>)['short-url'];
+  if (!base || !url.startsWith(CANONICAL_ORIGIN)) return url;
+  try {
+    const response = await fetch(base, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ url }),
+    });
+    if (!response.ok) return url;
+    const data = await response.json();
+    return data.short_url || url;
+  } catch {
+    return url;
+  }
+};

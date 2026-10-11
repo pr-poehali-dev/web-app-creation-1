@@ -4,7 +4,7 @@ import { Button } from '@/components/ui/button';
 import { useToast } from '@/hooks/use-toast';
 import { GameRoomDetail } from '../utils/gameRooms';
 import { GameUser } from '../utils/gameAuth';
-import { buildInviteUrl } from '../utils/gameLinks';
+import { buildInviteUrl, makeShareUrl } from '../utils/gameLinks';
 
 interface InviteShareBoxProps {
   room: GameRoomDetail;
@@ -23,9 +23,10 @@ export default function InviteShareBox({ room, user }: InviteShareBoxProps) {
   const inviteUrl = buildInviteUrl(room.invite_code);
 
   const handleShare = async () => {
+    const shareUrl = await makeShareUrl(inviteUrl);
     if (navigator.share) {
       try {
-        await navigator.share({ title: 'Присоединяйся к игре', text: 'Приглашаю тебя в партию!', url: inviteUrl });
+        await navigator.share({ title: 'Присоединяйся к игре', text: 'Приглашаю тебя в партию!', url: shareUrl });
         return;
       } catch {
         // пользователь закрыл диалог — просто fallback на копирование ниже не нужен
@@ -33,7 +34,7 @@ export default function InviteShareBox({ room, user }: InviteShareBoxProps) {
       }
     }
     try {
-      await navigator.clipboard.writeText(inviteUrl);
+      await navigator.clipboard.writeText(shareUrl);
       setCopied(true);
       toast({ title: 'Ссылка скопирована' });
       setTimeout(() => setCopied(false), 2000);
