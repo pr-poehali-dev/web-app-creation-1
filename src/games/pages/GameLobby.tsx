@@ -5,6 +5,7 @@ import { Button } from '@/components/ui/button';
 import ConfirmDialog from '@/components/ui/confirm-dialog';
 import { useToast } from '@/hooks/use-toast';
 import GameLayout from '../components/GameLayout';
+import RoomNotifyHint from '../components/RoomNotifyHint';
 import { getGameSession, GameUser } from '../utils/gameAuth';
 import { buildInviteUrl, buildClubUrl } from '../utils/gameLinks';
 import {
@@ -184,6 +185,7 @@ export default function GameLobby() {
 
   return (
     <GameLayout user={user}>
+      <RoomNotifyHint />
       <div className="mb-6 flex flex-col sm:flex-row sm:items-end sm:justify-between gap-3">
         <div>
           <h1 className="text-3xl font-bold text-slate-100 mb-1">Выберите игру</h1>
