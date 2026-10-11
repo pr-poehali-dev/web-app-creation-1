@@ -3,7 +3,13 @@ import Icon from '@/components/ui/icon';
 import { Button } from '@/components/ui/button';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from '@/components/ui/dialog';
 
-const SECTIONS = [
+export interface RulesSection {
+  icon: string;
+  title: string;
+  items: string[];
+}
+
+const SECTIONS: RulesSection[] = [
   {
     icon: 'Layers',
     title: 'Правила',
@@ -51,7 +57,7 @@ const SECTIONS = [
   },
 ];
 
-export default function DurakRulesDialog() {
+export function GameRulesDialog({ subtitle, sections }: { subtitle: string; sections: RulesSection[] }) {
   const [open, setOpen] = useState(false);
   return (
     <>
@@ -68,10 +74,10 @@ export default function DurakRulesDialog() {
         <DialogContent className="max-h-[85vh] overflow-y-auto border-slate-700 bg-slate-900 text-slate-100 sm:max-w-lg">
           <DialogHeader>
             <DialogTitle className="text-slate-100">Порядок игры</DialogTitle>
-            <DialogDescription className="text-slate-400">Переводной подкидной дурак, 36 карт</DialogDescription>
+            <DialogDescription className="text-slate-400">{subtitle}</DialogDescription>
           </DialogHeader>
           <div className="space-y-5">
-            {SECTIONS.map((section) => (
+            {sections.map((section) => (
               <section key={section.title}>
                 <h3 className="mb-2 flex items-center gap-2 text-sm font-bold text-amber-400">
                   <Icon name={section.icon} size={16} />
@@ -92,4 +98,8 @@ export default function DurakRulesDialog() {
       </Dialog>
     </>
   );
+}
+
+export default function DurakRulesDialog() {
+  return <GameRulesDialog subtitle="Переводной подкидной дурак, 36 карт" sections={SECTIONS} />;
 }

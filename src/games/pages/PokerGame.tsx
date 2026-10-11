@@ -1,4 +1,4 @@
-import { useState, useEffect, useCallback } from 'react';
+import { useState, useEffect, useCallback, useRef } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import Icon from '@/components/ui/icon';
 import { Input } from '@/components/ui/input';
@@ -15,6 +15,9 @@ import GameChatPanel from '../components/GameChatPanel';
 import RoomNotifyHint from '../components/RoomNotifyHint';
 import PlayerAvatar from '../components/PlayerAvatar';
 import { notifyOpponent } from '../utils/gameNotify';
+import PokerRulesDialog from '../components/PokerRulesDialog';
+import { pokerSounds } from '../utils/pokerSounds';
+import { isSoundOn, setSoundOn } from '../utils/durakSounds';
 
 const SUIT_SYMBOLS: Record<string, string> = { S: '♠', H: '♥', D: '♦', C: '♣' };
 const RANK_LABELS: Record<string, string> = { T: '10' };
@@ -68,6 +71,8 @@ export default function PokerGame() {
   const [chatMessages, setChatMessages] = useState<ChatMessage[]>([]);
   const [isActing, setIsActing] = useState(false);
   const [isNotifying, setIsNotifying] = useState(false);
+  const [soundOn, setSoundState] = useState(isSoundOn());
+  const prevRef = useRef<{ hand: number; stage: string; pot: number; folded: number; turn: boolean } | null>(null);
 
   const numericRoomId = Number(roomId);
 
@@ -104,7 +109,37 @@ export default function PokerGame() {
     };
   }, [user, loadRoom, loadChat, navigate]);
 
+  useEffect(() => {
+    const st = room?.state as unknown as PokerState | undefined;
+    if (!st || !user) return;
+    const folded = Object.values(st.players || {}).filter((p) => p.folded).length;
+    const myTurnNow = room?.current_turn_user_id === user.id;
+    const prev = prevRef.current;
+    if (prev) {
+      if (st.hand_number !== prev.hand && st.stage !== 'waiting') pokerSounds.deal();
+      else if (st.stage !== prev.stage && ['flop', 'turn', 'river'].includes(st.stage)) pokerSounds.community();
+      else if (st.pot > prev.pot) pokerSounds.chips();
+      else if (folded > prev.folded) pokerSounds.fold();
+      if (st.stage === 'showdown' && prev.stage !== 'showdown') {
+        const won = st.last_result?.winnings?.[String(user.id)];
+        if (won) pokerSounds.win();
+        else if (st.players?.[String(user.id)] && !st.players[String(user.id)].folded) pokerSounds.lose();
+      } else if (myTurnNow && !prev.turn && st.stage !== 'showdown' && st.stage !== 'waiting') {
+        pokerSounds.myTurn();
+      }
+    }
+    prevRef.current = { hand: st.hand_number, stage: st.stage, pot: st.pot, folded, turn: myTurnNow };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [room]);
+
   if (!user) return null;
+
+  const toggleSound = () => {
+    const next = !soundOn;
+    setSoundOn(next);
+    setSoundState(next);
+    if (next) pokerSounds.chips();
+  };
 
   const pokerState = room?.state as unknown as PokerState | undefined;
   const isMyTurn = room?.current_turn_user_id === user.id;
@@ -206,6 +241,18 @@ export default function PokerGame() {
                   </span>
                 )}
               </div>
+              <div className="flex items-center gap-2">
+                <PokerRulesDialog />
+                <Button
+                  size="sm"
+                  variant="outline"
+                  onClick={toggleSound}
+                  aria-label={soundOn ? 'Выключить звук' : 'Включить звук'}
+                  className="bg-amber-400 hover:bg-amber-500 border-amber-500 text-slate-950 font-semibold hover:text-slate-950 disabled:opacity-70"
+                >
+                  <Icon name={soundOn ? 'Volume2' : 'VolumeX'} size={14} />
+                </Button>
+              </div>
               {room.status === 'waiting' && (
                 <div className="flex items-center gap-2">
                   <div className="px-3 py-1.5 rounded-full text-sm font-semibold bg-slate-800 text-slate-400">
@@ -305,7 +352,7 @@ export default function PokerGame() {
                         variant="outline"
                         onClick={handleNotifyOpponent}
                         disabled={isNotifying}
-                        className="border-slate-700 text-slate-300 hover:bg-slate-800"
+                        className="bg-amber-400 hover:bg-amber-500 border-amber-500 text-slate-950 font-semibold hover:text-slate-950 disabled:opacity-70"
                         title="Напомнить сопернику о ходе push-уведомлением"
                       >
                         <Icon name={isNotifying ? 'Loader2' : 'BellRing'} size={14} className={isNotifying ? 'mr-1.5 animate-spin' : 'mr-1.5'} />

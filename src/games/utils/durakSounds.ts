@@ -13,7 +13,7 @@ const getCtx = (): AudioContext | null => {
   return ctx;
 };
 
-const tone = (freq: number, start: number, dur: number, type: OscillatorType = 'sine', vol = 0.15, slideTo?: number) => {
+export const tone = (freq: number, start: number, dur: number, type: OscillatorType = 'sine', vol = 0.15, slideTo?: number) => {
   const c = getCtx();
   if (!c) return;
   const osc = c.createOscillator();
@@ -30,7 +30,7 @@ const tone = (freq: number, start: number, dur: number, type: OscillatorType = '
   osc.stop(t0 + dur + 0.02);
 };
 
-const noise = (start: number, dur: number, vol = 0.12, cutoff = 2500) => {
+export const noise = (start: number, dur: number, vol = 0.12, cutoff = 2500) => {
   const c = getCtx();
   if (!c) return;
   const len = Math.floor(c.sampleRate * dur);
