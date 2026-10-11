@@ -267,7 +267,7 @@ def handle(event: Dict[str, Any], context: Any) -> Dict[str, Any]:
                     elif status in ('waiting', 'playing', 'finished'):
                         where.append("r.status = %s")
                         qp.append(status)
-                    if gt in ('chess', 'checkers', 'poker', 'durak'):
+                    if gt in ('chess', 'checkers', 'poker', 'durak', 'baarys'):
                         where.append("r.game_type = %s")
                         qp.append(gt)
                     cur.execute(f"""SELECT r.id, r.game_type, r.room_name, r.status, r.max_players, r.is_private, r.created_at, r.updated_at,
@@ -300,7 +300,7 @@ def handle(event: Dict[str, Any], context: Any) -> Dict[str, Any]:
                     room = cur.fetchone()
                     if not room:
                         return err(404, 'Комната не найдена')
-                    if room['game_type'] in ('poker', 'durak') and isinstance(room.get('state'), dict):
+                    if room['game_type'] in ('poker', 'durak', 'baarys') and isinstance(room.get('state'), dict):
                         room['state'].pop('deck', None)  # админ видит карты игроков, колоду скрываем
                     cur.execute(f"""SELECT p.user_id, p.side, p.chips, u.nickname, u.avatar_emoji FROM {S}.game_room_players p
                                     JOIN {S}.game_users u ON u.id=p.user_id WHERE p.room_id=%s ORDER BY p.seat_index""", (rid,))

@@ -114,6 +114,20 @@ def _sanitize_durak_state(state: Dict[str, Any], viewer_user_id: int) -> Dict[st
     return sanitized
 
 
+def _sanitize_baarys_state(state: Dict[str, Any], viewer_user_id: int) -> Dict[str, Any]:
+    """Скрывает колоду и карты соперника: остаются свои карты и количество карт у соперника."""
+    sanitized = dict(state)
+    hands = sanitized.get('hands')
+    if isinstance(hands, dict):
+        sanitized['counts'] = {uid: len(h) for uid, h in hands.items()}
+        sanitized['hands'] = {uid: h for uid, h in hands.items() if uid == str(viewer_user_id)}
+    deadline = sanitized.pop('deadline', None)
+    sanitized['turn_left'] = max(0, int(deadline - time.time())) if deadline and sanitized.get('phase') == 'playing' else None
+    sanitized.pop('skips', None)
+    sanitized['deck_count'] = len(sanitized.pop('deck', []) or [])
+    return sanitized
+
+
 def initial_state_for(game_type: str) -> Dict[str, Any]:
     if game_type == 'chess':
         return CHESS_INITIAL_STATE
@@ -195,6 +209,8 @@ def handler(event: Dict[str, Any], context: Any) -> Dict[str, Any]:
                         room_data['state'] = _sanitize_poker_state(room_data['state'], user['id'])
                     if room_data['game_type'] == 'durak' and room_data.get('state'):
                         room_data['state'] = _sanitize_durak_state(room_data['state'], user['id'])
+                    if room_data['game_type'] == 'baarys' and room_data.get('state'):
+                        room_data['state'] = _sanitize_baarys_state(room_data['state'], user['id'])
 
                     return {
                         'statusCode': 200,
@@ -237,7 +253,7 @@ def handler(event: Dict[str, Any], context: Any) -> Dict[str, Any]:
 
         if action == 'create':
             game_type = body.get('game_type')
-            if game_type not in ('chess', 'checkers', 'poker', 'durak'):
+            if game_type not in ('chess', 'checkers', 'poker', 'durak', 'baarys'):
                 return error_response(400, 'Неизвестный тип игры')
 
             room_name = (body.get('room_name') or f'Комната {user["nickname"]}')[:64]
@@ -332,7 +348,7 @@ def handler(event: Dict[str, Any], context: Any) -> Dict[str, Any]:
                     new_count = count + 1
                     # Покер собирает до 8 игроков — не запускаем автоматически при 2,
                     # ждём явного старта стола создателем (action 'start_table').
-                    if new_count >= 2 and room['game_type'] not in ('poker', 'durak'):
+                    if new_count >= 2 and room['game_type'] not in ('poker', 'durak', 'baarys'):
                         cur.execute(
                             f"UPDATE {DB_SCHEMA}.game_rooms SET status = 'playing', current_turn_user_id = %s, updated_at = CURRENT_TIMESTAMP WHERE id = %s",
                             (user['id'] if room['game_type'] in ('chess', 'checkers') else room['created_by'], room['id'])
@@ -474,6 +490,42 @@ def handler(event: Dict[str, Any], context: Any) -> Dict[str, Any]:
                             cur.execute(
                                 f"DELETE FROM {DB_SCHEMA}.game_room_players WHERE room_id = %s AND user_id = %s",
                                 (room_id, user['id'])
+                            )
+                            conn.commit()
+                            return {
+                                'statusCode': 200,
+                                'headers': cors_headers(),
+                                'body': json.dumps({'success': True, 'forfeited': True}),
+                                'isBase64Encoded': False
+                            }
+
+                        if room['game_type'] == 'baarys':
+                            state = room['state'] or {}
+                            cur.execute(
+                                f"SELECT user_id FROM {DB_SCHEMA}.game_room_players WHERE room_id = %s AND user_id != %s",
+                                (room_id, user['id'])
+                            )
+                            opp = cur.fetchone()
+                            winner_id = opp['user_id'] if opp else None
+                            state['phase'] = 'finished'
+                            state['winner'] = str(winner_id) if winner_id else None
+                            state['reason'] = 'left'
+                            state['lead'] = []
+                            state.setdefault('log', []).append({'t': 'left', 'by': str(user['id'])})
+                            cur.execute(
+                                f"UPDATE {DB_SCHEMA}.game_rooms SET state = %s, status = 'finished', winner_id = %s, "
+                                f"current_turn_user_id = NULL, updated_at = CURRENT_TIMESTAMP WHERE id = %s",
+                                (json.dumps(state), winner_id, room_id)
+                            )
+                            cur.execute(
+                                f"UPDATE {DB_SCHEMA}.game_users SET games_played = games_played + 1 WHERE id = %s",
+                                (user['id'],)
+                            )
+                            if winner_id:
+                                cur.execute(
+                                    f"UPDATE {DB_SCHEMA}.game_users SET games_played = games_played + 1, "
+                                    f"games_won = games_won + 1 WHERE id = %s",
+                                    (winner_id,)
                             )
                             conn.commit()
                             return {

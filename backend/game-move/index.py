@@ -19,6 +19,7 @@ import jwt
 import chess
 import requests
 import durak
+import baarys
 
 DATABASE_URL = os.environ.get('DATABASE_URL')
 DB_SCHEMA = os.environ.get('DB_SCHEMA', 't_p42562714_web_app_creation_1')
@@ -28,7 +29,7 @@ GAME_JWT_ISSUER = 'games-section'
 
 PUSH_SEND_URL = 'https://functions.poehali.dev/a1c8fafd-b64f-45e5-b9b9-0a050cca4f7a'
 
-GAME_TITLES = {'chess': 'Шахматы', 'checkers': 'Шашки', 'poker': 'Покер', 'durak': 'Игра в дурака'}
+GAME_TITLES = {'chess': 'Шахматы', 'checkers': 'Шашки', 'poker': 'Покер', 'durak': 'Игра в дурака', 'baarys': 'Баарыс'}
 
 
 def notify_next_turn(room_id: int, next_turn_user_id: Optional[int], game_type: str) -> None:
@@ -1085,6 +1086,114 @@ def handle_durak_action(cur, conn, room, user, body):
     }
 
 
+def handle_baarys_action(cur, conn, room, user, body):
+    action = body.get('action')
+    if action not in ('start', 'lead', 'respond', 'timeout'):
+        return error_response(400, 'Неизвестное действие')
+
+    room_id = room['id']
+    cur.execute("SELECT * FROM " + DB_SCHEMA + ".game_rooms WHERE id = %s FOR UPDATE", (room_id,))
+    room = cur.fetchone()
+    cur.execute(
+        "SELECT user_id FROM " + DB_SCHEMA + ".game_room_players WHERE room_id = %s ORDER BY seat_index",
+        (room_id,)
+    )
+    order = [str(r['user_id']) for r in cur.fetchall()]
+    my_uid = str(user['id'])
+    if my_uid not in order:
+        return error_response(403, 'Вы не участник этой партии')
+
+    prev_turn = room['current_turn_user_id']
+
+    if action == 'start':
+        if room['created_by'] != user['id']:
+            return error_response(403, 'Начать игру может только создатель комнаты')
+        if room['status'] not in ('waiting', 'finished'):
+            return error_response(400, 'Игра уже идёт')
+        if len(order) != 2:
+            return error_response(400, 'Для игры нужны два игрока')
+        state = baarys.new_match(order)
+        state['skips'] = {}
+        state['deadline'] = time.time() + baarys.TURN_SECONDS
+        turn = baarys.current_turn(state)
+        cur.execute(
+            "UPDATE " + DB_SCHEMA + ".game_rooms SET state = %s, status = 'playing', winner_id = NULL, "
+            "current_turn_user_id = %s, updated_at = CURRENT_TIMESTAMP WHERE id = %s",
+            (json.dumps(state), int(turn), room_id)
+        )
+        conn.commit()
+        if int(turn) != user['id']:
+            notify_next_turn(room_id, int(turn), 'baarys')
+        return {'statusCode': 200, 'headers': cors_headers(), 'body': json.dumps({'success': True, 'status': 'playing'}), 'isBase64Encoded': False}
+
+    if room['status'] != 'playing':
+        return error_response(400, 'Игра не идёт')
+    state = room['state'] or {}
+    if not state.get('hands'):
+        return error_response(400, 'Игра ещё не началась')
+
+    now = time.time()
+    skips = state.setdefault('skips', {})
+    if action == 'timeout':
+        actor = baarys.current_turn(state)
+        if actor is None:
+            return error_response(400, 'Сейчас нет активного хода')
+        if now < state.get('deadline', 0) - 1:
+            return error_response(400, 'Время хода ещё не вышло')
+        skips[actor] = skips.get(actor, 0) + 1
+        if skips[actor] >= baarys.MAX_SKIPS:
+            baarys.forfeit(state, actor)
+        else:
+            auto_action, auto_body = baarys.auto_move(state, actor)
+            err = baarys.apply_action(state, actor, auto_action, auto_body)
+            if err:
+                return error_response(400, err)
+            state.setdefault('log', []).append({'t': 'timeout', 'by': actor})
+            del state['log'][:-8]
+    else:
+        err = baarys.apply_action(state, my_uid, action, body)
+        if err:
+            return error_response(400, err)
+        skips[my_uid] = 0
+
+    finished = state['phase'] == 'finished'
+    if not finished:
+        state['deadline'] = now + baarys.TURN_SECONDS
+    turn = baarys.current_turn(state)
+    turn_id = int(turn) if turn else None
+    winner_id = int(state['winner']) if finished and state.get('winner') else None
+
+    cur.execute(
+        "UPDATE " + DB_SCHEMA + ".game_rooms SET state = %s, status = %s, winner_id = %s, "
+        "current_turn_user_id = %s, updated_at = CURRENT_TIMESTAMP WHERE id = %s",
+        (json.dumps(state), 'finished' if finished else 'playing', winner_id, turn_id, room_id)
+    )
+
+    if finished:
+        ids = [int(u) for u in order]
+        cur.execute(
+            "UPDATE " + DB_SCHEMA + ".game_users SET games_played = games_played + 1 WHERE id = ANY(%s)",
+            (ids,)
+        )
+        if winner_id:
+            cur.execute(
+                "UPDATE " + DB_SCHEMA + ".game_users SET games_won = games_won + 1 WHERE id = %s",
+                (winner_id,)
+            )
+
+    conn.commit()
+
+    if not finished and turn_id and turn_id != prev_turn and turn_id != user['id']:
+        notify_next_turn(room_id, turn_id, 'baarys')
+
+    return {
+        'statusCode': 200,
+        'headers': cors_headers(),
+        'body': json.dumps({'success': True, 'phase': state['phase'], 'winner': state.get('winner')}),
+        'isBase64Encoded': False
+    }
+
+
 def handler(event: Dict[str, Any], context: Any) -> Dict[str, Any]:
     method = event.get('httpMethod', 'GET')
 
@@ -1124,6 +1233,8 @@ def handler(event: Dict[str, Any], context: Any) -> Dict[str, Any]:
             result = handle_poker_action(cur, conn, room, user, body)
         elif room['game_type'] == 'durak':
             result = handle_durak_action(cur, conn, room, user, body)
+        elif room['game_type'] == 'baarys':
+            result = handle_baarys_action(cur, conn, room, user, body)
         else:
             result = error_response(400, 'Неизвестный тип игры для этой комнаты')
 
