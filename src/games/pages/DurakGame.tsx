@@ -10,6 +10,8 @@ import GameChatPanel from '../components/GameChatPanel';
 import RoomNotifyHint from '../components/RoomNotifyHint';
 import PlayerAvatar from '../components/PlayerAvatar';
 import DurakCard, { SuitSymbol } from '../components/DurakCard';
+import DurakRulesDialog from '../components/DurakRulesDialog';
+import { sounds, isSoundOn, setSoundOn } from '../utils/durakSounds';
 import { getGameSession, GameUser } from '../utils/gameAuth';
 import { getGameRoom, GameRoomDetail } from '../utils/gameRooms';
 import { getChatMessages, ChatMessage } from '../utils/gameChat';
@@ -36,6 +38,8 @@ export default function DurakGame() {
   const [selected, setSelected] = useState<string | null>(null);
   const [isActing, setIsActing] = useState(false);
   const [isNotifying, setIsNotifying] = useState(false);
+  const [soundOn, setSoundState] = useState(isSoundOn());
+  const prevRef = useRef<{ log: number; sig: string; turn: boolean; phase: string; secs: number | null } | null>(null);
 
   const numericRoomId = Number(roomId);
 
@@ -106,6 +110,44 @@ export default function DurakGame() {
   }, [numericRoomId, loadRoom]);
 
   const hasGame = !!state?.hands;
+
+  useEffect(() => {
+    if (!state?.hands || !user) return;
+    const sig = `${state.round}-${state.log?.length}-${state.log?.[state.log.length - 1]?.t}-${state.log?.[state.log.length - 1]?.card}`;
+    const prev = prevRef.current;
+    const last = state.log?.[state.log.length - 1];
+    const myTurnNow = room?.current_turn_user_id === user.id;
+    if (prev && prev.sig !== sig && last) {
+      if (last.t === 'attack') sounds.place();
+      else if (last.t === 'defend') sounds.beat();
+      else if (last.t === 'transfer') sounds.transfer();
+      else if (last.t === 'take' || last.t === 'took') sounds.take();
+      else if (last.t === 'bito') sounds.bito();
+      else if (last.t === 'deal') sounds.deal();
+    } else if (!prev && last?.t === 'deal' && state.phase === 'playing') {
+      sounds.deal();
+    }
+    if (state.phase === 'finished' && prev && prev.phase !== 'finished') {
+      if (state.loser === String(user.id)) sounds.lose();
+      else sounds.win();
+    } else if (state.phase === 'playing' && myTurnNow && (!prev || !prev.turn)) {
+      sounds.myTurn();
+    }
+    prevRef.current = { log: state.log?.length ?? 0, sig, turn: myTurnNow, phase: state.phase, secs: null };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [room]);
+
+  useEffect(() => {
+    if (secondsLeft != null && secondsLeft > 0 && secondsLeft <= 5 && room?.current_turn_user_id === user?.id) sounds.tick();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [secondsLeft]);
+
+  const toggleSound = () => {
+    const next = !soundOn;
+    setSoundOn(next);
+    setSoundState(next);
+    if (next) sounds.place();
+  };
   const myUid = String(user?.id ?? '');
   const myHand = hasGame ? sortHand(state!.hands[myUid] || [], state!.trump) : [];
 
@@ -275,6 +317,18 @@ export default function DurakGame() {
                   )}
                 </div>
               )}
+              <div className="flex items-center gap-2">
+                <DurakRulesDialog />
+                <Button
+                  size="sm"
+                  variant="outline"
+                  onClick={toggleSound}
+                  aria-label={soundOn ? 'Выключить звук' : 'Включить звук'}
+                  className="border-slate-700 text-slate-300 hover:bg-slate-800"
+                >
+                  <Icon name={soundOn ? 'Volume2' : 'VolumeX'} size={14} />
+                </Button>
+              </div>
               {playing && secondsLeft != null && (
                 <div className={`flex items-center gap-1.5 rounded-full px-3 py-1.5 text-sm font-semibold ${
                   secondsLeft <= 10 ? 'bg-red-500/20 text-red-300' : 'bg-slate-800 text-slate-300'
