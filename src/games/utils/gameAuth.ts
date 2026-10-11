@@ -16,6 +16,7 @@ export interface GameUser {
   chips_balance: number;
   games_played: number;
   games_won: number;
+  pin_set?: boolean;
 }
 
 interface GameAuthResponse {
@@ -23,6 +24,7 @@ interface GameAuthResponse {
   user?: GameUser;
   token?: string;
   error?: string;
+  pin_created?: boolean;
 }
 
 // URL функции пропишется автоматически после публикации backend (game-auth).
@@ -31,7 +33,7 @@ const GAME_AUTH_API = (func2url as Record<string, string>)['game-auth'] || '';
 
 export const getGameAuthApiUrl = () => GAME_AUTH_API;
 
-export const registerGameUser = async (nickname: string): Promise<GameAuthResponse> => {
+export const registerGameUser = async (nickname: string, pin: string): Promise<GameAuthResponse> => {
   if (!GAME_AUTH_API) {
     return { success: false, error: 'Игровой раздел ещё разворачивается, попробуйте через пару минут' };
   }
@@ -39,7 +41,7 @@ export const registerGameUser = async (nickname: string): Promise<GameAuthRespon
     const response = await fetch(GAME_AUTH_API, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ action: 'register', nickname }),
+      body: JSON.stringify({ action: 'register', nickname, pin }),
     });
     const data = await response.json();
     if (!response.ok || !data.success) {
@@ -52,7 +54,7 @@ export const registerGameUser = async (nickname: string): Promise<GameAuthRespon
   }
 };
 
-export const loginGameUser = async (nickname: string): Promise<GameAuthResponse> => {
+export const loginGameUser = async (nickname: string, pin: string): Promise<GameAuthResponse> => {
   if (!GAME_AUTH_API) {
     return { success: false, error: 'Игровой раздел ещё разворачивается, попробуйте через пару минут' };
   }
@@ -60,14 +62,14 @@ export const loginGameUser = async (nickname: string): Promise<GameAuthResponse>
     const response = await fetch(GAME_AUTH_API, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ action: 'login', nickname }),
+      body: JSON.stringify({ action: 'login', nickname, pin }),
     });
     const data = await response.json();
     if (!response.ok || !data.success) {
-      return { success: false, error: data.error || 'Игрок с таким никнеймом не найден' };
+      return { success: false, error: data.error || 'Неверный никнейм или пароль' };
     }
     saveGameSession(data.user, data.token);
-    return { success: true, user: data.user, token: data.token };
+    return { success: true, user: data.user, token: data.token, pin_created: data.pin_created };
   } catch {
     return { success: false, error: 'Ошибка соединения с сервером' };
   }
@@ -134,6 +136,23 @@ export const updateGameNotifySettings = async (
     if (!response.ok || !data.success) return { success: false, error: data.error || 'Не удалось сохранить' };
     const user = getGameSession();
     if (user) saveGameSession({ ...user, notify_chat: notifyChat, notify_turn: notifyTurn }, token);
+    return { success: true };
+  } catch {
+    return { success: false, error: 'Ошибка соединения с сервером' };
+  }
+};
+
+export const changeGamePin = async (pin: string, oldPin?: string): Promise<{ success: boolean; error?: string }> => {
+  const token = getGameToken();
+  if (!token || !GAME_AUTH_API) return { success: false, error: 'Нужно войти заново' };
+  try {
+    const response = await fetch(GAME_AUTH_API, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ action: 'set_pin', token, pin, old_pin: oldPin }),
+    });
+    const data = await response.json();
+    if (!response.ok || !data.success) return { success: false, error: data.error || 'Не удалось сохранить пароль' };
     return { success: true };
   } catch {
     return { success: false, error: 'Ошибка соединения с сервером' };

@@ -57,7 +57,16 @@ def validate_nickname(nickname: str) -> bool:
 
 
 def validate_pin(pin: str) -> bool:
-    return bool(re.match(r'^\d{4,6}$', pin or ''))
+    return bool(re.match(r'^\d{4}$', pin or ''))
+
+
+MAX_PIN_ATTEMPTS = 5
+LOCK_MINUTES = 15
+USER_FIELDS = 'id, nickname, avatar_emoji, avatar_url, notify_chat, notify_turn, chips_balance, games_played, games_won, pin_set'
+
+
+def err(status: int, message: str) -> Dict[str, Any]:
+    return {'statusCode': status, 'headers': cors_headers(), 'body': json.dumps({'error': message}), 'isBase64Encoded': False}
 
 
 def cors_headers() -> Dict[str, str]:
@@ -106,6 +115,9 @@ def handler(event: Dict[str, Any], context: Any) -> Dict[str, Any]:
                 'body': json.dumps({'error': 'Никнейм: 3-20 символов, буквы/цифры/подчёркивание'}),
                 'isBase64Encoded': False
             }
+        pin = str(body.get('pin') or '')
+        if not validate_pin(pin):
+            return err(400, 'Пароль должен состоять из 4 цифр')
         conn = get_db_connection()
         try:
             with conn.cursor() as cur:
@@ -118,11 +130,11 @@ def handler(event: Dict[str, Any], context: Any) -> Dict[str, Any]:
                         'isBase64Encoded': False
                     }
 
-                pin_hash = hash_pin(secrets.token_hex(16))
+                pin_hash = hash_pin(pin)
                 cur.execute(
-                    f"""INSERT INTO {DB_SCHEMA}.game_users (nickname, pin_hash, last_login_at)
-                       VALUES (%s, %s, CURRENT_TIMESTAMP)
-                       RETURNING id, nickname, avatar_emoji, avatar_url, notify_chat, notify_turn, chips_balance, games_played, games_won""",
+                    f"""INSERT INTO {DB_SCHEMA}.game_users (nickname, pin_hash, pin_set, last_login_at)
+                       VALUES (%s, %s, TRUE, CURRENT_TIMESTAMP)
+                       RETURNING {USER_FIELDS}""",
                     (nickname, pin_hash)
                 )
                 user = cur.fetchone()
@@ -140,39 +152,101 @@ def handler(event: Dict[str, Any], context: Any) -> Dict[str, Any]:
 
     elif action == 'login':
         nickname = (body.get('nickname') or '').strip()
+        pin = str(body.get('pin') or '')
+        if not validate_pin(pin):
+            return err(400, 'Введите пароль из 4 цифр')
 
         conn = get_db_connection()
         try:
             with conn.cursor() as cur:
                 cur.execute(
-                    f"""SELECT id, nickname, avatar_emoji, avatar_url, notify_chat, notify_turn, chips_balance, games_played, games_won
-                       FROM {DB_SCHEMA}.game_users WHERE nickname = %s""",
+                    f"""SELECT {USER_FIELDS}, pin_hash, pin_failed_attempts, pin_locked_until
+                       FROM {DB_SCHEMA}.game_users WHERE nickname = %s FOR UPDATE""",
                     (nickname,)
                 )
                 user = cur.fetchone()
 
                 if not user:
-                    return {
-                        'statusCode': 401,
-                        'headers': cors_headers(),
-                        'body': json.dumps({'error': 'Игрок с таким никнеймом не найден'}),
-                        'isBase64Encoded': False
-                    }
+                    return err(401, 'Неверный никнейм или пароль')
+
+                if user['pin_locked_until'] and user['pin_locked_until'] > datetime.utcnow():
+                    left = int((user['pin_locked_until'] - datetime.utcnow()).total_seconds() // 60) + 1
+                    return err(429, f'Слишком много попыток. Попробуйте через {left} мин.')
+
+                created = False
+                if not user['pin_set']:
+                    cur.execute(
+                        f"UPDATE {DB_SCHEMA}.game_users SET pin_hash = %s, pin_set = TRUE WHERE id = %s",
+                        (hash_pin(pin), user['id'])
+                    )
+                    created = True
+                elif not verify_pin(pin, user['pin_hash']):
+                    attempts = user['pin_failed_attempts'] + 1
+                    if attempts >= MAX_PIN_ATTEMPTS:
+                        cur.execute(
+                            f"UPDATE {DB_SCHEMA}.game_users SET pin_failed_attempts = 0, pin_locked_until = %s WHERE id = %s",
+                            (datetime.utcnow() + timedelta(minutes=LOCK_MINUTES), user['id'])
+                        )
+                        conn.commit()
+                        return err(429, f'Слишком много попыток. Вход закрыт на {LOCK_MINUTES} мин.')
+                    cur.execute(
+                        f"UPDATE {DB_SCHEMA}.game_users SET pin_failed_attempts = %s WHERE id = %s",
+                        (attempts, user['id'])
+                    )
+                    conn.commit()
+                    return err(401, f'Неверный никнейм или пароль. Осталось попыток: {MAX_PIN_ATTEMPTS - attempts}')
 
                 cur.execute(
-                    f"UPDATE {DB_SCHEMA}.game_users SET last_login_at = CURRENT_TIMESTAMP WHERE id = %s",
+                    f"UPDATE {DB_SCHEMA}.game_users SET last_login_at = CURRENT_TIMESTAMP, pin_failed_attempts = 0, pin_locked_until = NULL WHERE id = %s",
                     (user['id'],)
                 )
                 conn.commit()
 
-                user_data = dict(user)
+                user_data = {k: user[k] for k in ('id', 'nickname', 'avatar_emoji', 'avatar_url', 'notify_chat', 'notify_turn', 'chips_balance', 'games_played', 'games_won')}
+                user_data['pin_set'] = True
                 token = generate_game_token(user['id'], user['nickname'])
                 return {
                     'statusCode': 200,
                     'headers': cors_headers(),
-                    'body': json.dumps({'success': True, 'user': user_data, 'token': token}),
+                    'body': json.dumps({'success': True, 'user': user_data, 'token': token, 'pin_created': created}),
                     'isBase64Encoded': False
                 }
+        finally:
+            conn.close()
+
+    elif action == 'set_pin':
+        token = body.get('token') or ''
+        try:
+            payload = jwt.decode(token, JWT_SECRET, algorithms=[JWT_ALGORITHM])
+            if payload.get('iss') != GAME_JWT_ISSUER:
+                raise jwt.InvalidTokenError('Wrong issuer')
+        except Exception:
+            return err(401, 'Нужно войти заново')
+        pin = str(body.get('pin') or '')
+        old_pin = str(body.get('old_pin') or '')
+        if not validate_pin(pin):
+            return err(400, 'Пароль должен состоять из 4 цифр')
+        conn = get_db_connection()
+        try:
+            with conn.cursor() as cur:
+                cur.execute(
+                    f"SELECT pin_hash, pin_set, pin_locked_until FROM {DB_SCHEMA}.game_users WHERE id = %s FOR UPDATE",
+                    (payload['game_user_id'],)
+                )
+                row = cur.fetchone()
+                if not row:
+                    return err(401, 'Нужно войти заново')
+                if row['pin_set']:
+                    if row['pin_locked_until'] and row['pin_locked_until'] > datetime.utcnow():
+                        return err(429, 'Слишком много попыток. Попробуйте позже')
+                    if not validate_pin(old_pin) or not verify_pin(old_pin, row['pin_hash']):
+                        return err(401, 'Текущий пароль неверный')
+                cur.execute(
+                    f"UPDATE {DB_SCHEMA}.game_users SET pin_hash = %s, pin_set = TRUE, pin_failed_attempts = 0 WHERE id = %s",
+                    (hash_pin(pin), payload['game_user_id'])
+                )
+                conn.commit()
+                return {'statusCode': 200, 'headers': cors_headers(), 'body': json.dumps({'success': True}), 'isBase64Encoded': False}
         finally:
             conn.close()
 
@@ -247,7 +321,7 @@ def handler(event: Dict[str, Any], context: Any) -> Dict[str, Any]:
             try:
                 with conn.cursor() as cur:
                     cur.execute(
-                        f"""SELECT id, nickname, avatar_emoji, avatar_url, notify_chat, notify_turn, chips_balance, games_played, games_won
+                        f"""SELECT {USER_FIELDS}
                            FROM {DB_SCHEMA}.game_users WHERE id = %s""",
                         (payload['game_user_id'],)
                     )

@@ -12,7 +12,8 @@
       "path": "/",
       "body": {
         "action": "register",
-        "nickname": "a"
+        "nickname": "a",
+        "pin": "1234"
       },
       "expectedStatus": 400,
       "expectedBody": {
@@ -26,7 +27,8 @@
       "path": "/",
       "body": {
         "action": "login",
-        "nickname": "nonexistent_user_xyz"
+        "nickname": "nonexistent_user_xyz",
+        "pin": "1234"
       },
       "expectedStatus": 401,
       "expectedBody": {
@@ -54,6 +56,20 @@
       "path": "/",
       "body": {
         "action": "unknown_action"
+      },
+      "expectedStatus": 400,
+      "expectedBody": {
+        "error": "string"
+      },
+      "bodyMatcher": "partial"
+    },
+    {
+      "name": "Register without pin",
+      "method": "POST",
+      "path": "/",
+      "body": {
+        "action": "register",
+        "nickname": "test_user_nopin"
       },
       "expectedStatus": 400,
       "expectedBody": {

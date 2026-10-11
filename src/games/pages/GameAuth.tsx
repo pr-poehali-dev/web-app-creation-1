@@ -13,6 +13,8 @@ export default function GameAuth() {
   const { toast } = useToast();
   const [mode, setMode] = useState<'login' | 'register'>('login');
   const [nickname, setNickname] = useState('');
+  const [pin, setPin] = useState('');
+  const [pin2, setPin2] = useState('');
   const [isLoading, setIsLoading] = useState(false);
 
   const redirectAfterAuth = () => {
@@ -38,14 +40,26 @@ export default function GameAuth() {
       return;
     }
 
+    if (!/^\d{4}$/.test(pin)) {
+      toast({ variant: 'destructive', title: 'Ошибка', description: 'Пароль должен состоять из 4 цифр' });
+      return;
+    }
+    if (mode === 'register' && pin !== pin2) {
+      toast({ variant: 'destructive', title: 'Ошибка', description: 'Пароли не совпадают' });
+      return;
+    }
+
     setIsLoading(true);
     const result = mode === 'register'
-      ? await registerGameUser(nickname.trim())
-      : await loginGameUser(nickname.trim());
+      ? await registerGameUser(nickname.trim(), pin)
+      : await loginGameUser(nickname.trim(), pin);
     setIsLoading(false);
 
     if (result.success) {
-      toast({ title: 'Добро пожаловать!', description: `Привет, ${result.user?.nickname}!` });
+      toast({
+        title: 'Добро пожаловать!',
+        description: result.pin_created ? `Привет, ${result.user?.nickname}! Пароль сохранён, запомните его` : `Привет, ${result.user?.nickname}!`,
+      });
       redirectAfterAuth();
     } else {
       toast({ variant: 'destructive', title: 'Ошибка', description: result.error });
@@ -75,12 +89,12 @@ export default function GameAuth() {
               <Icon name="Spade" size={32} className="text-slate-950" />
             </div>
             <h1 className="text-2xl font-bold text-slate-100 tracking-wide">ИГРОВОЙ КЛУБ</h1>
-            <p className="text-slate-400 text-sm mt-1">Шахматы · Шашки · Покер · Игра в дурака</p>
+            <p className="text-slate-400 text-sm mt-1">Шахматы · Шашки · Покер · Дурак · Баарыс</p>
           </div>
 
           <div className="flex gap-2 mb-6 bg-slate-800/60 rounded-lg p-1">
             <button
-              onClick={() => setMode('login')}
+              onClick={() => { setMode('login'); setPin(''); setPin2(''); }}
               className={`flex-1 py-2 rounded-md text-sm font-semibold transition-colors ${
                 mode === 'login' ? 'bg-amber-500 text-slate-950' : 'text-slate-400 hover:text-slate-200'
               }`}
@@ -88,7 +102,7 @@ export default function GameAuth() {
               Вход
             </button>
             <button
-              onClick={() => setMode('register')}
+              onClick={() => { setMode('register'); setPin(''); setPin2(''); }}
               className={`flex-1 py-2 rounded-md text-sm font-semibold transition-colors ${
                 mode === 'register' ? 'bg-amber-500 text-slate-950' : 'text-slate-400 hover:text-slate-200'
               }`}
@@ -109,6 +123,44 @@ export default function GameAuth() {
                 maxLength={20}
               />
             </div>
+
+            <div className="space-y-1.5">
+              <Label htmlFor="pin" className="text-slate-300">{mode === 'register' ? 'Придумайте пароль (4 цифры)' : 'Пароль (4 цифры)'}</Label>
+              <Input
+                id="pin"
+                type="password"
+                inputMode="numeric"
+                autoComplete={mode === 'register' ? 'new-password' : 'current-password'}
+                value={pin}
+                onChange={(e) => setPin(e.target.value.replace(/\D/g, '').slice(0, 4))}
+                placeholder="••••"
+                className="bg-slate-800/60 border-slate-700 text-slate-100 placeholder:text-slate-500 focus-visible:ring-amber-500 tracking-[0.5em]"
+                maxLength={4}
+              />
+            </div>
+
+            {mode === 'register' && (
+              <div className="space-y-1.5">
+                <Label htmlFor="pin2" className="text-slate-300">Повторите пароль</Label>
+                <Input
+                  id="pin2"
+                  type="password"
+                  inputMode="numeric"
+                  autoComplete="new-password"
+                  value={pin2}
+                  onChange={(e) => setPin2(e.target.value.replace(/\D/g, '').slice(0, 4))}
+                  placeholder="••••"
+                  className="bg-slate-800/60 border-slate-700 text-slate-100 placeholder:text-slate-500 focus-visible:ring-amber-500 tracking-[0.5em]"
+                  maxLength={4}
+                />
+              </div>
+            )}
+
+            {mode === 'login' && (
+              <p className="text-xs text-slate-500">
+                Играли раньше без пароля? Войдите со своим ником и придумайте пароль: он сохранится.
+              </p>
+            )}
 
             <Button
               type="submit"

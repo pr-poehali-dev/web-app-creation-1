@@ -4,7 +4,8 @@ import { Button } from '@/components/ui/button';
 import { Switch } from '@/components/ui/switch';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { useToast } from '@/hooks/use-toast';
-import { GameUser, updateGameAvatar, updateGameNotifySettings } from '../utils/gameAuth';
+import { Input } from '@/components/ui/input';
+import { GameUser, updateGameAvatar, updateGameNotifySettings, changeGamePin } from '../utils/gameAuth';
 import { imageToDataUrl } from '../utils/gameChat';
 import PlayerAvatar from './PlayerAvatar';
 
@@ -18,6 +19,8 @@ export default function AvatarUploader({ user, open, onOpenChange }: AvatarUploa
   const { toast } = useToast();
   const fileRef = useRef<HTMLInputElement>(null);
   const [busy, setBusy] = useState(false);
+  const [oldPin, setOldPin] = useState('');
+  const [newPin, setNewPin] = useState('');
 
   const handleFile = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
@@ -45,6 +48,25 @@ export default function AvatarUploader({ user, open, onOpenChange }: AvatarUploa
   const handleNotify = async (chat: boolean, turn: boolean) => {
     const result = await updateGameNotifySettings(chat, turn);
     if (!result.success) toast({ variant: 'destructive', title: 'Ошибка', description: result.error });
+  };
+
+  const digits = (v: string) => v.replace(/\D/g, '').slice(0, 4);
+
+  const handleChangePin = async () => {
+    if (!/^\d{4}$/.test(newPin) || !/^\d{4}$/.test(oldPin)) {
+      toast({ variant: 'destructive', title: 'Ошибка', description: 'Нужны 4 цифры в обоих полях' });
+      return;
+    }
+    setBusy(true);
+    const result = await changeGamePin(newPin, oldPin);
+    setBusy(false);
+    if (result.success) {
+      setOldPin('');
+      setNewPin('');
+      toast({ title: 'Пароль изменён' });
+    } else {
+      toast({ variant: 'destructive', title: 'Ошибка', description: result.error });
+    }
   };
 
   const handleRemove = async () => {
@@ -84,6 +106,30 @@ export default function AvatarUploader({ user, open, onOpenChange }: AvatarUploa
               Новые сообщения в чате
               <Switch checked={notifyChat} onCheckedChange={(v) => handleNotify(v, notifyTurn)} />
             </label>
+          </div>
+          <div className="w-full space-y-2 border-t border-slate-800 pt-4">
+            <p className="text-sm font-semibold text-slate-200">Сменить пароль</p>
+            <Input
+              type="password"
+              inputMode="numeric"
+              value={oldPin}
+              onChange={(e) => setOldPin(digits(e.target.value))}
+              placeholder="Текущий пароль"
+              maxLength={4}
+              className="bg-slate-800/60 border-slate-700 text-slate-100 placeholder:text-slate-500"
+            />
+            <Input
+              type="password"
+              inputMode="numeric"
+              value={newPin}
+              onChange={(e) => setNewPin(digits(e.target.value))}
+              placeholder="Новый пароль (4 цифры)"
+              maxLength={4}
+              className="bg-slate-800/60 border-slate-700 text-slate-100 placeholder:text-slate-500"
+            />
+            <Button disabled={busy} onClick={handleChangePin} variant="outline" className="w-full bg-amber-400 hover:bg-amber-500 border-amber-500 text-slate-950 font-semibold hover:text-slate-950">
+              Сохранить пароль
+            </Button>
           </div>
         </div>
       </DialogContent>
