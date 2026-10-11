@@ -29,6 +29,12 @@ export default function GameLobby() {
   const navigate = useNavigate();
   const { toast } = useToast();
   const [user, setUser] = useState<GameUser | null>(getGameSession());
+
+  useEffect(() => {
+    const sync = () => setUser(getGameSession());
+    window.addEventListener('gameSessionChanged', sync);
+    return () => window.removeEventListener('gameSessionChanged', sync);
+  }, []);
   const [selectedGame, setSelectedGame] = useState<GameType>('chess');
   const [rooms, setRooms] = useState<GameRoomListItem[]>([]);
   const [isLoading, setIsLoading] = useState(true);

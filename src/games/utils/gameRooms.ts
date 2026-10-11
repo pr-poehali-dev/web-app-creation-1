@@ -42,6 +42,7 @@ export interface GameRoomPlayer {
   chips: number | null;
   nickname: string;
   avatar_emoji: string;
+  avatar_url?: string | null;
 }
 
 export interface GameRoomDetail {

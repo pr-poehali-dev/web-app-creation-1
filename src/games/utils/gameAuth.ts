@@ -10,6 +10,7 @@ export interface GameUser {
   id: number;
   nickname: string;
   avatar_emoji: string;
+  avatar_url?: string | null;
   chips_balance: number;
   games_played: number;
   games_won: number;
@@ -93,4 +94,23 @@ export const clearGameSession = (): void => {
   localStorage.removeItem(GAME_USER_KEY);
   localStorage.removeItem(GAME_TOKEN_KEY);
   window.dispatchEvent(new Event('gameSessionChanged'));
+};
+
+export const updateGameAvatar = async (image: string | null): Promise<{ success: boolean; error?: string }> => {
+  const token = getGameToken();
+  if (!token || !GAME_AUTH_API) return { success: false, error: 'Нужно войти заново' };
+  try {
+    const response = await fetch(GAME_AUTH_API, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(image ? { action: 'set_avatar', token, image } : { action: 'clear_avatar', token }),
+    });
+    const data = await response.json();
+    if (!response.ok || !data.success) return { success: false, error: data.error || 'Не удалось сохранить фото' };
+    const user = getGameSession();
+    if (user) saveGameSession({ ...user, avatar_url: data.avatar_url }, token);
+    return { success: true };
+  } catch {
+    return { success: false, error: 'Ошибка соединения с сервером' };
+  }
 };

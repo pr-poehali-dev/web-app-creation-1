@@ -1,8 +1,7 @@
-import { useState, useEffect, useCallback, useRef } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { Chess, Square } from 'chess.js';
 import Icon from '@/components/ui/icon';
-import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
 import { useToast } from '@/hooks/use-toast';
 import GameLayout from '../components/GameLayout';
@@ -11,7 +10,9 @@ import LeaveRoomButton from '../components/LeaveRoomButton';
 import { getGameSession, GameUser } from '../utils/gameAuth';
 import { getGameRoom, GameRoomDetail } from '../utils/gameRooms';
 import { sendChessMove } from '../utils/gameChess';
-import { getChatMessages, sendChatMessage, ChatMessage } from '../utils/gameChat';
+import { getChatMessages, ChatMessage } from '../utils/gameChat';
+import GameChatPanel from '../components/GameChatPanel';
+import PlayerAvatar from '../components/PlayerAvatar';
 import { notifyOpponent } from '../utils/gameNotify';
 
 const PIECE_SYMBOLS: Record<string, string> = {
@@ -23,14 +24,18 @@ export default function ChessGame() {
   const { roomId } = useParams<{ roomId: string }>();
   const navigate = useNavigate();
   const { toast } = useToast();
-  const [user] = useState<GameUser | null>(getGameSession());
+  const [user, setUser] = useState<GameUser | null>(getGameSession());
+
+  useEffect(() => {
+    const sync = () => setUser(getGameSession());
+    window.addEventListener('gameSessionChanged', sync);
+    return () => window.removeEventListener('gameSessionChanged', sync);
+  }, []);
   const [room, setRoom] = useState<GameRoomDetail | null>(null);
   const [chess, setChess] = useState<Chess>(new Chess());
   const [selectedSquare, setSelectedSquare] = useState<Square | null>(null);
   const [chatMessages, setChatMessages] = useState<ChatMessage[]>([]);
-  const [chatInput, setChatInput] = useState('');
   const [isNotifying, setIsNotifying] = useState(false);
-  const chatContainerRef = useRef<HTMLDivElement>(null);
 
   const numericRoomId = Number(roomId);
 
@@ -72,14 +77,6 @@ export default function ChessGame() {
       clearInterval(chatInterval);
     };
   }, [user, loadRoom, loadChat, navigate]);
-
-  useEffect(() => {
-    const container = chatContainerRef.current;
-    if (!container) return;
-    // Скроллим только сам блок чата, не затрагивая страницу — иначе автопрокрутка
-    // страницы уносила доску за пределы экрана при каждом новом сообщении.
-    container.scrollTop = container.scrollHeight;
-  }, [chatMessages]);
 
   if (!user) return null;
 
@@ -124,17 +121,6 @@ export default function ChessGame() {
       toast({ title: 'Шах!' });
     } else if (result.is_stalemate || result.is_draw) {
       toast({ title: 'Ничья' });
-    }
-  };
-
-  const handleSendChat = async () => {
-    if (!chatInput.trim()) return;
-    try {
-      await sendChatMessage(numericRoomId, chatInput.trim());
-      setChatInput('');
-      loadChat();
-    } catch {
-      toast({ variant: 'destructive', title: 'Ошибка', description: 'Не удалось отправить сообщение' });
     }
   };
 
@@ -183,7 +169,7 @@ export default function ChessGame() {
           <div>
             <div className="flex items-center justify-between mb-4 bg-slate-900/60 border border-slate-800 rounded-xl p-4">
               <div className="flex items-center gap-2">
-                <span className="text-2xl">{opponent?.avatar_emoji || '👤'}</span>
+                <PlayerAvatar emoji={opponent?.avatar_emoji} url={opponent?.avatar_url} size={36} />
                 <div>
                   <p className="font-semibold text-slate-100">{opponent?.nickname || 'Ожидание соперника...'}</p>
                   <p className="text-xs text-slate-500">{opponent?.side === 'white' ? 'Белые' : 'Чёрные'}</p>
@@ -267,7 +253,7 @@ export default function ChessGame() {
             </div>
 
             <div className="flex items-center gap-2 mt-4 bg-slate-900/60 border border-slate-800 rounded-xl p-4">
-              <span className="text-2xl">{user.avatar_emoji}</span>
+              <PlayerAvatar emoji={user.avatar_emoji} url={user.avatar_url} size={36} />
               <div>
                 <p className="font-semibold text-slate-100">{user.nickname} (Вы)</p>
                 <p className="text-xs text-slate-500">{mySide === 'white' ? 'Белые' : 'Чёрные'}</p>
@@ -275,43 +261,7 @@ export default function ChessGame() {
             </div>
           </div>
 
-          <div className="bg-slate-900/60 border border-slate-800 rounded-xl flex flex-col h-[500px]">
-            <div className="p-3 border-b border-slate-800 font-semibold text-slate-200 flex items-center gap-2">
-              <Icon name="MessageCircle" size={18} />
-              Чат комнаты
-            </div>
-            <div ref={chatContainerRef} className="flex-1 overflow-y-auto p-3 space-y-2">
-              {chatMessages.length === 0 ? (
-                <p className="text-sm text-slate-500 text-center mt-4">Пока нет сообщений</p>
-              ) : (
-                chatMessages.map((msg) => (
-                  <div key={msg.id} className={`flex flex-col ${msg.user_id === user.id ? 'items-end' : 'items-start'}`}>
-                    <span className="text-[10px] text-slate-500">{msg.nickname}</span>
-                    <div
-                      className={`max-w-[85%] rounded-lg px-3 py-1.5 text-sm ${
-                        msg.user_id === user.id ? 'bg-amber-500 text-slate-950' : 'bg-slate-800 text-slate-200'
-                      }`}
-                    >
-                      {msg.message}
-                    </div>
-                  </div>
-                ))
-              )}
-            </div>
-            <div className="p-3 border-t border-slate-800 flex gap-2">
-              <Input
-                value={chatInput}
-                onChange={(e) => setChatInput(e.target.value)}
-                onKeyDown={(e) => e.key === 'Enter' && handleSendChat()}
-                placeholder="Сообщение..."
-                className="bg-slate-800/60 border-slate-700 text-slate-100 placeholder:text-slate-500"
-                maxLength={500}
-              />
-              <Button size="icon" onClick={handleSendChat} className="bg-amber-500 hover:bg-amber-600 text-slate-950 shrink-0">
-                <Icon name="Send" size={16} />
-              </Button>
-            </div>
-          </div>
+          <GameChatPanel roomId={numericRoomId} userId={user.id} messages={chatMessages} onSent={loadChat} />
         </div>
       )}
     </GameLayout>

@@ -1,9 +1,11 @@
-import { ReactNode } from 'react';
+import { ReactNode, useState } from 'react';
 import { Link } from 'react-router-dom';
 import Icon from '@/components/ui/icon';
 import { GameUser, clearGameSession } from '../utils/gameAuth';
 import GamesPWAMeta from './GamesPWAMeta';
 import GameNotificationBanner from './GameNotificationBanner';
+import PlayerAvatar from './PlayerAvatar';
+import AvatarUploader from './AvatarUploader';
 
 interface GameLayoutProps {
   user: GameUser | null;
@@ -12,6 +14,8 @@ interface GameLayoutProps {
 }
 
 export default function GameLayout({ user, onLogout, children }: GameLayoutProps) {
+  const [avatarOpen, setAvatarOpen] = useState(false);
+
   const handleLogout = () => {
     clearGameSession();
     onLogout?.();
@@ -39,10 +43,15 @@ export default function GameLayout({ user, onLogout, children }: GameLayoutProps
                 <Icon name="Coins" size={16} className="text-amber-400" />
                 <span className="text-sm font-semibold text-amber-300">{user.chips_balance}</span>
               </div>
-              <div className="flex items-center gap-2 bg-slate-800/60 border border-slate-700 rounded-full px-3 py-1.5">
-                <span>{user.avatar_emoji}</span>
+              <button
+                type="button"
+                onClick={() => setAvatarOpen(true)}
+                title="Сменить фото"
+                className="flex items-center gap-2 bg-slate-800/60 border border-slate-700 hover:border-amber-500/40 rounded-full pl-1.5 pr-3 py-1 transition-colors"
+              >
+                <PlayerAvatar emoji={user.avatar_emoji} url={user.avatar_url} size={28} />
                 <span className="text-sm font-medium">{user.nickname}</span>
-              </div>
+              </button>
               <button
                 onClick={handleLogout}
                 className="h-9 w-9 flex items-center justify-center rounded-full hover:bg-slate-800 text-slate-400 hover:text-red-400 transition-colors"
@@ -54,6 +63,7 @@ export default function GameLayout({ user, onLogout, children }: GameLayoutProps
           )}
         </div>
       </header>
+      {user && <AvatarUploader user={user} open={avatarOpen} onOpenChange={setAvatarOpen} />}
       <main className="container mx-auto px-4 py-8">{children}</main>
     </div>
   );

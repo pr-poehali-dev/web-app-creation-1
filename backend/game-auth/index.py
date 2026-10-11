@@ -10,6 +10,9 @@ import json
 import os
 import re
 import secrets
+import base64
+import uuid
+import boto3
 from typing import Dict, Any
 from datetime import datetime, timedelta
 import psycopg2
@@ -119,7 +122,7 @@ def handler(event: Dict[str, Any], context: Any) -> Dict[str, Any]:
                 cur.execute(
                     f"""INSERT INTO {DB_SCHEMA}.game_users (nickname, pin_hash, last_login_at)
                        VALUES (%s, %s, CURRENT_TIMESTAMP)
-                       RETURNING id, nickname, avatar_emoji, chips_balance, games_played, games_won""",
+                       RETURNING id, nickname, avatar_emoji, avatar_url, chips_balance, games_played, games_won""",
                     (nickname, pin_hash)
                 )
                 user = cur.fetchone()
@@ -142,7 +145,7 @@ def handler(event: Dict[str, Any], context: Any) -> Dict[str, Any]:
         try:
             with conn.cursor() as cur:
                 cur.execute(
-                    f"""SELECT id, nickname, avatar_emoji, chips_balance, games_played, games_won
+                    f"""SELECT id, nickname, avatar_emoji, avatar_url, chips_balance, games_played, games_won
                        FROM {DB_SCHEMA}.game_users WHERE nickname = %s""",
                     (nickname,)
                 )
@@ -173,6 +176,44 @@ def handler(event: Dict[str, Any], context: Any) -> Dict[str, Any]:
         finally:
             conn.close()
 
+    elif action in ('set_avatar', 'clear_avatar'):
+        token = body.get('token') or ''
+        try:
+            payload = jwt.decode(token, JWT_SECRET, algorithms=[JWT_ALGORITHM])
+            if payload.get('iss') != GAME_JWT_ISSUER:
+                raise jwt.InvalidTokenError('Wrong issuer')
+        except Exception:
+            return {'statusCode': 401, 'headers': cors_headers(), 'body': json.dumps({'error': 'Нужно войти заново'}), 'isBase64Encoded': False}
+
+        avatar_url = None
+        if action == 'set_avatar':
+            data_url = body.get('image') or ''
+            mime = data_url[5:].split(';')[0] if data_url.startswith('data:') else ''
+            exts = {'image/jpeg': 'jpg', 'image/png': 'png', 'image/webp': 'webp'}
+            if mime not in exts or ',' not in data_url:
+                return {'statusCode': 400, 'headers': cors_headers(), 'body': json.dumps({'error': 'Нужна картинка JPG, PNG или WebP'}), 'isBase64Encoded': False}
+            raw = base64.b64decode(data_url.split(',', 1)[1])
+            if len(raw) > 2 * 1024 * 1024:
+                return {'statusCode': 400, 'headers': cors_headers(), 'body': json.dumps({'error': 'Картинка слишком большая'}), 'isBase64Encoded': False}
+            s3 = boto3.client('s3', endpoint_url='https://bucket.poehali.dev',
+                              aws_access_key_id=os.environ['AWS_ACCESS_KEY_ID'],
+                              aws_secret_access_key=os.environ['AWS_SECRET_ACCESS_KEY'])
+            key = f"game-avatars/{payload['game_user_id']}_{uuid.uuid4().hex[:8]}.{exts[mime]}"
+            s3.put_object(Bucket='files', Key=key, Body=raw, ContentType=mime)
+            avatar_url = f"https://cdn.poehali.dev/projects/{os.environ['AWS_ACCESS_KEY_ID']}/bucket/{key}"
+
+        conn = get_db_connection()
+        try:
+            with conn.cursor() as cur:
+                cur.execute(
+                    f"UPDATE {DB_SCHEMA}.game_users SET avatar_url = %s WHERE id = %s",
+                    (avatar_url, payload['game_user_id'])
+                )
+                conn.commit()
+                return {'statusCode': 200, 'headers': cors_headers(), 'body': json.dumps({'success': True, 'avatar_url': avatar_url}), 'isBase64Encoded': False}
+        finally:
+            conn.close()
+
     elif action == 'verify':
         token = body.get('token') or ''
         try:
@@ -184,7 +225,7 @@ def handler(event: Dict[str, Any], context: Any) -> Dict[str, Any]:
             try:
                 with conn.cursor() as cur:
                     cur.execute(
-                        f"""SELECT id, nickname, avatar_emoji, chips_balance, games_played, games_won
+                        f"""SELECT id, nickname, avatar_emoji, avatar_url, chips_balance, games_played, games_won
                            FROM {DB_SCHEMA}.game_users WHERE id = %s""",
                         (payload['game_user_id'],)
                     )

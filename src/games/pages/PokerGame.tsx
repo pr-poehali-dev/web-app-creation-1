@@ -1,4 +1,4 @@
-import { useState, useEffect, useCallback, useRef } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import Icon from '@/components/ui/icon';
 import { Input } from '@/components/ui/input';
@@ -10,7 +10,9 @@ import LeaveRoomButton from '../components/LeaveRoomButton';
 import { getGameSession, GameUser } from '../utils/gameAuth';
 import { getGameRoom, GameRoomDetail, startPokerTable } from '../utils/gameRooms';
 import { sendPokerAction, PokerState } from '../utils/gamePoker';
-import { getChatMessages, sendChatMessage, ChatMessage } from '../utils/gameChat';
+import { getChatMessages, ChatMessage } from '../utils/gameChat';
+import GameChatPanel from '../components/GameChatPanel';
+import PlayerAvatar from '../components/PlayerAvatar';
 import { notifyOpponent } from '../utils/gameNotify';
 
 const SUIT_SYMBOLS: Record<string, string> = { S: '♠', H: '♥', D: '♦', C: '♣' };
@@ -53,14 +55,18 @@ export default function PokerGame() {
   const { roomId } = useParams<{ roomId: string }>();
   const navigate = useNavigate();
   const { toast } = useToast();
-  const [user] = useState<GameUser | null>(getGameSession());
+  const [user, setUser] = useState<GameUser | null>(getGameSession());
+
+  useEffect(() => {
+    const sync = () => setUser(getGameSession());
+    window.addEventListener('gameSessionChanged', sync);
+    return () => window.removeEventListener('gameSessionChanged', sync);
+  }, []);
   const [room, setRoom] = useState<GameRoomDetail | null>(null);
   const [raiseAmount, setRaiseAmount] = useState('');
   const [chatMessages, setChatMessages] = useState<ChatMessage[]>([]);
-  const [chatInput, setChatInput] = useState('');
   const [isActing, setIsActing] = useState(false);
   const [isNotifying, setIsNotifying] = useState(false);
-  const chatContainerRef = useRef<HTMLDivElement>(null);
 
   const numericRoomId = Number(roomId);
 
@@ -97,12 +103,6 @@ export default function PokerGame() {
     };
   }, [user, loadRoom, loadChat, navigate]);
 
-  useEffect(() => {
-    const container = chatContainerRef.current;
-    if (!container) return;
-    container.scrollTop = container.scrollHeight;
-  }, [chatMessages]);
-
   if (!user) return null;
 
   const pokerState = room?.state as unknown as PokerState | undefined;
@@ -136,17 +136,6 @@ export default function PokerGame() {
       return;
     }
     handleAction('raise', amount);
-  };
-
-  const handleSendChat = async () => {
-    if (!chatInput.trim()) return;
-    try {
-      await sendChatMessage(numericRoomId, chatInput.trim());
-      setChatInput('');
-      loadChat();
-    } catch {
-      toast({ variant: 'destructive', title: 'Ошибка', description: 'Не удалось отправить сообщение' });
-    }
   };
 
   const handleStartTable = async () => {
@@ -250,7 +239,7 @@ export default function PokerGame() {
                         isTurn ? 'border-amber-400 bg-amber-500/10' : 'border-slate-700/60 bg-slate-900/50'
                       } ${pState?.folded ? 'opacity-40' : ''}`}
                     >
-                      <div className="text-xl">{p.avatar_emoji}</div>
+                      <div className="flex justify-center"><PlayerAvatar emoji={p.avatar_emoji} url={p.avatar_url} size={28} /></div>
                       <p className="text-xs font-semibold text-slate-100 truncate max-w-[90px] mx-auto">{p.nickname}</p>
                       <p className="text-xs text-amber-400">{p.chips ?? 0} фишек</p>
                       {pState?.bet_this_round ? (
@@ -359,52 +348,7 @@ export default function PokerGame() {
             </div>
           </div>
 
-          <div className="bg-slate-900/60 border border-slate-800 rounded-xl flex flex-col h-[500px]">
-            <div className="p-3 border-b border-slate-800 font-semibold text-slate-200 flex items-center gap-2">
-              <Icon name="MessageCircle" size={18} />
-              Чат комнаты
-            </div>
-            <div ref={chatContainerRef} className="flex-1 overflow-y-auto p-3 space-y-2">
-              {chatMessages.length === 0 ? (
-                <p className="text-sm text-slate-500 text-center mt-4">Пока нет сообщений</p>
-              ) : (
-                chatMessages.map((msg) =>
-                  msg.is_system ? (
-                    <div key={msg.id} className="flex justify-center">
-                      <div className="max-w-[95%] rounded-lg px-3 py-1.5 text-xs text-center bg-amber-500/10 text-amber-300 border border-amber-500/20 flex items-center gap-1.5">
-                        <Icon name="Sparkles" size={12} className="shrink-0" />
-                        {msg.message}
-                      </div>
-                    </div>
-                  ) : (
-                    <div key={msg.id} className={`flex flex-col ${msg.user_id === user.id ? 'items-end' : 'items-start'}`}>
-                      <span className="text-[10px] text-slate-500">{msg.nickname}</span>
-                      <div
-                        className={`max-w-[85%] rounded-lg px-3 py-1.5 text-sm ${
-                          msg.user_id === user.id ? 'bg-amber-500 text-slate-950' : 'bg-slate-800 text-slate-200'
-                        }`}
-                      >
-                        {msg.message}
-                      </div>
-                    </div>
-                  )
-                )
-              )}
-            </div>
-            <div className="p-3 border-t border-slate-800 flex gap-2">
-              <Input
-                value={chatInput}
-                onChange={(e) => setChatInput(e.target.value)}
-                onKeyDown={(e) => e.key === 'Enter' && handleSendChat()}
-                placeholder="Сообщение..."
-                className="bg-slate-800/60 border-slate-700 text-slate-100 placeholder:text-slate-500"
-                maxLength={500}
-              />
-              <Button size="icon" onClick={handleSendChat} className="bg-amber-500 hover:bg-amber-600 text-slate-950 shrink-0">
-                <Icon name="Send" size={16} />
-              </Button>
-            </div>
-          </div>
+          <GameChatPanel roomId={numericRoomId} userId={user.id} messages={chatMessages} onSent={loadChat} />
         </div>
       )}
     </GameLayout>

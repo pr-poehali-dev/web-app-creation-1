@@ -165,7 +165,7 @@ def handler(event: Dict[str, Any], context: Any) -> Dict[str, Any]:
                         return error_response(404, 'Комната не найдена')
 
                     cur.execute(
-                        f"""SELECT p.*, u.nickname, u.avatar_emoji
+                        f"""SELECT p.*, u.nickname, u.avatar_emoji, u.avatar_url
                            FROM {DB_SCHEMA}.game_room_players p
                            JOIN {DB_SCHEMA}.game_users u ON u.id = p.user_id
                            WHERE p.room_id = %s ORDER BY p.seat_index""",

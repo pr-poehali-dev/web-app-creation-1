@@ -53,6 +53,14 @@ export default function AssistantAuth() {
   return (
     <div className="min-h-screen bg-gradient-to-b from-sky-50 via-white to-emerald-50 flex items-center justify-center p-4">
       <div className="w-full max-w-md">
+        <button
+          type="button"
+          onClick={() => navigate('/')}
+          className="mb-6 flex items-center gap-1.5 text-sm text-slate-500 hover:text-slate-800 transition-colors"
+        >
+          <Icon name="ArrowLeft" size={16} />
+          На главную ЕРТТП
+        </button>
         <div className="text-center mb-8">
           <div className="mx-auto mb-4 flex h-16 w-16 items-center justify-center rounded-2xl bg-emerald-500 shadow-lg shadow-emerald-500/30">
             <Icon name="HeartHandshake" size={32} className="text-white" />

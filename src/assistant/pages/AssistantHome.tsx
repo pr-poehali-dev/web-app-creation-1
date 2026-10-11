@@ -77,6 +77,15 @@ export default function AssistantHome() {
       <header className="sticky top-0 z-30 border-b border-slate-200 bg-white/90 backdrop-blur">
         <div className="mx-auto flex h-14 max-w-3xl items-center justify-between px-4">
           <div className="flex items-center gap-2">
+            <button
+              type="button"
+              onClick={() => navigate('/')}
+              aria-label="На главную ЕРТТП"
+              className="flex items-center gap-1 rounded-full py-1.5 pl-1.5 pr-3 text-sm text-slate-600 hover:bg-slate-100 hover:text-slate-800"
+            >
+              <Icon name="ArrowLeft" size={18} />
+              <span className="hidden sm:inline">ЕРТТП</span>
+            </button>
             <div className="flex h-9 w-9 items-center justify-center rounded-xl bg-emerald-500">
               <Icon name="HeartHandshake" size={20} className="text-white" />
             </div>

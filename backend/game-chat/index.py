@@ -7,6 +7,9 @@ Returns: HTTP response dict with statusCode, headers, body
 
 import json
 import os
+import base64
+import uuid
+import boto3
 from typing import Dict, Any, Optional
 import psycopg2
 from psycopg2.extras import RealDictCursor
@@ -47,6 +50,36 @@ def cors_headers() -> Dict[str, str]:
     }
 
 
+MEDIA_TYPES = {
+    'image/jpeg': ('image', 'jpg', 3 * 1024 * 1024),
+    'image/png': ('image', 'png', 3 * 1024 * 1024),
+    'image/webp': ('image', 'webp', 3 * 1024 * 1024),
+    'audio/webm': ('audio', 'webm', 2 * 1024 * 1024),
+    'audio/ogg': ('audio', 'ogg', 2 * 1024 * 1024),
+    'audio/mp4': ('audio', 'm4a', 2 * 1024 * 1024),
+    'audio/mpeg': ('audio', 'mp3', 2 * 1024 * 1024),
+}
+
+
+def upload_media(room_id: int, data_url: str):
+    if not data_url.startswith('data:') or ',' not in data_url:
+        return None
+    head, b64 = data_url.split(',', 1)
+    mime = head[5:].split(';')[0]
+    if mime not in MEDIA_TYPES:
+        return None
+    kind, ext, limit = MEDIA_TYPES[mime]
+    raw = base64.b64decode(b64)
+    if len(raw) > limit:
+        return None
+    s3 = boto3.client('s3', endpoint_url='https://bucket.poehali.dev',
+                      aws_access_key_id=os.environ['AWS_ACCESS_KEY_ID'],
+                      aws_secret_access_key=os.environ['AWS_SECRET_ACCESS_KEY'])
+    key = f"game-chat/{room_id}/{uuid.uuid4().hex}.{ext}"
+    s3.put_object(Bucket='files', Key=key, Body=raw, ContentType=mime)
+    return kind, f"https://cdn.poehali.dev/projects/{os.environ['AWS_ACCESS_KEY_ID']}/bucket/{key}"
+
+
 def error_response(status: int, message: str) -> Dict[str, Any]:
     return {
         'statusCode': status,
@@ -76,7 +109,7 @@ def handler(event: Dict[str, Any], context: Any) -> Dict[str, Any]:
         try:
             with conn.cursor() as cur:
                 cur.execute(
-                    f"""SELECT c.id, c.user_id, c.message, c.created_at, c.is_system, u.nickname, u.avatar_emoji
+                    f"""SELECT c.id, c.user_id, c.message, c.created_at, c.is_system, c.media_url, c.media_type, u.nickname, u.avatar_emoji, u.avatar_url
                        FROM {DB_SCHEMA}.game_chat_messages c
                        JOIN {DB_SCHEMA}.game_users u ON u.id = c.user_id
                        WHERE c.room_id = %s
@@ -101,8 +134,9 @@ def handler(event: Dict[str, Any], context: Any) -> Dict[str, Any]:
 
         room_id = body.get('room_id')
         message = (body.get('message') or '').strip()[:500]
+        media = body.get('media')
 
-        if not room_id or not message:
+        if not room_id or (not message and not media):
             return error_response(400, 'room_id и message обязательны')
 
         conn = get_db_connection()
@@ -115,10 +149,20 @@ def handler(event: Dict[str, Any], context: Any) -> Dict[str, Any]:
                 if not cur.fetchone():
                     return error_response(403, 'Вы не участник этой комнаты')
 
+                media_type = None
+                media_url = None
+                if media:
+                    uploaded = upload_media(room_id, media)
+                    if not uploaded:
+                        return error_response(400, 'Файл не подходит: слишком большой или неподдерживаемый формат')
+                    media_type, media_url = uploaded
+                    if not message:
+                        message = '🎤 Голосовое сообщение' if media_type == 'audio' else '📷 Фото'
+
                 cur.execute(
-                    f"""INSERT INTO {DB_SCHEMA}.game_chat_messages (room_id, user_id, message)
-                       VALUES (%s, %s, %s) RETURNING id, created_at""",
-                    (room_id, user['id'], message)
+                    f"""INSERT INTO {DB_SCHEMA}.game_chat_messages (room_id, user_id, message, media_url, media_type)
+                       VALUES (%s, %s, %s, %s, %s) RETURNING id, created_at""",
+                    (room_id, user['id'], message, media_url, media_type)
                 )
                 result = cur.fetchone()
                 conn.commit()
