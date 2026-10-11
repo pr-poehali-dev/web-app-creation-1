@@ -184,6 +184,8 @@ def extract_game_invite(url: str) -> str | None:
     return m.group(1) if m else None
 
 def get_game_invite_og(code: str, url: str, conn) -> dict:
+    from urllib.parse import urlparse, parse_qs
+    sender = (parse_qs(urlparse(url).query).get('from') or [''])[0].strip()[:20]
     cur = conn.cursor()
     safe = code.replace("'", "''")
     cur.execute(f"""SELECT r.game_type, u.nickname FROM {SCHEMA}.game_rooms r
@@ -192,7 +194,7 @@ def get_game_invite_og(code: str, url: str, conn) -> dict:
     row = cur.fetchone()
     cur.close()
     game_type = row[0] if row else None
-    nickname = row[1] if row else ''
+    nickname = sender or (row[1] if row else '')
     if game_type not in _INVITE_TEXT:
         return {**_GAMES_OG, 'url': url}
     name, acc, invite_to = _INVITE_TEXT[game_type]

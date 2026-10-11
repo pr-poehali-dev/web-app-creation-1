@@ -23,7 +23,7 @@ export default function InviteShareBox({ room, user }: InviteShareBoxProps) {
   const inviteUrl = buildInviteUrl(room.invite_code);
 
   const handleShare = async () => {
-    const shareUrl = await makeShareUrl(inviteUrl);
+    const shareUrl = await makeShareUrl(inviteUrl, user.nickname);
     if (navigator.share) {
       try {
         await navigator.share({ title: 'Присоединяйся к игре', text: 'Приглашаю тебя в партию!', url: shareUrl });

@@ -12,7 +12,8 @@ export const buildInviteUrl = (inviteCode: string): string => `${getGamesOrigin(
 export const buildClubUrl = (): string => `${getGamesOrigin()}/games`;
 
 
-export const makeShareUrl = async (url: string): Promise<string> => {
+export const makeShareUrl = async (rawUrl: string, senderNickname?: string): Promise<string> => {
+  const url = senderNickname ? `${rawUrl}?from=${encodeURIComponent(senderNickname)}` : rawUrl;
   const base = (func2url as Record<string, string>)['short-url'];
   if (!base || !url.startsWith(CANONICAL_ORIGIN)) return url;
   try {
