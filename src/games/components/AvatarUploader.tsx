@@ -1,9 +1,10 @@
 import { useRef, useState } from 'react';
 import Icon from '@/components/ui/icon';
 import { Button } from '@/components/ui/button';
+import { Switch } from '@/components/ui/switch';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { useToast } from '@/hooks/use-toast';
-import { GameUser, updateGameAvatar } from '../utils/gameAuth';
+import { GameUser, updateGameAvatar, updateGameNotifySettings } from '../utils/gameAuth';
 import { imageToDataUrl } from '../utils/gameChat';
 import PlayerAvatar from './PlayerAvatar';
 
@@ -38,6 +39,14 @@ export default function AvatarUploader({ user, open, onOpenChange }: AvatarUploa
     }
   };
 
+  const notifyChat = user.notify_chat !== false;
+  const notifyTurn = user.notify_turn !== false;
+
+  const handleNotify = async (chat: boolean, turn: boolean) => {
+    const result = await updateGameNotifySettings(chat, turn);
+    if (!result.success) toast({ variant: 'destructive', title: 'Ошибка', description: result.error });
+  };
+
   const handleRemove = async () => {
     setBusy(true);
     const result = await updateGameAvatar(null);
@@ -50,7 +59,7 @@ export default function AvatarUploader({ user, open, onOpenChange }: AvatarUploa
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className="bg-slate-900 border-slate-700 text-slate-100 max-w-sm">
         <DialogHeader>
-          <DialogTitle>Ваш аватар</DialogTitle>
+          <DialogTitle>Профиль игрока</DialogTitle>
         </DialogHeader>
         <div className="flex flex-col items-center gap-4 py-2">
           <PlayerAvatar emoji={user.avatar_emoji} url={user.avatar_url} size={96} />
@@ -65,6 +74,17 @@ export default function AvatarUploader({ user, open, onOpenChange }: AvatarUploa
             </Button>
           )}
           <p className="text-xs text-slate-500 text-center">Фото увидят соперники в комнатах и в чате</p>
+          <div className="w-full space-y-3 border-t border-slate-800 pt-4">
+            <p className="text-sm font-semibold text-slate-200">Уведомления</p>
+            <label className="flex items-center justify-between gap-3 text-sm text-slate-300">
+              Соперник сделал ход
+              <Switch checked={notifyTurn} onCheckedChange={(v) => handleNotify(notifyChat, v)} />
+            </label>
+            <label className="flex items-center justify-between gap-3 text-sm text-slate-300">
+              Новые сообщения в чате
+              <Switch checked={notifyChat} onCheckedChange={(v) => handleNotify(v, notifyTurn)} />
+            </label>
+          </div>
         </div>
       </DialogContent>
     </Dialog>

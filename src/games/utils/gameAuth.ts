@@ -11,6 +11,8 @@ export interface GameUser {
   nickname: string;
   avatar_emoji: string;
   avatar_url?: string | null;
+  notify_chat?: boolean;
+  notify_turn?: boolean;
   chips_balance: number;
   games_played: number;
   games_won: number;
@@ -109,6 +111,29 @@ export const updateGameAvatar = async (image: string | null): Promise<{ success:
     if (!response.ok || !data.success) return { success: false, error: data.error || 'Не удалось сохранить фото' };
     const user = getGameSession();
     if (user) saveGameSession({ ...user, avatar_url: data.avatar_url }, token);
+    return { success: true };
+  } catch {
+    return { success: false, error: 'Ошибка соединения с сервером' };
+  }
+};
+
+
+export const updateGameNotifySettings = async (
+  notifyChat: boolean,
+  notifyTurn: boolean
+): Promise<{ success: boolean; error?: string }> => {
+  const token = getGameToken();
+  if (!token || !GAME_AUTH_API) return { success: false, error: 'Нужно войти заново' };
+  try {
+    const response = await fetch(GAME_AUTH_API, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ action: 'set_notify', token, notify_chat: notifyChat, notify_turn: notifyTurn }),
+    });
+    const data = await response.json();
+    if (!response.ok || !data.success) return { success: false, error: data.error || 'Не удалось сохранить' };
+    const user = getGameSession();
+    if (user) saveGameSession({ ...user, notify_chat: notifyChat, notify_turn: notifyTurn }, token);
     return { success: true };
   } catch {
     return { success: false, error: 'Ошибка соединения с сервером' };

@@ -122,7 +122,7 @@ def handler(event: Dict[str, Any], context: Any) -> Dict[str, Any]:
                 cur.execute(
                     f"""INSERT INTO {DB_SCHEMA}.game_users (nickname, pin_hash, last_login_at)
                        VALUES (%s, %s, CURRENT_TIMESTAMP)
-                       RETURNING id, nickname, avatar_emoji, avatar_url, chips_balance, games_played, games_won""",
+                       RETURNING id, nickname, avatar_emoji, avatar_url, notify_chat, notify_turn, chips_balance, games_played, games_won""",
                     (nickname, pin_hash)
                 )
                 user = cur.fetchone()
@@ -145,7 +145,7 @@ def handler(event: Dict[str, Any], context: Any) -> Dict[str, Any]:
         try:
             with conn.cursor() as cur:
                 cur.execute(
-                    f"""SELECT id, nickname, avatar_emoji, avatar_url, chips_balance, games_played, games_won
+                    f"""SELECT id, nickname, avatar_emoji, avatar_url, notify_chat, notify_turn, chips_balance, games_played, games_won
                        FROM {DB_SCHEMA}.game_users WHERE nickname = %s""",
                     (nickname,)
                 )
@@ -173,6 +173,28 @@ def handler(event: Dict[str, Any], context: Any) -> Dict[str, Any]:
                     'body': json.dumps({'success': True, 'user': user_data, 'token': token}),
                     'isBase64Encoded': False
                 }
+        finally:
+            conn.close()
+
+    elif action == 'set_notify':
+        token = body.get('token') or ''
+        try:
+            payload = jwt.decode(token, JWT_SECRET, algorithms=[JWT_ALGORITHM])
+            if payload.get('iss') != GAME_JWT_ISSUER:
+                raise jwt.InvalidTokenError('Wrong issuer')
+        except Exception:
+            return {'statusCode': 401, 'headers': cors_headers(), 'body': json.dumps({'error': 'Нужно войти заново'}), 'isBase64Encoded': False}
+        notify_chat = bool(body.get('notify_chat'))
+        notify_turn = bool(body.get('notify_turn'))
+        conn = get_db_connection()
+        try:
+            with conn.cursor() as cur:
+                cur.execute(
+                    f"UPDATE {DB_SCHEMA}.game_users SET notify_chat = %s, notify_turn = %s WHERE id = %s",
+                    (notify_chat, notify_turn, payload['game_user_id'])
+                )
+                conn.commit()
+                return {'statusCode': 200, 'headers': cors_headers(), 'body': json.dumps({'success': True, 'notify_chat': notify_chat, 'notify_turn': notify_turn}), 'isBase64Encoded': False}
         finally:
             conn.close()
 
@@ -225,7 +247,7 @@ def handler(event: Dict[str, Any], context: Any) -> Dict[str, Any]:
             try:
                 with conn.cursor() as cur:
                     cur.execute(
-                        f"""SELECT id, nickname, avatar_emoji, avatar_url, chips_balance, games_played, games_won
+                        f"""SELECT id, nickname, avatar_emoji, avatar_url, notify_chat, notify_turn, chips_balance, games_played, games_won
                            FROM {DB_SCHEMA}.game_users WHERE id = %s""",
                         (payload['game_user_id'],)
                     )

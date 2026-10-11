@@ -38,6 +38,15 @@ def notify_next_turn(room_id: int, next_turn_user_id: Optional[int], game_type: 
     if not next_turn_user_id:
         return
     try:
+        conn = get_db_connection()
+        try:
+            with conn.cursor() as cur:
+                cur.execute(f"SELECT notify_turn FROM {DB_SCHEMA}.game_users WHERE id = %s", (next_turn_user_id,))
+                row = cur.fetchone()
+        finally:
+            conn.close()
+        if row and not row['notify_turn']:
+            return
         requests.post(
             PUSH_SEND_URL,
             json={

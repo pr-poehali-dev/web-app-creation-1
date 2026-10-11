@@ -208,7 +208,8 @@ def handler(event: Dict[str, Any], context: Any) -> Dict[str, Any]:
                     cur.execute(
                         f"""SELECT p.user_id, r.game_type FROM {DB_SCHEMA}.game_room_players p
                            JOIN {DB_SCHEMA}.game_rooms r ON r.id = p.room_id
-                           WHERE p.room_id = %s AND p.user_id <> %s""",
+                           JOIN {DB_SCHEMA}.game_users u ON u.id = p.user_id
+                           WHERE p.room_id = %s AND p.user_id <> %s AND u.notify_chat = TRUE""",
                         (room_id, user['id'])
                     )
                     rows = cur.fetchall()
