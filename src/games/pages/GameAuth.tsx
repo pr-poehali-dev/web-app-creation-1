@@ -75,7 +75,7 @@ export default function GameAuth() {
               <Icon name="Spade" size={32} className="text-slate-950" />
             </div>
             <h1 className="text-2xl font-bold text-slate-100 tracking-wide">ИГРОВОЙ КЛУБ</h1>
-            <p className="text-slate-400 text-sm mt-1">Шахматы · Шашки · Покер · Дурак</p>
+            <p className="text-slate-400 text-sm mt-1">Шахматы · Шашки · Покер · Игра в дурака</p>
           </div>
 
           <div className="flex gap-2 mb-6 bg-slate-800/60 rounded-lg p-1">

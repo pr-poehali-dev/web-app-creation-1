@@ -158,7 +158,7 @@ export default function AdminGames({ isAuthenticated, onLogout }: Props) {
                   <Button key={v} size="sm" variant={statusFilter === v ? 'default' : 'outline'} onClick={() => setStatusFilter(v)}>{l}</Button>
                 ))}
                 <span className="w-px h-6 bg-border mx-1" />
-                {[['', 'Все игры'], ['chess', 'Шахматы'], ['checkers', 'Шашки'], ['poker', 'Покер'], ['durak', 'Дурак']].map(([v, l]) => (
+                {[['', 'Все игры'], ['chess', 'Шахматы'], ['checkers', 'Шашки'], ['poker', 'Покер'], ['durak', 'Игра в дурака']].map(([v, l]) => (
                   <Button key={v} size="sm" variant={gameFilter === v ? 'default' : 'outline'} onClick={() => setGameFilter(v)}>{l}</Button>
                 ))}
                 <Button size="sm" variant="ghost" onClick={loadMonitor}><Icon name="RefreshCw" size={14} /></Button>

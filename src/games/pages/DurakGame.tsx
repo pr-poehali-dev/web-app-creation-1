@@ -218,7 +218,7 @@ export default function DurakGame() {
         opponentUserId: turnPlayer.user_id,
         roomId: numericRoomId,
         senderNickname: user.nickname,
-        gameTitle: 'Дурак',
+        gameTitle: 'Игра в дурака',
       });
       toast(
         result.success
@@ -290,7 +290,7 @@ export default function DurakGame() {
             <div className="flex items-center justify-between mb-4 bg-slate-900/60 border border-slate-800 rounded-xl p-4 flex-wrap gap-2">
               <div className="flex items-center gap-3 flex-wrap">
                 <Icon name="Layers" size={20} className="text-amber-400" />
-                <span className="font-semibold text-slate-100">Переводной дурак</span>
+                <span className="font-semibold text-slate-100">Игра в дурака</span>
                 {hasGame && (
                   <span className="text-sm text-slate-400 flex items-center gap-1.5">
                     Козырь <SuitSymbol suit={state!.trump} />

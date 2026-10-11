@@ -23,7 +23,7 @@ import {
 const GAME_INFO: Record<GameType, { title: string; icon: string; description: string; color: string; available: boolean }> = {
   chess: { title: 'Шахматы', icon: 'Crown', description: 'Классическая игра для двоих', color: 'from-blue-500 to-indigo-600', available: true },
   checkers: { title: 'Шашки', icon: 'Circle', description: 'Классическая игра для двоих', color: 'from-emerald-500 to-teal-600', available: true },
-  durak: { title: 'Дурак', icon: 'Layers', description: 'Переводной, от 2 до 6 игроков', color: 'from-amber-500 to-orange-600', available: true },
+  durak: { title: 'Игра в дурака', icon: 'Layers', description: 'Переводной, от 2 до 6 игроков', color: 'from-amber-500 to-orange-600', available: true },
   poker: { title: 'Покер', icon: 'Spade', description: 'Техасский холдем до 8 игроков', color: 'from-red-500 to-rose-600', available: true },
 };
 
