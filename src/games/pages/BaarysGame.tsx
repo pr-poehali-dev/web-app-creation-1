@@ -243,10 +243,31 @@ export default function BaarysGame() {
   }).filter(Boolean);
 
   const trick = state?.last_trick;
-  const ScoreBox = ({ uid, name }: { uid: string; name: string }) => (
-    <div className="rounded-xl border border-slate-700/60 bg-slate-900/50 px-3 py-1.5 text-center min-w-[96px]">
-      <p className="text-[11px] text-slate-400 truncate max-w-[110px]">{name}</p>
-      <p className="text-lg font-bold text-amber-300 leading-tight">{state?.scores?.[uid] ?? 0}<span className="text-xs text-slate-500"> / {TARGET}</span></p>
+  const rows = hasGame
+    ? [
+        ...(state!.history || []).map((h) => ({ label: `Партия ${h.game_no}`, points: h.points, current: false })),
+        ...(state!.phase === 'playing' ? [{ label: `Партия ${state!.game_no} (идёт)`, points: state!.game_points || {}, current: true }] : []),
+      ]
+    : [];
+  const ScoreTable = () => (
+    <div className="rounded-xl border border-slate-700/60 bg-slate-900/60 px-3 py-2 text-xs min-w-[240px]">
+      <div className="grid grid-cols-[1fr_64px_64px] gap-x-2 text-slate-400 mb-1">
+        <span />
+        <span className="text-center truncate">{opponent?.nickname}</span>
+        <span className="text-center">Вы</span>
+      </div>
+      {rows.map((r) => (
+        <div key={r.label} className={`grid grid-cols-[1fr_64px_64px] gap-x-2 py-0.5 ${r.current ? 'text-slate-100' : 'text-slate-300'}`}>
+          <span>{r.label}</span>
+          <span className="text-center">{r.points[oppUid] ?? 0}</span>
+          <span className="text-center">{r.points[myUid] ?? 0}</span>
+        </div>
+      ))}
+      <div className="grid grid-cols-[1fr_64px_64px] gap-x-2 border-t border-slate-700 mt-1 pt-1 font-bold text-amber-300">
+        <span>Всего из {TARGET}</span>
+        <span className="text-center">{state!.scores?.[oppUid] ?? 0}</span>
+        <span className="text-center">{state!.scores?.[myUid] ?? 0}</span>
+      </div>
     </div>
   );
 
@@ -363,10 +384,7 @@ export default function BaarysGame() {
                     )}
                   </div>
                   {hasGame && (
-                    <>
-                      <ScoreBox uid={oppUid} name={opponent.nickname} />
-                      <ScoreBox uid={myUid} name="Вы" />
-                    </>
+                    <ScoreTable />
                   )}
                 </div>
               )}
@@ -437,6 +455,7 @@ export default function BaarysGame() {
                     {state!.multiplier === 2 ? ' вдвойне' : ''}
                   </p>
                   {state!.reason && <p className="text-sm text-emerald-300">{REASON[state!.reason] || ''}</p>}
+                  <div className="mt-3 flex justify-center"><ScoreTable /></div>
                   {isOwner && (
                     <Button
                       onClick={() => act('start')}

@@ -40,6 +40,8 @@ export interface BaarysState {
   multiplier: number;
   reason: string | null;
   last_trick: BaarysTrick | null;
+  game_points: Record<string, number>;
+  history: { game_no: number; points: Record<string, number> }[];
   log: BaarysLogEvent[];
   turn_left: number | null;
 }

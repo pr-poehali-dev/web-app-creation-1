@@ -66,6 +66,15 @@ def other(s, uid: str) -> str:
     return s['order'][1] if s['order'][0] == uid else s['order'][0]
 
 
+def _add(s, uid: str, n: int):
+    s['scores'][uid] += n
+    s['game_points'][uid] = s['game_points'].get(uid, 0) + n
+
+
+def _close_game(s):
+    s.setdefault('history', []).append({'game_no': s['game_no'], 'points': dict(s['game_points'])})
+
+
 def _deal(s):
     deck = [r + sd for r in RANKS for sd in SUITS]
     random.shuffle(deck)
@@ -78,6 +87,7 @@ def _deal(s):
     s['trump_card'] = deck[0]
     s['trump'] = suit(deck[0])
     s['leader'] = other(s, s['dealer'])
+    s['game_points'] = {u: 0 for u in s['order']}
     s['lead'] = []
     s['demand'] = False
     s['last_trick'] = None
@@ -88,7 +98,7 @@ def new_match(order: List[str]) -> Dict[str, Any]:
     s = {
         'phase': 'playing', 'order': list(order), 'scores': {u: 0 for u in order},
         'game_no': 1, 'dealer': random.choice(order), 'winner': None,
-        'multiplier': 1, 'reason': None, 'log': [],
+        'multiplier': 1, 'reason': None, 'log': [], 'history': [],
     }
     _deal(s)
     return s
@@ -194,7 +204,7 @@ def _respond(s, uid: str, body) -> Optional[str]:
     winner = uid if beaten else leader
     if not beaten and s['game_no'] == 1 and s['deck']:
         bonus = marriage_bonus(lead, trump)
-    s['scores'][winner] += pts + bonus
+    _add(s, winner, pts + bonus)
     s['last_trick'] = {
         'leader': leader, 'winner': winner, 'lead': list(lead), 'resp': resp,
         'beaten': beaten, 'points': pts, 'bonus': bonus,
@@ -208,12 +218,14 @@ def _respond(s, uid: str, body) -> Optional[str]:
     s['leader'] = winner
 
     if s['scores'][winner] >= TARGET:
+        _close_game(s)
         _win(s, winner, 2 if s['game_no'] == 1 else 1, 'points')
         return None
 
     if not s['deck'] and any(not s['hands'][u] for u in s['order']):
-        s['scores'][winner] += LAST_TRICK_BONUS
+        _add(s, winner, LAST_TRICK_BONUS)
         _log(s, t='last', by=winner, n=LAST_TRICK_BONUS)
+        _close_game(s)
         if s['scores'][winner] >= TARGET:
             _win(s, winner, 2 if s['game_no'] == 1 else 1, 'points')
             return None
