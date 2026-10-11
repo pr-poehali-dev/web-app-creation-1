@@ -173,9 +173,9 @@ STATIC_OG = {
 }
 
 _INVITE_TEXT = {
-    'chess': ('Шахматы', 'Тебя приглашают на партию в шахматы. Нажми, чтобы присоединиться!'),
-    'checkers': ('Шашки', 'Тебя приглашают на партию в шашки. Нажми, чтобы присоединиться!'),
-    'poker': ('Покер', 'Тебя приглашают за стол в покер. Нажми, чтобы присоединиться!'),
+    'chess': ('Шахматы', 'в шахматы', 'на партию в шахматы'),
+    'checkers': ('Шашки', 'в шашки', 'на партию в шашки'),
+    'poker': ('Покер', 'в покер', 'за стол в покер'),
 }
 
 def extract_game_invite(url: str) -> str | None:
@@ -186,16 +186,19 @@ def extract_game_invite(url: str) -> str | None:
 def get_game_invite_og(code: str, url: str, conn) -> dict:
     cur = conn.cursor()
     safe = code.replace("'", "''")
-    cur.execute(f"SELECT game_type FROM {SCHEMA}.game_rooms WHERE invite_code = '{safe}' LIMIT 1")
+    cur.execute(f"""SELECT r.game_type, u.nickname FROM {SCHEMA}.game_rooms r
+                   JOIN {SCHEMA}.game_users u ON u.id = r.created_by
+                   WHERE r.invite_code = '{safe}' LIMIT 1""")
     row = cur.fetchone()
     cur.close()
     game_type = row[0] if row else None
+    nickname = row[1] if row else ''
     if game_type not in _INVITE_TEXT:
         return {**_GAMES_OG, 'url': url}
-    name, desc = _INVITE_TEXT[game_type]
+    name, acc, invite_to = _INVITE_TEXT[game_type]
     return {
-        'title': f'Приглашение в игру: {name}',
-        'description': desc,
+        'title': f'{nickname} приглашает тебя {acc}' if nickname else f'Приглашение в игру: {name}',
+        'description': f'Тебя приглашают {invite_to}. Нажми, чтобы присоединиться!',
         'image': f'{SITE_URL}/games-og-{game_type}.jpg',
         'url': url,
         'site_name': 'Игровой клуб ЕРТТП',
