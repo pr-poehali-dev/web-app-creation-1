@@ -15,6 +15,9 @@ import GameChatPanel from '../components/GameChatPanel';
 import RoomNotifyHint from '../components/RoomNotifyHint';
 import PlayerAvatar from '../components/PlayerAvatar';
 import { notifyOpponent } from '../utils/gameNotify';
+import GameHeaderTools, { YELLOW_BUTTON } from '../components/GameHeaderTools';
+import ChessRulesDialog from '../components/ChessRulesDialog';
+import { useBoardSounds } from '../hooks/useBoardSounds';
 
 const PIECE_SYMBOLS: Record<string, string> = {
   p: '♟\uFE0E', n: '♞', b: '♝', r: '♜', q: '♛', k: '♚',
@@ -78,6 +81,16 @@ export default function ChessGame() {
       clearInterval(chatInterval);
     };
   }, [user, loadRoom, loadChat, navigate]);
+
+  useBoardSounds(room, user?.id, (state) => {
+    const c = new Chess();
+    try {
+      c.load((state.fen as string) || new Chess().fen());
+    } catch {
+      return { pieces: 0, check: false };
+    }
+    return { pieces: c.board().flat().filter(Boolean).length, check: c.isCheck() };
+  });
 
   if (!user) return null;
 
@@ -169,7 +182,7 @@ export default function ChessGame() {
       ) : (
         <div className="grid grid-cols-1 lg:grid-cols-[1fr_320px] gap-6">
           <div>
-            <div className="flex items-center justify-between mb-4 bg-slate-900/60 border border-slate-800 rounded-xl p-4">
+            <div className="flex items-center justify-between gap-2 flex-wrap mb-4 bg-slate-900/60 border border-slate-800 rounded-xl p-4">
               <div className="flex items-center gap-2">
                 <PlayerAvatar emoji={opponent?.avatar_emoji} url={opponent?.avatar_url} size={36} />
                 <div>
@@ -177,6 +190,7 @@ export default function ChessGame() {
                   <p className="text-xs text-slate-500">{opponent?.side === 'white' ? 'Белые' : 'Чёрные'}</p>
                 </div>
               </div>
+              <GameHeaderTools rules={<ChessRulesDialog />} />
               {room.status === 'playing' && (
                 <div className="flex items-center gap-2 flex-wrap justify-end">
                   <div className={`px-3 py-1.5 rounded-full text-sm font-semibold ${isMyTurn ? 'bg-amber-500 text-slate-950' : 'bg-slate-800 text-slate-400'}`}>
@@ -188,7 +202,7 @@ export default function ChessGame() {
                       variant="outline"
                       onClick={handleNotifyOpponent}
                       disabled={isNotifying}
-                      className="border-amber-500/50 bg-amber-500/10 text-amber-400 hover:bg-amber-500/20 hover:text-amber-300"
+                      className={YELLOW_BUTTON}
                       title="Напомнить сопернику о ходе push-уведомлением"
                     >
                       <Icon name={isNotifying ? 'Loader2' : 'BellRing'} size={14} className={isNotifying ? 'mr-1.5 animate-spin' : 'mr-1.5'} />

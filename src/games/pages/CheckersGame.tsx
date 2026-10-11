@@ -14,6 +14,9 @@ import GameChatPanel from '../components/GameChatPanel';
 import RoomNotifyHint from '../components/RoomNotifyHint';
 import PlayerAvatar from '../components/PlayerAvatar';
 import { notifyOpponent } from '../utils/gameNotify';
+import GameHeaderTools, { YELLOW_BUTTON } from '../components/GameHeaderTools';
+import CheckersRulesDialog from '../components/CheckersRulesDialog';
+import { useBoardSounds } from '../hooks/useBoardSounds';
 import {
   CBoard,
   Side,
@@ -80,6 +83,11 @@ export default function CheckersGame() {
       clearInterval(chatInterval);
     };
   }, [user, loadRoom, loadChat, navigate]);
+
+  useBoardSounds(room, user?.id, (state) => {
+    const b = (state.board as CBoard | undefined) || [];
+    return { pieces: b.flat().filter(Boolean).length, check: false };
+  });
 
   if (!user) return null;
 
@@ -185,7 +193,7 @@ export default function CheckersGame() {
       ) : (
         <div className="grid grid-cols-1 lg:grid-cols-[1fr_320px] gap-6">
           <div>
-            <div className="flex items-center justify-between mb-4 bg-slate-900/60 border border-slate-800 rounded-xl p-4">
+            <div className="flex items-center justify-between gap-2 flex-wrap mb-4 bg-slate-900/60 border border-slate-800 rounded-xl p-4">
               <div className="flex items-center gap-2">
                 <PlayerAvatar emoji={opponent?.avatar_emoji} url={opponent?.avatar_url} size={36} />
                 <div>
@@ -193,6 +201,7 @@ export default function CheckersGame() {
                   <p className="text-xs text-slate-500">{opponent?.side === 'white' ? 'Белые' : 'Чёрные'}</p>
                 </div>
               </div>
+              <GameHeaderTools rules={<CheckersRulesDialog />} />
               {room.status === 'playing' && (
                 <div className="flex items-center gap-2">
                   <div className={`px-3 py-1.5 rounded-full text-sm font-semibold ${isMyTurn ? 'bg-amber-500 text-slate-950' : 'bg-slate-800 text-slate-400'}`}>
@@ -204,7 +213,7 @@ export default function CheckersGame() {
                       variant="outline"
                       onClick={handleNotifyOpponent}
                       disabled={isNotifying}
-                      className="border-slate-700 text-slate-300 hover:bg-slate-800"
+                      className={YELLOW_BUTTON}
                       title="Напомнить сопернику о ходе push-уведомлением"
                     >
                       <Icon name={isNotifying ? 'Loader2' : 'BellRing'} size={14} className={isNotifying ? 'mr-1.5 animate-spin' : 'mr-1.5'} />
