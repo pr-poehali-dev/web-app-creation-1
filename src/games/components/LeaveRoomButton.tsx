@@ -10,12 +10,13 @@ interface LeaveRoomButtonProps {
   roomId: number;
   /** Показывать без подтверждения — обычно используется после завершения партии */
   requireConfirm?: boolean;
+  playing?: boolean;
 }
 
 // Кнопка выхода из комнаты — доступна всем участникам после завершения игры
 // (пока партия идёт, backend отклонит запрос, поэтому кнопку рендерим только
 // в состоянии room.status === 'finished' на стороне вызывающего компонента).
-export default function LeaveRoomButton({ roomId, requireConfirm = true }: LeaveRoomButtonProps) {
+export default function LeaveRoomButton({ roomId, requireConfirm = true, playing = false }: LeaveRoomButtonProps) {
   const navigate = useNavigate();
   const { toast } = useToast();
   const [confirmOpen, setConfirmOpen] = useState(false);
@@ -43,12 +44,12 @@ export default function LeaveRoomButton({ roomId, requireConfirm = true }: Leave
         className="bg-amber-400 hover:bg-amber-500 border-amber-500 text-slate-950 font-semibold hover:text-slate-950"
       >
         <Icon name="LogOut" size={16} className="mr-1.5" />
-        Выйти из комнаты
+        {playing ? 'Покинуть игру' : 'Выйти из комнаты'}
       </Button>
       <ConfirmDialog
         open={confirmOpen}
-        title="Покинуть комнату?"
-        description="Вы выйдете из этой игровой комнаты."
+        title={playing ? 'Покинуть игру?' : 'Покинуть комнату?'}
+        description={playing ? 'Если досрочно покинуть игру, победа засчитывается сопернику.' : 'Вы выйдете из этой игровой комнаты.'}
         confirmLabel={isLeaving ? 'Выход...' : 'Выйти'}
         cancelLabel="Отмена"
         confirmClassName="bg-slate-700 hover:bg-slate-600 text-white"

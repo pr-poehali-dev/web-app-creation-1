@@ -273,6 +273,7 @@ export default function PokerGame() {
                   )}
                 </div>
               )}
+              {room.status === 'playing' && <LeaveRoomButton roomId={numericRoomId} playing />}
               {room.status === 'finished' && (
                 <div className="flex items-center gap-2">
                   <RematchButton roomId={numericRoomId} />

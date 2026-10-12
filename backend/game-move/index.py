@@ -1005,7 +1005,6 @@ def handle_durak_action(cur, conn, room, user, body):
             return error_response(400, 'Для игры нужно от 2 до 6 игроков')
         state = durak.new_game(order)
         state['skips'] = {}
-        state['deadline'] = time.time() + durak.TURN_SECONDS
         turn = durak.current_turn(state)
         cur.execute(
             "UPDATE " + DB_SCHEMA + ".game_rooms SET state = %s, status = 'playing', winner_id = NULL, "
@@ -1026,6 +1025,8 @@ def handle_durak_action(cur, conn, room, user, body):
     now = time.time()
     skips = state.setdefault('skips', {})
     if action == 'timeout':
+        return error_response(400, 'Ограничения по времени хода нет')
+    if False:
         actor = durak.current_turn(state)
         if actor is None:
             return error_response(400, 'Сейчас нет активного хода')
@@ -1048,8 +1049,6 @@ def handle_durak_action(cur, conn, room, user, body):
         skips[my_uid] = 0
 
     finished = state['phase'] == 'finished'
-    if not finished:
-        state['deadline'] = now + durak.TURN_SECONDS
     turn = durak.current_turn(state)
     turn_id = int(turn) if turn else None
     winner_id = int(state['out'][0]) if finished and state['out'] else None
@@ -1114,7 +1113,6 @@ def handle_baarys_action(cur, conn, room, user, body):
             return error_response(400, 'Для игры нужны два игрока')
         state = baarys.new_match(order)
         state['skips'] = {}
-        state['deadline'] = time.time() + baarys.TURN_SECONDS
         turn = baarys.current_turn(state)
         cur.execute(
             "UPDATE " + DB_SCHEMA + ".game_rooms SET state = %s, status = 'playing', winner_id = NULL, "
@@ -1135,6 +1133,8 @@ def handle_baarys_action(cur, conn, room, user, body):
     now = time.time()
     skips = state.setdefault('skips', {})
     if action == 'timeout':
+        return error_response(400, 'Ограничения по времени хода нет')
+    if False:
         actor = baarys.current_turn(state)
         if actor is None:
             return error_response(400, 'Сейчас нет активного хода')
@@ -1157,8 +1157,6 @@ def handle_baarys_action(cur, conn, room, user, body):
         skips[my_uid] = 0
 
     finished = state['phase'] == 'finished'
-    if not finished:
-        state['deadline'] = now + baarys.TURN_SECONDS
     turn = baarys.current_turn(state)
     turn_id = int(turn) if turn else None
     winner_id = int(state['winner']) if finished and state.get('winner') else None
