@@ -407,6 +407,13 @@ def handler(event: Dict[str, Any], context: Any) -> Dict[str, Any]:
                             f"UPDATE {DB_SCHEMA}.game_rooms SET rematch_room_id = %s WHERE id = %s",
                             (new_id, room_id)
                         )
+                        cur.execute(
+                            f"""INSERT INTO {DB_SCHEMA}.game_chat_messages (room_id, user_id, message, created_at, is_system, media_url, media_type)
+                               SELECT %s, user_id, message, created_at, is_system, media_url, media_type
+                               FROM (SELECT * FROM {DB_SCHEMA}.game_chat_messages WHERE room_id = %s ORDER BY created_at DESC, id DESC LIMIT 200) h
+                               ORDER BY created_at ASC, id ASC""",
+                            (new_id, room_id)
+                        )
                     conn.commit()
                     return {
                         'statusCode': 200,
