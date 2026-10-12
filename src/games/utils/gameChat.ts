@@ -44,6 +44,14 @@ export const sendChatMessage = async (roomId: number, message: string, media?: s
   }
 };
 
+export const deleteChatMessage = async (messageId: number): Promise<void> => {
+  const response = await fetch(`${GAME_CHAT_API}?message_id=${messageId}`, { method: 'DELETE', headers: authHeaders() });
+  if (!response.ok) {
+    const data = await response.json().catch(() => ({}));
+    throw new Error(data.error || 'Не удалось удалить сообщение');
+  }
+};
+
 export const fileToDataUrl = (file: Blob): Promise<string> =>
   new Promise((resolve, reject) => {
     const reader = new FileReader();

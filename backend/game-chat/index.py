@@ -73,7 +73,7 @@ def cors_headers() -> Dict[str, str]:
     return {
         'Content-Type': 'application/json',
         'Access-Control-Allow-Origin': '*',
-        'Access-Control-Allow-Methods': 'GET, POST, OPTIONS',
+        'Access-Control-Allow-Methods': 'GET, POST, DELETE, OPTIONS',
         'Access-Control-Allow-Headers': 'Content-Type, X-Game-Token',
         'Access-Control-Max-Age': '86400'
     }
@@ -246,6 +246,35 @@ def handler(event: Dict[str, Any], context: Any) -> Dict[str, Any]:
                     }),
                     'isBase64Encoded': False
                 }
+        finally:
+            conn.close()
+
+    if method == 'DELETE':
+        params = event.get('queryStringParameters') or {}
+        message_id = params.get('message_id')
+        if not message_id:
+            return error_response(400, 'message_id обязателен')
+        conn = get_db_connection()
+        try:
+            with conn.cursor() as cur:
+                cur.execute(
+                    f"SELECT id, room_id, user_id, is_system FROM {DB_SCHEMA}.game_chat_messages WHERE id = %s",
+                    (message_id,)
+                )
+                msg = cur.fetchone()
+                if not msg or msg['is_system']:
+                    return error_response(404, 'Сообщение не найдено')
+                if msg['user_id'] != user['id']:
+                    return error_response(403, 'Можно удалить только своё сообщение')
+                cur.execute(
+                    f"SELECT MAX(last_read_id) AS r FROM {DB_SCHEMA}.game_chat_reads WHERE room_id = %s AND user_id <> %s",
+                    (msg['room_id'], user['id'])
+                )
+                if msg['id'] <= (cur.fetchone()['r'] or 0):
+                    return error_response(409, 'Собеседник уже прочитал сообщение, удалить нельзя')
+                cur.execute(f"DELETE FROM {DB_SCHEMA}.game_chat_messages WHERE id = %s", (msg['id'],))
+                conn.commit()
+                return {'statusCode': 200, 'headers': cors_headers(), 'body': json.dumps({'success': True}), 'isBase64Encoded': False}
         finally:
             conn.close()
 

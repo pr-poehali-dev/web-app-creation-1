@@ -3,7 +3,7 @@ import Icon from '@/components/ui/icon';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { useToast } from '@/hooks/use-toast';
-import { ChatMessage, sendChatMessage, fileToDataUrl, imageToDataUrl } from '../utils/gameChat';
+import { ChatMessage, sendChatMessage, deleteChatMessage, fileToDataUrl, imageToDataUrl } from '../utils/gameChat';
 import PlayerAvatar from './PlayerAvatar';
 
 interface GameChatPanelProps {
@@ -50,6 +50,16 @@ export default function GameChatPanel({ roomId, userId, messages, onSent }: Game
       toast({ variant: 'destructive', title: 'Ошибка', description: e instanceof Error ? e.message : 'Не удалось отправить' });
     } finally {
       setSending(false);
+    }
+  };
+
+  const handleDelete = async (id: number) => {
+    try {
+      await deleteChatMessage(id);
+      onSent();
+    } catch (e) {
+      toast({ variant: 'destructive', title: 'Ошибка', description: e instanceof Error ? e.message : 'Не удалось удалить' });
+      onSent();
     }
   };
 
@@ -159,8 +169,15 @@ export default function GameChatPanel({ roomId, userId, messages, onSent }: Game
                     )}
                   </div>
                   {msg.user_id === userId && (
-                    <span className={`mt-0.5 flex items-center ${msg.is_read ? 'text-emerald-400' : 'text-slate-200'}`} title={msg.is_read ? 'Прочитано' : 'Доставлено'}>
-                      <Icon name={msg.is_read ? 'CheckCheck' : 'Check'} size={14} />
+                    <span className="mt-0.5 flex items-center gap-2">
+                      <span className={msg.is_read ? 'text-emerald-400' : 'text-slate-200'} title={msg.is_read ? 'Прочитано' : 'Доставлено'}>
+                        <Icon name={msg.is_read ? 'CheckCheck' : 'Check'} size={14} />
+                      </span>
+                      {!msg.is_read && (
+                        <button type="button" onClick={() => handleDelete(msg.id)} className="text-slate-500 hover:text-red-400" aria-label="Удалить сообщение" title="Удалить">
+                          <Icon name="Trash2" size={13} />
+                        </button>
+                      )}
                     </span>
                   )}
                 </div>
