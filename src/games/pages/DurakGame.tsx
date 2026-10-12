@@ -193,7 +193,18 @@ export default function DurakGame() {
   const handleHandCard = (card: string) => {
     if (!playing || iAmOut) return;
     if (iAmDefender) {
-      setSelected(selected === card ? null : card);
+      if (selected === card) {
+        setSelected(null);
+        return;
+      }
+      if (!state!.taking && !canTransferCard(state!, card)) {
+        const targets = state!.table.map((p, i) => ({ p, i })).filter(({ p }) => !p.d && canBeat(p.a, card, state!.trump));
+        if (targets.length === 1) {
+          act('defend', { card, target: targets[0].i });
+          return;
+        }
+      }
+      setSelected(card);
       return;
     }
     if (canAddCard(state!, myUid, card)) act('attack', { card });
@@ -427,7 +438,7 @@ export default function DurakGame() {
                     {state!.table.map((pair, i) => {
                       const targetable = iAmDefender && !!selected && !pair.d && !state!.taking && canBeat(pair.a, selected, state!.trump);
                       return (
-                        <div key={pair.a} className="relative h-[7.5rem] w-[4.75rem] sm:h-[8.5rem] sm:w-[5.5rem]">
+                        <div key={pair.a} className="relative h-[8.5rem] w-[5.5rem] sm:h-[9.5rem] sm:w-[6.25rem]">
                           <DurakCard
                             card={pair.a}
                             trump={pair.a[1] === state!.trump}
@@ -435,7 +446,7 @@ export default function DurakGame() {
                             onClick={!pair.d && iAmDefender && selected ? () => handleTableTarget(i) : undefined}
                           />
                           {pair.d && (
-                            <DurakCard card={pair.d} trump={pair.d[1] === state!.trump} className="absolute left-3 top-4 sm:left-4 sm:top-5 rotate-6" />
+                            <DurakCard card={pair.d} trump={pair.d[1] === state!.trump} className="absolute left-5 top-8 sm:left-6 sm:top-9 z-10 rotate-6 shadow-xl shadow-black/50" />
                           )}
                         </div>
                       );
