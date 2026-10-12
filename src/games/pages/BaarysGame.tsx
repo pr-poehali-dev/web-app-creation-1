@@ -437,11 +437,24 @@ export default function BaarysGame() {
                           Прошлый ход: {nick(trick.winner)} забрал +{trick.points + trick.bonus}
                           {trick.bonus ? ` (бонус ${trick.bonus})` : ''}
                         </p>
-                        <div className="flex flex-wrap justify-center gap-1 opacity-80">
-                          {[...trick.lead, ...trick.resp].map((c) => (
-                            <DurakCard key={c} card={c} size="xs" trump={c[1] === state!.trump} />
-                          ))}
-                        </div>
+                        {trick.beaten ? (
+                          <div className="flex flex-wrap justify-center gap-x-4 gap-y-3">
+                            {trick.lead.map((c, i) => (
+                              <div key={c} className="relative h-[5.5rem] w-[3.75rem]">
+                                <DurakCard card={c} size="sm" trump={c[1] === state!.trump} />
+                                {trick.resp[i] && (
+                                  <DurakCard card={trick.resp[i]} size="sm" trump={trick.resp[i][1] === state!.trump} className="absolute left-3 top-5 z-10 rotate-6 shadow-xl shadow-black/50" />
+                                )}
+                              </div>
+                            ))}
+                          </div>
+                        ) : (
+                          <div className="flex flex-wrap justify-center gap-1 opacity-80">
+                            {[...trick.lead, ...trick.resp].map((c) => (
+                              <DurakCard key={c} card={c} size="xs" trump={c[1] === state!.trump} />
+                            ))}
+                          </div>
+                        )}
                       </>
                     ) : (
                       playing && <p className="text-sm text-emerald-100/50">Стол пуст</p>
