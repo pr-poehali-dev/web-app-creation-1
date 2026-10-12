@@ -1,4 +1,5 @@
 import { useState, useEffect, useCallback } from 'react';
+import { setVisibleInterval } from '../utils/visibleInterval';
 import { useNavigate } from 'react-router-dom';
 import Icon from '@/components/ui/icon';
 import { Button } from '@/components/ui/button';
@@ -76,8 +77,8 @@ export default function GameLobby() {
     }
     loadRooms();
     loadActiveRooms();
-    const interval = setInterval(loadRooms, 4000);
-    const activeInterval = setInterval(loadActiveRooms, 5000);
+    const interval = setVisibleInterval(loadRooms, 4000);
+    const activeInterval = setVisibleInterval(loadActiveRooms, 5000);
     return () => {
       clearInterval(interval);
       clearInterval(activeInterval);

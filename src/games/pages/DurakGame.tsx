@@ -1,4 +1,5 @@
 import { useState, useEffect, useCallback, useRef } from 'react';
+import { setVisibleInterval } from '../utils/visibleInterval';
 import { useParams, useNavigate } from 'react-router-dom';
 import Icon from '@/components/ui/icon';
 import { Button } from '@/components/ui/button';
@@ -73,8 +74,8 @@ export default function DurakGame() {
     }
     loadRoom();
     loadChat();
-    const roomInterval = setInterval(loadRoom, 2000);
-    const chatInterval = setInterval(loadChat, 3000);
+    const roomInterval = setVisibleInterval(loadRoom, 2000);
+    const chatInterval = setVisibleInterval(loadChat, 3000);
     return () => {
       clearInterval(roomInterval);
       clearInterval(chatInterval);

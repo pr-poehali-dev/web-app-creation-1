@@ -6,6 +6,7 @@ import BannerStrip from "@/components/BannerStrip";
 import LocationToast from "@/components/LocationToast";
 import { Toaster } from "@/components/ui/toaster";
 import { Toaster as Sonner } from "@/components/ui/sonner";
+import { useLocation } from "react-router-dom";
 import TopLoadingBar from "@/components/TopLoadingBar";
 
 interface AppBannersProps {
@@ -13,15 +14,16 @@ interface AppBannersProps {
 }
 
 export default function AppBanners({ isAuthenticated }: AppBannersProps) {
+  const isGames = useLocation().pathname.startsWith("/games");
   return (
     <>
       <TopLoadingBar />
       <Toaster />
       <Sonner />
       <TechnicalIssuesBanner />
-      <BannerStrip />
-      {isAuthenticated && <NotificationPermissionBanner />}
-      {isAuthenticated && (
+      {!isGames && <BannerStrip />}
+      {!isGames && isAuthenticated && <NotificationPermissionBanner />}
+      {!isGames && isAuthenticated && (
         <OnlineInviteBanner
           onOpenOrderChat={(orderId) => {
             const dispatch = () => window.dispatchEvent(
@@ -35,8 +37,8 @@ export default function AppBanners({ isAuthenticated }: AppBannersProps) {
           }}
         />
       )}
-      <LocationToast />
-      <InstallPrompt />
+      {!isGames && <LocationToast />}
+      {!isGames && <InstallPrompt />}
     </>
   );
 }
