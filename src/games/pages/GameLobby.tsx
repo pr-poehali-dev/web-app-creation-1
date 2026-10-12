@@ -108,7 +108,7 @@ export default function GameLobby() {
 
     if (navigator.share) {
       try {
-        await navigator.share({ title: 'Присоединяйся к игре', text: 'Приглашаю тебя в партию!', url: inviteUrl });
+        await navigator.share({ url: inviteUrl });
         return;
       } catch {
         return;

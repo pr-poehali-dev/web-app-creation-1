@@ -26,7 +26,7 @@ export default function InviteShareBox({ room, user }: InviteShareBoxProps) {
     const shareUrl = await makeShareUrl(inviteUrl, user.nickname, room.game_type);
     if (navigator.share) {
       try {
-        await navigator.share({ title: 'Присоединяйся к игре', text: 'Приглашаю тебя в партию!', url: shareUrl });
+        await navigator.share({ url: shareUrl });
         return;
       } catch {
         // пользователь закрыл диалог — просто fallback на копирование ниже не нужен
