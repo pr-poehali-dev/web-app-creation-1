@@ -1,5 +1,3 @@
-import func2url from '../../../backend/func2url.json';
-
 const CANONICAL_ORIGIN = 'https://erttp.ru';
 
 export const getGamesOrigin = (): string => {
@@ -11,21 +9,13 @@ export const getGamesOrigin = (): string => {
 export const buildInviteUrl = (inviteCode: string): string => `${getGamesOrigin()}/games/invite/${inviteCode}`;
 export const buildClubUrl = (): string => `${getGamesOrigin()}/games`;
 
-
-export const makeShareUrl = async (rawUrl: string, senderNickname?: string): Promise<string> => {
-  const url = senderNickname ? `${rawUrl}?from=${encodeURIComponent(senderNickname)}` : rawUrl;
-  const base = (func2url as Record<string, string>)['short-url'];
-  if (!base || !url.startsWith(CANONICAL_ORIGIN)) return url;
-  try {
-    const response = await fetch(base, {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ url }),
-    });
-    if (!response.ok) return url;
-    const data = await response.json();
-    return data.code ? `${base}?code=${data.code}` : url;
-  } catch {
-    return url;
+export const makeShareUrl = async (rawUrl: string, senderNickname?: string, gameType?: string): Promise<string> => {
+  const origin = getGamesOrigin();
+  const invite = rawUrl.match(/\/games\/invite\/([A-Za-z0-9]+)/);
+  if (invite && gameType) {
+    const from = senderNickname ? `&f=${encodeURIComponent(senderNickname)}` : '';
+    return `${origin}/i/${gameType}.html?c=${invite[1]}${from}`;
   }
+  if (rawUrl === buildClubUrl()) return `${origin}/g.html`;
+  return rawUrl;
 };

@@ -104,7 +104,7 @@ export default function GameLobby() {
 
   const handleShareRoom = async (room: GameRoomListItem) => {
     if (!room.invite_code) return;
-    const inviteUrl = await makeShareUrl(buildInviteUrl(room.invite_code), user?.nickname);
+    const inviteUrl = await makeShareUrl(buildInviteUrl(room.invite_code), user?.nickname, room.game_type);
 
     if (navigator.share) {
       try {
