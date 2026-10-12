@@ -229,6 +229,7 @@ export default function CheckersGame() {
                   Ожидание игрока
                 </div>
               )}
+              {room.status === 'playing' && opponent && <LeaveRoomButton roomId={numericRoomId} playing />}
               {room.status === 'finished' && (
                 <div className="flex items-center gap-2">
                   <div className="px-3 py-1.5 rounded-full text-sm font-semibold bg-emerald-600 text-white">

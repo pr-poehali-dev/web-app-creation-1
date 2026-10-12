@@ -26,6 +26,7 @@ const GAME_INFO: Record<GameType, { title: string; icon: string; description: st
   checkers: { title: 'Шашки', icon: 'Circle', description: 'Классическая игра для двоих', color: 'from-emerald-500 to-teal-600', available: true },
   durak: { title: 'Игра в дурака', icon: 'Layers', description: 'Переводной, от 2 до 6 игроков', color: 'from-amber-500 to-orange-600', available: true },
   baarys: { title: 'Баарыс', icon: 'Swords', description: 'Карточная игра для двоих до 101 очка', color: 'from-purple-500 to-fuchsia-600', available: true },
+  nardy: { title: 'Длинные нарды', icon: 'Dices', description: 'Классическая игра для двоих', color: 'from-orange-500 to-red-600', available: true },
   poker: { title: 'Покер', icon: 'Spade', description: 'Техасский холдем до 8 игроков', color: 'from-red-500 to-rose-600', available: true },
 };
 

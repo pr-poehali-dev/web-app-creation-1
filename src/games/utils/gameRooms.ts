@@ -4,7 +4,7 @@ import { getGameToken } from './gameAuth';
 
 const GAME_ROOMS_API = (func2url as Record<string, string>)['game-rooms'] || '';
 
-export type GameType = 'chess' | 'checkers' | 'poker' | 'durak' | 'baarys';
+export type GameType = 'chess' | 'checkers' | 'poker' | 'durak' | 'baarys' | 'nardy';
 
 export interface GameRoomListItem {
   id: number;

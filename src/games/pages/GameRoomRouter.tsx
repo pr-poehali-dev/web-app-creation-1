@@ -10,6 +10,7 @@ const CheckersGame = lazy(() => import('./CheckersGame'));
 const PokerGame = lazy(() => import('./PokerGame'));
 const DurakGame = lazy(() => import('./DurakGame'));
 const BaarysGame = lazy(() => import('./BaarysGame'));
+const NardyGame = lazy(() => import('./NardyGame'));
 
 // Комната может быть шахматной, шашечной, покерной или картой «Дурак» — сначала узнаём тип игры,
 // затем рендерим нужную доску. Дочерние компоненты сами читают :roomId через useParams.
@@ -67,6 +68,7 @@ export default function GameRoomRouter() {
     : gameType === 'poker' ? PokerGame
     : gameType === 'durak' ? DurakGame
     : gameType === 'baarys' ? BaarysGame
+    : gameType === 'nardy' ? NardyGame
     : ChessGame;
   return (
     <Suspense

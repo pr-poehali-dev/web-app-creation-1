@@ -15,6 +15,7 @@ const SHORT_PAGES: Record<string, string> = {
   poker: 'p',
   durak: 'd',
   baarys: 'b',
+  nardy: 'n',
 };
 
 export const makeShareUrl = async (rawUrl: string, _senderNickname?: string, gameType?: string): Promise<string> => {

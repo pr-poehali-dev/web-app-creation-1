@@ -267,7 +267,7 @@ def handle(event: Dict[str, Any], context: Any) -> Dict[str, Any]:
                     elif status in ('waiting', 'playing', 'finished'):
                         where.append("r.status = %s")
                         qp.append(status)
-                    if gt in ('chess', 'checkers', 'poker', 'durak', 'baarys'):
+                    if gt in ('chess', 'checkers', 'poker', 'durak', 'baarys', 'nardy'):
                         where.append("r.game_type = %s")
                         qp.append(gt)
                     cur.execute(f"""SELECT r.id, r.game_type, r.room_name, r.status, r.max_players, r.is_private, r.created_at, r.updated_at,

@@ -15,6 +15,7 @@ import psycopg2
 from psycopg2.extras import RealDictCursor
 import jwt
 import tournaments
+import nardy
 
 DATABASE_URL = os.environ.get('DATABASE_URL')
 DB_SCHEMA = os.environ.get('DB_SCHEMA', 't_p42562714_web_app_creation_1')
@@ -129,6 +130,8 @@ def _sanitize_baarys_state(state: Dict[str, Any], viewer_user_id: int) -> Dict[s
 
 
 def initial_state_for(game_type: str) -> Dict[str, Any]:
+    if game_type == 'nardy':
+        return nardy.initial_state()
     if game_type == 'chess':
         return CHESS_INITIAL_STATE
     if game_type == 'checkers':
@@ -253,7 +256,7 @@ def handler(event: Dict[str, Any], context: Any) -> Dict[str, Any]:
 
         if action == 'create':
             game_type = body.get('game_type')
-            if game_type not in ('chess', 'checkers', 'poker', 'durak', 'baarys'):
+            if game_type not in ('chess', 'checkers', 'poker', 'durak', 'baarys', 'nardy'):
                 return error_response(400, 'Неизвестный тип игры')
 
             room_name = (body.get('room_name') or f'Комната {user["nickname"]}')[:64]
@@ -276,7 +279,7 @@ def handler(event: Dict[str, Any], context: Any) -> Dict[str, Any]:
                     room_id = cur.fetchone()['id']
 
                     # Создатель играет чёрными, вошедший вторым — белыми и ходит первым
-                    side = 'black' if game_type in ('chess', 'checkers') else 'seat0'
+                    side = 'black' if game_type in ('chess', 'checkers') else ('white' if game_type == 'nardy' else 'seat0')
                     chips = 1000 if game_type == 'poker' else None
                     cur.execute(
                         f"""INSERT INTO {DB_SCHEMA}.game_room_players (room_id, user_id, seat_index, side, chips)
@@ -333,7 +336,9 @@ def handler(event: Dict[str, Any], context: Any) -> Dict[str, Any]:
                         return error_response(400, 'Комната заполнена')
 
                     side = None
-                    if room['game_type'] in ('chess', 'checkers'):
+                    if room['game_type'] == 'nardy':
+                        side = 'black'
+                    elif room['game_type'] in ('chess', 'checkers'):
                         side = 'white'
                     else:
                         side = f'seat{count}'
@@ -396,7 +401,7 @@ def handler(event: Dict[str, Any], context: Any) -> Dict[str, Any]:
                              json.dumps(initial_state_for(game_type)), room['is_private'], invite_code)
                         )
                         new_id = cur.fetchone()['id']
-                        side = 'black' if game_type in ('chess', 'checkers') else 'seat0'
+                        side = 'black' if game_type in ('chess', 'checkers') else ('white' if game_type == 'nardy' else 'seat0')
                         chips = 1000 if game_type == 'poker' else None
                         cur.execute(
                             f"""INSERT INTO {DB_SCHEMA}.game_room_players (room_id, user_id, seat_index, side, chips)
@@ -524,7 +529,7 @@ def handler(event: Dict[str, Any], context: Any) -> Dict[str, Any]:
                     # Партия уже идёт — выход засчитывается как поражение (форфейт),
                     # чтобы оставшиеся игроки не зависли в ожидании вышедшего.
                     if room['status'] == 'playing':
-                        if room['game_type'] in ('chess', 'checkers'):
+                        if room['game_type'] in ('chess', 'checkers', 'nardy'):
                             cur.execute(
                                 f"SELECT user_id FROM {DB_SCHEMA}.game_room_players WHERE room_id = %s AND user_id != %s",
                                 (room_id, user['id'])

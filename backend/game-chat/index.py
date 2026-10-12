@@ -23,7 +23,7 @@ JWT_ALGORITHM = 'HS256'
 GAME_JWT_ISSUER = 'games-section'
 
 PUSH_SEND_URL = 'https://functions.poehali.dev/a1c8fafd-b64f-45e5-b9b9-0a050cca4f7a'
-GAME_TITLES = {'chess': 'Шахматы', 'checkers': 'Шашки', 'poker': 'Покер', 'durak': 'Игра в дурака'}
+GAME_TITLES = {'chess': 'Шахматы', 'checkers': 'Шашки', 'poker': 'Покер', 'durak': 'Игра в дурака', 'nardy': 'Длинные нарды'}
 PUSH_COOLDOWN_SECONDS = 20
 
 

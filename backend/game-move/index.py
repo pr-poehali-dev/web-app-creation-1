@@ -20,6 +20,7 @@ import chess
 import requests
 import durak
 import baarys
+import nardy
 
 DATABASE_URL = os.environ.get('DATABASE_URL')
 DB_SCHEMA = os.environ.get('DB_SCHEMA', 't_p42562714_web_app_creation_1')
@@ -29,7 +30,7 @@ GAME_JWT_ISSUER = 'games-section'
 
 PUSH_SEND_URL = 'https://functions.poehali.dev/a1c8fafd-b64f-45e5-b9b9-0a050cca4f7a'
 
-GAME_TITLES = {'chess': 'Шахматы', 'checkers': 'Шашки', 'poker': 'Покер', 'durak': 'Игра в дурака', 'baarys': 'Баарыс'}
+GAME_TITLES = {'chess': 'Шахматы', 'checkers': 'Шашки', 'poker': 'Покер', 'durak': 'Игра в дурака', 'baarys': 'Баарыс', 'nardy': 'Длинные нарды'}
 
 
 def notify_next_turn(room_id: int, next_turn_user_id: Optional[int], game_type: str) -> None:
@@ -1192,6 +1193,73 @@ def handle_baarys_action(cur, conn, room, user, body):
     }
 
 
+def handle_nardy_action(cur, conn, room, user, body):
+    action = body.get('action')
+    if action not in ('roll', 'move'):
+        return error_response(400, 'Неизвестное действие')
+    room_id = room['id']
+    cur.execute("SELECT * FROM " + DB_SCHEMA + ".game_rooms WHERE id = %s FOR UPDATE", (room_id,))
+    room = cur.fetchone()
+    if room['status'] != 'playing':
+        return error_response(400, 'Игра не идёт')
+    cur.execute(
+        "SELECT user_id, side FROM " + DB_SCHEMA + ".game_room_players WHERE room_id = %s",
+        (room_id,)
+    )
+    players = {r['user_id']: r['side'] for r in cur.fetchall()}
+    if user['id'] not in players:
+        return error_response(403, 'Вы не участник этой партии')
+    state = room['state'] or {}
+    if 'pts_w' not in state:
+        state = nardy.initial_state()
+    my_side = 'w' if players[user['id']] == 'white' else 'b'
+    if state['turn'] != my_side:
+        return error_response(400, 'Сейчас не ваш ход')
+    prev_turn = state['turn']
+
+    if action == 'roll':
+        err = nardy.roll(state)
+    else:
+        try:
+            src, die = int(body.get('from')), int(body.get('die'))
+        except (TypeError, ValueError):
+            return error_response(400, 'Некорректный ход')
+        err = nardy.move(state, src, die)
+    if err:
+        return error_response(400, err)
+
+    winner_id = None
+    next_user = None
+    for uid, sd in players.items():
+        if (sd == 'white') == (state['turn'] == 'w'):
+            next_user = uid
+        if state.get('winner') and (sd == 'white') == (state['winner'] == 'w'):
+            winner_id = uid
+    finished = bool(state.get('winner'))
+    cur.execute(
+        "UPDATE " + DB_SCHEMA + ".game_rooms SET state = %s, status = %s, winner_id = %s, "
+        "current_turn_user_id = %s, updated_at = CURRENT_TIMESTAMP WHERE id = %s",
+        (json.dumps(state), 'finished' if finished else 'playing', winner_id, None if finished else next_user, room_id)
+    )
+    if finished:
+        cur.execute(
+            "UPDATE " + DB_SCHEMA + ".game_users SET games_played = games_played + 1 WHERE id = ANY(%s)",
+            (list(players.keys()),)
+        )
+        cur.execute(
+            "UPDATE " + DB_SCHEMA + ".game_users SET games_won = games_won + 1 WHERE id = %s",
+            (winner_id,)
+        )
+    conn.commit()
+    if not finished and state['turn'] != prev_turn and next_user and next_user != user['id']:
+        notify_next_turn(room_id, next_user, 'nardy')
+    return {
+        'statusCode': 200, 'headers': cors_headers(),
+        'body': json.dumps({'success': True, 'finished': finished, 'winner_id': winner_id}),
+        'isBase64Encoded': False
+    }
+
+
 def handler(event: Dict[str, Any], context: Any) -> Dict[str, Any]:
     method = event.get('httpMethod', 'GET')
 
@@ -1233,6 +1301,8 @@ def handler(event: Dict[str, Any], context: Any) -> Dict[str, Any]:
             result = handle_durak_action(cur, conn, room, user, body)
         elif room['game_type'] == 'baarys':
             result = handle_baarys_action(cur, conn, room, user, body)
+        elif room['game_type'] == 'nardy':
+            result = handle_nardy_action(cur, conn, room, user, body)
         else:
             result = error_response(400, 'Неизвестный тип игры для этой комнаты')
 
