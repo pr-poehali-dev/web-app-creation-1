@@ -146,10 +146,30 @@ def handler(event: Dict[str, Any], context: Any) -> Dict[str, Any]:
                     (room_id,)
                 )
                 messages = cur.fetchall()
+                last_id = max([m['id'] for m in messages], default=0)
+                if last_id:
+                    cur.execute(
+                        f"""INSERT INTO {DB_SCHEMA}.game_chat_reads (room_id, user_id, last_read_id, updated_at)
+                           VALUES (%s, %s, %s, NOW())
+                           ON CONFLICT (room_id, user_id) DO UPDATE
+                           SET last_read_id = GREATEST({DB_SCHEMA}.game_chat_reads.last_read_id, EXCLUDED.last_read_id), updated_at = NOW()""",
+                        (room_id, user['id'], last_id)
+                    )
+                    conn.commit()
+                cur.execute(
+                    f"SELECT MAX(last_read_id) AS r FROM {DB_SCHEMA}.game_chat_reads WHERE room_id = %s AND user_id <> %s",
+                    (room_id, user['id'])
+                )
+                other_read = cur.fetchone()['r'] or 0
+                result = []
+                for m in messages:
+                    d = dict(m)
+                    d['is_read'] = d['id'] <= other_read
+                    result.append(d)
                 return {
                     'statusCode': 200,
                     'headers': cors_headers(),
-                    'body': json.dumps([dict(m) for m in messages], default=str),
+                    'body': json.dumps(result, default=str),
                     'isBase64Encoded': False
                 }
         finally:

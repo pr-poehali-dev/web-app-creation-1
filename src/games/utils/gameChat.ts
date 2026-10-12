@@ -15,6 +15,7 @@ export interface ChatMessage {
   media_url?: string | null;
   media_type?: 'image' | 'audio' | null;
   avatar_url?: string | null;
+  is_read?: boolean;
 }
 
 function authHeaders(): HeadersInit {

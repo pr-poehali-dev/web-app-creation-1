@@ -440,10 +440,10 @@ export default function BaarysGame() {
                         {trick.beaten ? (
                           <div className="flex flex-wrap justify-center gap-x-4 gap-y-3">
                             {trick.lead.map((c, i) => (
-                              <div key={c} className="relative h-[5.5rem] w-[3.75rem]">
+                              <div key={c} className="relative h-[4.75rem] w-[3.25rem]">
                                 <DurakCard card={c} size="sm" trump={c[1] === state!.trump} />
                                 {trick.resp[i] && (
-                                  <DurakCard card={trick.resp[i]} size="sm" trump={trick.resp[i][1] === state!.trump} className="absolute left-3 top-5 z-10 rotate-6 shadow-xl shadow-black/50" />
+                                  <DurakCard card={trick.resp[i]} size="sm" trump={trick.resp[i][1] === state!.trump} className="absolute left-1.5 top-2.5 z-10 rotate-3 shadow-xl shadow-black/50" />
                                 )}
                               </div>
                             ))}

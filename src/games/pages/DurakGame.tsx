@@ -438,7 +438,7 @@ export default function DurakGame() {
                     {state!.table.map((pair, i) => {
                       const targetable = iAmDefender && !!selected && !pair.d && !state!.taking && canBeat(pair.a, selected, state!.trump);
                       return (
-                        <div key={pair.a} className="relative h-[8.5rem] w-[5.5rem] sm:h-[9.5rem] sm:w-[6.25rem]">
+                        <div key={pair.a} className="relative h-[6.5rem] w-[4.75rem] sm:h-[7.25rem] sm:w-[5.25rem]">
                           <DurakCard
                             card={pair.a}
                             trump={pair.a[1] === state!.trump}
@@ -446,7 +446,7 @@ export default function DurakGame() {
                             onClick={!pair.d && iAmDefender && selected ? () => handleTableTarget(i) : undefined}
                           />
                           {pair.d && (
-                            <DurakCard card={pair.d} trump={pair.d[1] === state!.trump} className="absolute left-5 top-8 sm:left-6 sm:top-9 z-10 rotate-6 shadow-xl shadow-black/50" />
+                            <DurakCard card={pair.d} trump={pair.d[1] === state!.trump} className="absolute left-2 top-3 sm:left-2.5 sm:top-3.5 z-10 rotate-3 shadow-xl shadow-black/50" />
                           )}
                         </div>
                       );

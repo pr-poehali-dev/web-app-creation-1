@@ -158,6 +158,11 @@ export default function GameChatPanel({ roomId, userId, messages, onSent }: Game
                       msg.message
                     )}
                   </div>
+                  {msg.user_id === userId && (
+                    <span className={`mt-0.5 flex items-center ${msg.is_read ? 'text-emerald-400' : 'text-slate-200'}`} title={msg.is_read ? 'Прочитано' : 'Доставлено'}>
+                      <Icon name={msg.is_read ? 'CheckCheck' : 'Check'} size={14} />
+                    </span>
+                  )}
                 </div>
               </div>
             )

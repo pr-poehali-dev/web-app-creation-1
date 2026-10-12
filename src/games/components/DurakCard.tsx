@@ -45,11 +45,11 @@ export default function DurakCard({ card, hidden, size = 'md', selected, highlig
         dimmed ? 'opacity-50' : ''
       } ${className}`}
     >
-      <span className="absolute left-1 top-0.5 flex flex-col items-center font-bold leading-none">
+      <span className="absolute left-1 top-0.5 flex flex-col items-center font-bold leading-none text-[0.8em]">
         <span>{rank}</span>
         <span className="text-[0.85em]">{suit}</span>
       </span>
-      <span className="absolute inset-0 flex items-center justify-center text-[1.9em] leading-none">{suit}</span>
+      <span className="absolute inset-0 flex items-center justify-center text-[1.5em] leading-none">{suit}</span>
       {trump && <span className="absolute bottom-0.5 right-1 text-[0.6em] font-bold text-amber-600">К</span>}
     </button>
   );
