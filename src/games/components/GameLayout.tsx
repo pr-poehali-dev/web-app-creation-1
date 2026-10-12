@@ -49,7 +49,7 @@ export default function GameLayout({ user, onLogout, children }: GameLayoutProps
                 title="Сменить фото"
                 className="flex items-center gap-2 bg-slate-800/60 border border-slate-700 hover:border-amber-500/40 rounded-full pl-1.5 pr-3 py-1 transition-colors"
               >
-                <PlayerAvatar emoji={user.avatar_emoji} url={user.avatar_url} size={28} />
+                <PlayerAvatar emoji={user.avatar_emoji} url={user.avatar_url} size={28} zoomable={false} />
                 <span className="text-sm font-medium">{user.nickname}</span>
               </button>
               <button

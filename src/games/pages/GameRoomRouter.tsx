@@ -1,14 +1,15 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, lazy, Suspense } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import Icon from '@/components/ui/icon';
 import GameLayout from '../components/GameLayout';
 import { getGameSession } from '../utils/gameAuth';
 import { getGameRoom, GameType } from '../utils/gameRooms';
-import ChessGame from './ChessGame';
-import CheckersGame from './CheckersGame';
-import PokerGame from './PokerGame';
-import DurakGame from './DurakGame';
-import BaarysGame from './BaarysGame';
+
+const ChessGame = lazy(() => import('./ChessGame'));
+const CheckersGame = lazy(() => import('./CheckersGame'));
+const PokerGame = lazy(() => import('./PokerGame'));
+const DurakGame = lazy(() => import('./DurakGame'));
+const BaarysGame = lazy(() => import('./BaarysGame'));
 
 // Комната может быть шахматной, шашечной, покерной или картой «Дурак» — сначала узнаём тип игры,
 // затем рендерим нужную доску. Дочерние компоненты сами читают :roomId через useParams.
@@ -61,9 +62,24 @@ export default function GameRoomRouter() {
     );
   }
 
-  if (gameType === 'checkers') return <CheckersGame />;
-  if (gameType === 'poker') return <PokerGame />;
-  if (gameType === 'durak') return <DurakGame />;
-  if (gameType === 'baarys') return <BaarysGame />;
-  return <ChessGame />;
+  const Game =
+    gameType === 'checkers' ? CheckersGame
+    : gameType === 'poker' ? PokerGame
+    : gameType === 'durak' ? DurakGame
+    : gameType === 'baarys' ? BaarysGame
+    : ChessGame;
+  return (
+    <Suspense
+      fallback={
+        <GameLayout user={user}>
+          <div className="text-center py-20 text-slate-500">
+            <Icon name="Loader2" size={32} className="mx-auto mb-2 animate-spin" />
+            Загрузка партии...
+          </div>
+        </GameLayout>
+      }
+    >
+      <Game />
+    </Suspense>
+  );
 }
