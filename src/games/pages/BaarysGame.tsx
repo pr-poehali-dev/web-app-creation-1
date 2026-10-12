@@ -6,6 +6,7 @@ import { useToast } from '@/hooks/use-toast';
 import GameLayout from '../components/GameLayout';
 import InviteShareBox from '../components/InviteShareBox';
 import LeaveRoomButton from '../components/LeaveRoomButton';
+import RematchButton from '../components/RematchButton';
 import GameChatPanel from '../components/GameChatPanel';
 import RoomNotifyHint from '../components/RoomNotifyHint';
 import PlayerAvatar from '../components/PlayerAvatar';
@@ -361,6 +362,7 @@ export default function BaarysGame() {
                   Напомнить: {turnPlayer.nickname}
                 </Button>
               )}
+              {finished && <RematchButton roomId={numericRoomId} />}
               {finished && <LeaveRoomButton roomId={numericRoomId} />}
             </div>
 

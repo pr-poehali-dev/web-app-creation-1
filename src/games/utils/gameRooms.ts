@@ -116,6 +116,18 @@ export const joinGameRoom = async (roomId?: number, inviteCode?: string): Promis
   return data;
 };
 
+export const startRematch = async (roomId: number): Promise<number> => {
+  const response = await fetch(GAME_ROOMS_API, {
+    method: 'POST',
+    headers: authHeaders(),
+    body: JSON.stringify({ action: 'rematch', room_id: roomId }),
+  });
+  const data = await response.json();
+  if (!response.ok || !data.success) throw new Error(data.error || 'Не удалось начать реванш');
+  await joinGameRoom(data.room_id);
+  return data.room_id;
+};
+
 export const deleteGameRoom = async (roomId: number): Promise<void> => {
   const response = await fetch(GAME_ROOMS_API, {
     method: 'POST',

@@ -364,6 +364,59 @@ def handler(event: Dict[str, Any], context: Any) -> Dict[str, Any]:
             finally:
                 conn.close()
 
+        elif action == 'rematch':
+            room_id = body.get('room_id')
+            if not room_id:
+                return error_response(400, 'room_id обязателен')
+
+            conn = get_db_connection()
+            try:
+                with conn.cursor() as cur:
+                    cur.execute(f"SELECT * FROM {DB_SCHEMA}.game_rooms WHERE id = %s FOR UPDATE", (room_id,))
+                    room = cur.fetchone()
+                    if not room:
+                        return error_response(404, 'Комната не найдена')
+                    if room['status'] != 'finished':
+                        return error_response(400, 'Реванш доступен после окончания партии')
+                    cur.execute(
+                        f"SELECT 1 FROM {DB_SCHEMA}.game_room_players WHERE room_id = %s AND user_id = %s",
+                        (room_id, user['id'])
+                    )
+                    if not cur.fetchone():
+                        return error_response(403, 'Вы не участник этой комнаты')
+
+                    new_id = room.get('rematch_room_id')
+                    if not new_id:
+                        game_type = room['game_type']
+                        invite_code = ''.join(random.choices(string.ascii_uppercase + string.digits, k=6))
+                        cur.execute(
+                            f"""INSERT INTO {DB_SCHEMA}.game_rooms (game_type, room_name, max_players, created_by, state, is_private, invite_code)
+                               VALUES (%s, %s, %s, %s, %s, %s, %s) RETURNING id""",
+                            (game_type, room['room_name'], room['max_players'], user['id'],
+                             json.dumps(initial_state_for(game_type)), room['is_private'], invite_code)
+                        )
+                        new_id = cur.fetchone()['id']
+                        side = 'black' if game_type in ('chess', 'checkers') else 'seat0'
+                        chips = 1000 if game_type == 'poker' else None
+                        cur.execute(
+                            f"""INSERT INTO {DB_SCHEMA}.game_room_players (room_id, user_id, seat_index, side, chips)
+                               VALUES (%s, %s, 0, %s, %s)""",
+                            (new_id, user['id'], side, chips)
+                        )
+                        cur.execute(
+                            f"UPDATE {DB_SCHEMA}.game_rooms SET rematch_room_id = %s WHERE id = %s",
+                            (new_id, room_id)
+                        )
+                    conn.commit()
+                    return {
+                        'statusCode': 200,
+                        'headers': cors_headers(),
+                        'body': json.dumps({'success': True, 'room_id': new_id}),
+                        'isBase64Encoded': False
+                    }
+            finally:
+                conn.close()
+
         elif action == 'start_table':
             room_id = body.get('room_id')
             if not room_id:

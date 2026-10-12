@@ -7,6 +7,7 @@ import { useToast } from '@/hooks/use-toast';
 import GameLayout from '../components/GameLayout';
 import InviteShareBox from '../components/InviteShareBox';
 import LeaveRoomButton from '../components/LeaveRoomButton';
+import RematchButton from '../components/RematchButton';
 import { getGameSession, GameUser } from '../utils/gameAuth';
 import { getGameRoom, GameRoomDetail, startPokerTable } from '../utils/gameRooms';
 import { sendPokerAction, PokerState } from '../utils/gamePoker';
@@ -272,7 +273,10 @@ export default function PokerGame() {
                 </div>
               )}
               {room.status === 'finished' && (
-                <LeaveRoomButton roomId={numericRoomId} />
+                <div className="flex items-center gap-2">
+                  <RematchButton roomId={numericRoomId} />
+                  <LeaveRoomButton roomId={numericRoomId} />
+                </div>
               )}
             </div>
 

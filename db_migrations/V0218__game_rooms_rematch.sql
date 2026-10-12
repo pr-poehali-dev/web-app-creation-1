@@ -1,0 +1,1 @@
+ALTER TABLE game_rooms ADD COLUMN IF NOT EXISTS rematch_room_id INTEGER;
