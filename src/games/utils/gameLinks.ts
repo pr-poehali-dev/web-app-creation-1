@@ -9,12 +9,19 @@ export const getGamesOrigin = (): string => {
 export const buildInviteUrl = (inviteCode: string): string => `${getGamesOrigin()}/games/invite/${inviteCode}`;
 export const buildClubUrl = (): string => `${getGamesOrigin()}/games`;
 
-export const makeShareUrl = async (rawUrl: string, senderNickname?: string, gameType?: string): Promise<string> => {
+const SHORT_PAGES: Record<string, string> = {
+  chess: 'ch',
+  checkers: 'sh',
+  poker: 'p',
+  durak: 'd',
+  baarys: 'b',
+};
+
+export const makeShareUrl = async (rawUrl: string, _senderNickname?: string, gameType?: string): Promise<string> => {
   const origin = getGamesOrigin();
   const invite = rawUrl.match(/\/games\/invite\/([A-Za-z0-9]+)/);
-  if (invite && gameType) {
-    const from = senderNickname ? `&f=${encodeURIComponent(senderNickname)}` : '';
-    return `${origin}/i/${gameType}.html?c=${invite[1]}${from}`;
+  if (invite && gameType && SHORT_PAGES[gameType]) {
+    return `${origin}/${SHORT_PAGES[gameType]}.html?c=${invite[1]}`;
   }
   if (rawUrl === buildClubUrl()) return `${origin}/g.html`;
   return rawUrl;
