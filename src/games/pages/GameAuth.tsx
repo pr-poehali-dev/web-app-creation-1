@@ -11,7 +11,9 @@ import GamesPWAMeta from '../components/GamesPWAMeta';
 export default function GameAuth() {
   const navigate = useNavigate();
   const { toast } = useToast();
-  const [mode, setMode] = useState<'login' | 'register'>('login');
+  const [mode, setMode] = useState<'login' | 'register'>(
+    localStorage.getItem('game_has_account') ? 'login' : 'register'
+  );
   const [nickname, setNickname] = useState('');
   const [pin, setPin] = useState('');
   const [pin2, setPin2] = useState('');
@@ -28,6 +30,7 @@ export default function GameAuth() {
   };
 
   if (getGameSession()) {
+    localStorage.setItem('game_has_account', '1');
     redirectAfterAuth();
     return null;
   }
@@ -56,6 +59,7 @@ export default function GameAuth() {
     setIsLoading(false);
 
     if (result.success) {
+      localStorage.setItem('game_has_account', '1');
       toast({
         title: 'Добро пожаловать!',
         description: result.pin_created ? `Привет, ${result.user?.nickname}! Пароль сохранён, запомните его` : `Привет, ${result.user?.nickname}!`,
