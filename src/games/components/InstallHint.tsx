@@ -81,10 +81,20 @@ export default function InstallHint({ guest = false }: { guest?: boolean }) {
     if (result !== 'dismissed') setOpen(true);
   };
 
-  if (!visible && !open) return null;
+  if (!visible && !open && guest) return null;
 
   return (
     <>
+      {!visible && !guest && !isInstalled && (
+        <button
+          onClick={() => setOpen(true)}
+          className="mb-4 flex items-center gap-2 text-sm text-amber-400 underline underline-offset-4 hover:text-amber-300"
+        >
+          <Icon name="Smartphone" size={16} />
+          Как добавить клуб на главный экран
+        </button>
+      )}
+
       {visible && (
         <div className={`${guest ? 'mt-4' : 'mb-4'} flex items-center gap-3 rounded-xl border border-amber-500/30 bg-slate-900/70 p-3`}>
           <div className="h-10 w-10 shrink-0 rounded-lg bg-gradient-to-br from-amber-400 to-amber-600 flex items-center justify-center">

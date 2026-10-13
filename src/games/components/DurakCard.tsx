@@ -18,12 +18,12 @@ const SIZES = {
   md: 'w-14 h-20 sm:w-16 sm:h-24 text-base sm:text-lg rounded-lg',
 };
 
-export default function DurakCard({ card, hidden, size = 'md', selected, highlight, dimmed, trump, onClick, className = '' }: DurakCardProps) {
+export default function DurakCard({ card, hidden, size = 'md', selected, highlight, dimmed, onClick, className = '' }: DurakCardProps) {
   const base = `${SIZES[size]} shrink-0 select-none shadow-md transition-all duration-150`;
   if (hidden || !card) {
     return (
       <div
-        className={`${base} bg-gradient-to-br from-indigo-700 to-indigo-950 border border-indigo-300/30 flex items-center justify-center ${className}`}
+        className={`${base} ${className.includes('absolute') ? '' : 'relative'} bg-gradient-to-br from-indigo-700 to-indigo-950 border border-indigo-300/30 flex items-center justify-center ${className}`}
       >
         <div className="h-[70%] w-[70%] rounded-sm border border-indigo-300/30 bg-[repeating-linear-gradient(45deg,transparent,transparent_3px,rgba(165,180,252,0.15)_3px,rgba(165,180,252,0.15)_6px)]" />
       </div>
@@ -39,7 +39,7 @@ export default function DurakCard({ card, hidden, size = 'md', selected, highlig
       disabled={!interactive}
       onClick={onClick}
       aria-label={`${rank}${suit}`}
-      className={`${base} relative bg-white border ${
+      className={`${base} ${className.includes('absolute') ? '' : 'relative'} bg-white border ${
         selected ? 'border-amber-400 ring-2 ring-amber-400 -translate-y-3' : highlight ? 'border-emerald-400 ring-2 ring-emerald-400' : 'border-slate-300'
       } ${red ? 'text-red-600' : 'text-slate-900'} ${interactive ? 'cursor-pointer hover:-translate-y-1' : 'cursor-default'} ${
         dimmed ? 'opacity-50' : ''
@@ -50,7 +50,6 @@ export default function DurakCard({ card, hidden, size = 'md', selected, highlig
         <span className="text-[0.85em]">{suit}</span>
       </span>
       <span className="absolute inset-0 flex items-center justify-center text-[1.5em] leading-none">{suit}</span>
-      {trump && <span className="absolute bottom-0.5 right-1 text-[0.6em] font-bold text-amber-600">К</span>}
     </button>
   );
 }
