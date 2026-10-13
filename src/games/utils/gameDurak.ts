@@ -3,7 +3,7 @@ import { getGameToken } from './gameAuth';
 
 const GAME_MOVE_API = (func2url as Record<string, string>)['game-move'] || '';
 
-export type DurakAction = 'start' | 'attack' | 'defend' | 'transfer' | 'take' | 'pass' | 'timeout';
+export type DurakAction = 'start' | 'attack' | 'defend' | 'transfer' | 'take' | 'pass' | 'swap' | 'timeout';
 
 export interface DurakPair {
   a: string;

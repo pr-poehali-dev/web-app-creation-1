@@ -277,6 +277,20 @@ def apply_action(s, uid: str, action: str, body: Dict[str, Any]) -> Optional[str
         s['passed'] = []
         _log(s, t='take', by=uid)
 
+    elif action == 'swap':
+        six = '6' + s['trump']
+        if six not in hand:
+            return 'У вас нет козырной шестёрки'
+        if not s['deck'] or s['trump_card'] == six:
+            return 'Козырь уже нельзя поменять'
+        if current_turn(s) != uid:
+            return 'Поменять козырь можно в свой ход'
+        hand.remove(six)
+        hand.append(s['trump_card'])
+        s['deck'][0] = six
+        s['trump_card'] = six
+        _log(s, t='swap', by=uid, card=six)
+
     elif action == 'pass':
         if uid == s['defender']:
             return 'Отбивающийся не может сказать «бито»'

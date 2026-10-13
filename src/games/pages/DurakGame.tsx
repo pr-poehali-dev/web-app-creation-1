@@ -252,6 +252,7 @@ export default function DurakGame() {
   const lastEvents = (state?.log || []).slice(-3).reverse().map((e, i) => {
     const who = nick(e.by);
     switch (e.t) {
+      case 'swap': return `${who} поменял козырь на ${cardName(e.card)}`;
       case 'attack': return `${who} ходит ${cardName(e.card)}`;
       case 'defend': return `${who} бьёт ${cardName(e.card)}`;
       case 'transfer': return `${who} переводит ${cardName(e.card)} на ${nick(e.to)}`;
@@ -268,6 +269,7 @@ export default function DurakGame() {
   }).filter(Boolean);
 
   const canPass = playing && !iAmDefender && !iAmOut && state!.table.length > 0 && (unbeaten.length === 0 || state!.taking) && !state!.passed.includes(myUid);
+  const canSwap = playing && !iAmOut && state!.deck_count > 0 && state!.trump_card !== `6${state!.trump}` && myHand.includes(`6${state!.trump}`) && room?.current_turn_user_id === user.id;
   const canTake = iAmDefender && unbeaten.length > 0 && !state!.taking;
   const canTransfer = iAmDefender && !!selected && canTransferCard(state!, selected);
 
@@ -506,6 +508,12 @@ export default function DurakGame() {
                       >
                         <Icon name="CornerUpRight" size={14} className="mr-1" />
                         Перевести
+                      </Button>
+                    )}
+                    {canSwap && (
+                      <Button size="sm" disabled={isActing} onClick={() => act('swap')} className="bg-amber-500 hover:bg-amber-600 text-slate-950 font-semibold">
+                        <Icon name="Repeat" size={14} className="mr-1" />
+                        Поменять козырь
                       </Button>
                     )}
                     {canTake && (

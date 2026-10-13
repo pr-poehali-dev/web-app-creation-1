@@ -980,7 +980,7 @@ def handle_poker_action(cur, conn, room, user, body):
 
 def handle_durak_action(cur, conn, room, user, body):
     action = body.get('action')
-    if action not in ('start', 'attack', 'defend', 'transfer', 'take', 'pass', 'timeout'):
+    if action not in ('start', 'attack', 'defend', 'transfer', 'take', 'pass', 'swap', 'timeout'):
         return error_response(400, 'Неизвестное действие')
 
     room_id = room['id']
@@ -1058,7 +1058,8 @@ def handle_durak_action(cur, conn, room, user, body):
         if err:
             return error_response(400, err)
         skips[my_uid] = 0
-    state['deadline'] = now + durak.TURN_SECONDS
+    if action != 'swap':
+        state['deadline'] = now + durak.TURN_SECONDS
 
     finished = state['phase'] == 'finished'
     turn = durak.current_turn(state)
