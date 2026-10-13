@@ -117,19 +117,19 @@ export default function GameAuth() {
 
           <form onSubmit={handleSubmit} className="space-y-4">
             <div className="space-y-1.5">
-              <Label htmlFor="nickname" className="text-slate-300">Никнейм</Label>
+              <Label htmlFor="nickname" className="text-slate-300">{mode === 'register' ? 'Придумай себе имя (никнейм)' : 'Никнейм'}</Label>
               <Input
                 id="nickname"
                 value={nickname}
                 onChange={(e) => setNickname(e.target.value)}
-                placeholder="Ваш игровой ник"
+                placeholder={mode === 'register' ? 'Придумай себе имя (никнейм)' : 'Ваш игровой ник'}
                 className="bg-slate-800/60 border-slate-700 text-slate-100 placeholder:text-slate-500 focus-visible:ring-amber-500"
                 maxLength={20}
               />
             </div>
 
             <div className="space-y-1.5">
-              <Label htmlFor="pin" className="text-slate-300">{mode === 'register' ? 'Придумайте пароль (4 цифры)' : 'Пароль (4 цифры)'}</Label>
+              <Label htmlFor="pin" className="text-slate-300">{mode === 'register' ? 'Придумай пароль из 4 цифр' : 'Пароль (4 цифры)'}</Label>
               <Input
                 id="pin"
                 type="password"
@@ -145,7 +145,7 @@ export default function GameAuth() {
 
             {mode === 'register' && (
               <div className="space-y-1.5">
-                <Label htmlFor="pin2" className="text-slate-300">Повторите пароль</Label>
+                <Label htmlFor="pin2" className="text-slate-300">Повтори придуманный пароль для подтверждения</Label>
                 <Input
                   id="pin2"
                   type="password"
@@ -158,6 +158,19 @@ export default function GameAuth() {
                   maxLength={4}
                 />
               </div>
+            )}
+
+            {mode === 'register' && (
+              <p className="text-sm text-slate-400 text-center">
+                Уже зарегистрированы?{' '}
+                <button
+                  type="button"
+                  onClick={() => { setMode('login'); setPin(''); setPin2(''); }}
+                  className="text-amber-400 font-semibold hover:text-amber-300 underline"
+                >
+                  Войти
+                </button>
+              </p>
             )}
 
             {mode === 'login' && (
@@ -176,7 +189,7 @@ export default function GameAuth() {
                   <Icon name="Loader2" className="mr-2 h-4 w-4 animate-spin" />
                   Подождите...
                 </>
-              ) : mode === 'login' ? 'Войти' : 'Создать аккаунт'}
+              ) : mode === 'login' ? 'Войти' : 'Зарегистрировать'}
             </Button>
           </form>
 
