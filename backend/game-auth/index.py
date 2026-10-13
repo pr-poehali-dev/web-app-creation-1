@@ -24,7 +24,7 @@ DATABASE_URL = os.environ.get('DATABASE_URL')
 DB_SCHEMA = os.environ.get('DB_SCHEMA', 't_p42562714_web_app_creation_1')
 JWT_SECRET = os.environ.get('JWT_SECRET_KEY', '')
 JWT_ALGORITHM = 'HS256'
-JWT_EXPIRATION_HOURS = 24 * 30
+JWT_EXPIRATION_HOURS = 24 * 365
 GAME_JWT_ISSUER = 'games-section'
 
 
@@ -332,7 +332,7 @@ def handler(event: Dict[str, Any], context: Any) -> Dict[str, Any]:
                     return {
                         'statusCode': 200,
                         'headers': cors_headers(),
-                        'body': json.dumps({'success': True, 'user': dict(user)}),
+                        'body': json.dumps({'success': True, 'user': dict(user), 'token': generate_game_token(user['id'], user['nickname'])}),
                         'isBase64Encoded': False
                     }
             finally:

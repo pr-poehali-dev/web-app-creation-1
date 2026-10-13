@@ -7,7 +7,7 @@ import ConfirmDialog from '@/components/ui/confirm-dialog';
 import { useToast } from '@/hooks/use-toast';
 import GameLayout from '../components/GameLayout';
 import RoomNotifyHint from '../components/RoomNotifyHint';
-import { getGameSession, GameUser } from '../utils/gameAuth';
+import { getGameSession, refreshGameSession, GameUser } from '../utils/gameAuth';
 import { buildInviteUrl, buildClubUrl, makeShareUrl } from '../utils/gameLinks';
 import {
   listGameRooms,
@@ -34,6 +34,10 @@ export default function GameLobby() {
   const navigate = useNavigate();
   const { toast } = useToast();
   const [user, setUser] = useState<GameUser | null>(getGameSession());
+
+  useEffect(() => {
+    refreshGameSession();
+  }, []);
 
   useEffect(() => {
     const sync = () => setUser(getGameSession());

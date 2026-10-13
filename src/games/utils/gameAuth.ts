@@ -94,6 +94,27 @@ export const getGameToken = (): string | null => {
   return localStorage.getItem(GAME_TOKEN_KEY);
 };
 
+export const refreshGameSession = async (): Promise<void> => {
+  const token = getGameToken();
+  if (!token || !GAME_AUTH_API) return;
+  try {
+    if (navigator.storage?.persist) navigator.storage.persist();
+    const response = await fetch(GAME_AUTH_API, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ action: 'verify', token }),
+    });
+    if (response.status === 401) {
+      clearGameSession();
+      return;
+    }
+    const data = await response.json();
+    if (response.ok && data.success && data.token) saveGameSession(data.user, data.token);
+  } catch {
+    // нет связи — остаёмся в системе
+  }
+};
+
 export const clearGameSession = (): void => {
   localStorage.removeItem(GAME_USER_KEY);
   localStorage.removeItem(GAME_TOKEN_KEY);
