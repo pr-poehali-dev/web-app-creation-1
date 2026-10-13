@@ -7,6 +7,7 @@ import { Label } from '@/components/ui/label';
 import { useToast } from '@/hooks/use-toast';
 import { registerGameUser, loginGameUser, getGameSession } from '../utils/gameAuth';
 import GamesPWAMeta from '../components/GamesPWAMeta';
+import InstallHint from '../components/InstallHint';
 
 export default function GameAuth() {
   const navigate = useNavigate();
@@ -197,6 +198,7 @@ export default function GameAuth() {
             Игра на виртуальные фишки. Реальные деньги не используются.
           </p>
         </div>
+        <InstallHint guest />
       </div>
     </div>
   );

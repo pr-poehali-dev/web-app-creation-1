@@ -56,16 +56,16 @@ function Steps({ steps }: { steps: Step[] }) {
   );
 }
 
-export default function InstallHint() {
+export default function InstallHint({ guest = false }: { guest?: boolean }) {
   const { install, isIOS, isInstalled } = useInstallApp();
   const [visible, setVisible] = useState(false);
   const [open, setOpen] = useState(false);
   const [platform, setPlatform] = useState<'iphone' | 'android'>(isIOS ? 'iphone' : 'android');
 
   useEffect(() => {
-    if (!getGameSession() || isInstalled || wasDismissedRecently()) return;
+    if ((!guest && !getGameSession()) || isInstalled || wasDismissedRecently()) return;
     setVisible(true);
-  }, [isInstalled]);
+  }, [isInstalled, guest]);
 
   const dismiss = () => {
     localStorage.setItem(DISMISS_KEY, String(Date.now()));
@@ -86,7 +86,7 @@ export default function InstallHint() {
   return (
     <>
       {visible && (
-        <div className="mb-4 flex items-center gap-3 rounded-xl border border-amber-500/30 bg-slate-900/70 p-3">
+        <div className={`${guest ? 'mt-4' : 'mb-4'} flex items-center gap-3 rounded-xl border border-amber-500/30 bg-slate-900/70 p-3`}>
           <div className="h-10 w-10 shrink-0 rounded-lg bg-gradient-to-br from-amber-400 to-amber-600 flex items-center justify-center">
             <Icon name="Smartphone" size={20} className="text-slate-950" />
           </div>
