@@ -185,10 +185,11 @@ def resolve(s):
     if _unbeaten(s) and not s['taking']:
         return
     d = s['defender']
-    for p in s['order']:
-        if p == d or p in s['out'] or not s['hands'][p] or p in s['passed']:
-            continue
-        if can_add_any(s, p):
+    room_for_more = len(s['table']) < MAX_ATTACKS and len(_unbeaten(s)) + 1 <= len(s['hands'][d])
+    if room_for_more:
+        for p in s['order']:
+            if p == d or p in s['out'] or not s['hands'][p] or p in s['passed']:
+                continue
             return
     if s['taking']:
         _end_take(s)
@@ -204,7 +205,7 @@ def current_turn(s) -> Optional[str]:
     if _unbeaten(s) and not s['taking']:
         return s['defender']
     for p in [s['attacker']] + [u for u in s['order'] if u != s['attacker']]:
-        if p != s['defender'] and p not in s['out'] and p not in s['passed'] and can_add_any(s, p):
+        if p != s['defender'] and p not in s['out'] and p not in s['passed'] and s['hands'][p]:
             return p
     return s['attacker']
 
