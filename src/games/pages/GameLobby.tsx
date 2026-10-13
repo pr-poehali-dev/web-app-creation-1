@@ -7,6 +7,7 @@ import ConfirmDialog from '@/components/ui/confirm-dialog';
 import { useToast } from '@/hooks/use-toast';
 import GameLayout from '../components/GameLayout';
 import RoomNotifyHint from '../components/RoomNotifyHint';
+import InstallHint from '../components/InstallHint';
 import { getGameSession, refreshGameSession, GameUser } from '../utils/gameAuth';
 import { buildInviteUrl, buildClubUrl, makeShareUrl } from '../utils/gameLinks';
 import {
@@ -193,6 +194,7 @@ export default function GameLobby() {
 
   return (
     <GameLayout user={user}>
+      <InstallHint />
       <RoomNotifyHint />
       <div className="mb-6 flex flex-col sm:flex-row sm:items-end sm:justify-between gap-3">
         <div>
