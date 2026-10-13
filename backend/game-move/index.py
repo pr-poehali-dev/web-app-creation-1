@@ -1006,6 +1006,7 @@ def handle_durak_action(cur, conn, room, user, body):
             return error_response(400, 'Для игры нужно от 2 до 6 игроков')
         state = durak.new_game(order)
         state['skips'] = {}
+        state['deadline'] = time.time() + durak.TURN_SECONDS
         turn = durak.current_turn(state)
         cur.execute(
             "UPDATE " + DB_SCHEMA + ".game_rooms SET state = %s, status = 'playing', winner_id = NULL, "
@@ -1026,28 +1027,38 @@ def handle_durak_action(cur, conn, room, user, body):
     now = time.time()
     skips = state.setdefault('skips', {})
     if action == 'timeout':
-        return error_response(400, 'Ограничения по времени хода нет')
-    if False:
-        actor = durak.current_turn(state)
-        if actor is None:
-            return error_response(400, 'Сейчас нет активного хода')
         if now < state.get('deadline', 0) - 1:
             return error_response(400, 'Время хода ещё не вышло')
-        skips[actor] = skips.get(actor, 0) + 1
-        if skips[actor] >= durak.MAX_SKIPS:
-            durak.forfeit(state, actor)
-        else:
-            auto_action, auto_body = durak.auto_move(state, actor)
-            err = durak.apply_action(state, actor, auto_action, auto_body)
-            if err:
-                return error_response(400, err)
-            state.setdefault('log', []).append({'t': 'timeout', 'by': actor})
+        if state['phase'] != 'playing':
+            return error_response(400, 'Игра не идёт')
+        waiting = bool(state['table']) and (not durak._unbeaten(state) or state['taking'])
+        if waiting:
+            for u in state['order']:
+                if u != state['defender'] and u not in state['out'] and state['hands'][u] and u not in state['passed']:
+                    state['passed'].append(u)
+            durak.resolve(state)
+            state.setdefault('log', []).append({'t': 'timeout', 'by': state['attacker']})
             del state['log'][:-8]
+        else:
+            actor = durak.current_turn(state)
+            if actor is None:
+                return error_response(400, 'Сейчас нет активного хода')
+            skips[actor] = skips.get(actor, 0) + 1
+            if skips[actor] >= durak.MAX_SKIPS:
+                durak.forfeit(state, actor)
+            else:
+                auto_action, auto_body = durak.auto_move(state, actor)
+                err = durak.apply_action(state, actor, auto_action, auto_body)
+                if err:
+                    return error_response(400, err)
+                state.setdefault('log', []).append({'t': 'timeout', 'by': actor})
+                del state['log'][:-8]
     else:
         err = durak.apply_action(state, my_uid, action, body)
         if err:
             return error_response(400, err)
         skips[my_uid] = 0
+    state['deadline'] = now + durak.TURN_SECONDS
 
     finished = state['phase'] == 'finished'
     turn = durak.current_turn(state)

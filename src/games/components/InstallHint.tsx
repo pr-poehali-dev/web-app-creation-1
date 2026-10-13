@@ -13,6 +13,13 @@ const wasDismissedRecently = () => {
   return !!raw && Date.now() - Number(raw) < DISMISS_DAYS * 24 * 60 * 60 * 1000;
 };
 
+const YANDEX_STEPS: Step[] = [
+  { icon: 'Globe', title: 'Откройте клуб в Яндекс Браузере', text: 'Если клуб открыт в другом браузере, скопируйте ссылку и откройте её в Яндекс Браузере.' },
+  { icon: 'EllipsisVertical', title: 'Нажмите на три точки', text: 'Они внизу экрана справа.' },
+  { icon: 'SquarePlus', title: 'Выберите «Добавить ярлык на телефон»', text: 'Пункт в выпадающем списке. Если его не видно, пролистайте список вниз.' },
+  { icon: 'Check', title: 'Подтвердите', text: 'Нажмите «Добавить». Значок клуба появится на главном экране.' },
+];
+
 interface Step {
   icon: string;
   title: string;
@@ -60,7 +67,7 @@ export default function InstallHint({ guest = false }: { guest?: boolean }) {
   const { install, isIOS, isInstalled } = useInstallApp();
   const [visible, setVisible] = useState(false);
   const [open, setOpen] = useState(false);
-  const [platform, setPlatform] = useState<'iphone' | 'android'>(isIOS ? 'iphone' : 'android');
+  const [platform, setPlatform] = useState<'iphone' | 'android' | 'yandex'>(isIOS ? 'iphone' : 'android');
 
   useEffect(() => {
     if ((!guest && !getGameSession()) || isInstalled || wasDismissedRecently()) return;
@@ -119,7 +126,7 @@ export default function InstallHint({ guest = false }: { guest?: boolean }) {
             <DialogTitle className="text-amber-400">Значок клуба на главном экране</DialogTitle>
           </DialogHeader>
           <div className="flex gap-2 rounded-lg bg-slate-800/60 p-1">
-            {(['iphone', 'android'] as const).map((p) => (
+            {(['iphone', 'android', 'yandex'] as const).map((p) => (
               <button
                 key={p}
                 onClick={() => setPlatform(p)}
@@ -127,11 +134,11 @@ export default function InstallHint({ guest = false }: { guest?: boolean }) {
                   platform === p ? 'bg-amber-500 text-slate-950' : 'text-slate-400 hover:text-slate-200'
                 }`}
               >
-                {p === 'iphone' ? 'iPhone' : 'Android'}
+                {p === 'iphone' ? 'iPhone' : p === 'android' ? 'Android' : 'Яндекс'}
               </button>
             ))}
           </div>
-          <Steps steps={platform === 'iphone' ? IPHONE_STEPS : ANDROID_STEPS} />
+          <Steps steps={platform === 'iphone' ? IPHONE_STEPS : platform === 'android' ? ANDROID_STEPS : YANDEX_STEPS} />
         </DialogContent>
       </Dialog>
     </>

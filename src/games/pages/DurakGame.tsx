@@ -111,6 +111,31 @@ export default function DurakGame() {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [room]);
 
+  const [secsLeft, setSecsLeft] = useState<number | null>(null);
+  const timeoutSentRef = useRef(0);
+  const turnLeft = state?.turn_left ?? null;
+  const roundSig = `${state?.round}-${state?.log?.length}-${state?.table?.length}`;
+
+  useEffect(() => {
+    if (turnLeft === null || state?.phase !== 'playing') {
+      setSecsLeft(null);
+      return;
+    }
+    const endAt = Date.now() + turnLeft * 1000;
+    const tick = () => setSecsLeft(Math.max(0, Math.ceil((endAt - Date.now()) / 1000)));
+    tick();
+    const id = setInterval(tick, 500);
+    return () => clearInterval(id);
+  }, [turnLeft, roundSig, state?.phase]);
+
+  useEffect(() => {
+    if (secsLeft !== 0 || !user) return;
+    const now = Date.now();
+    if (now - timeoutSentRef.current < 4000) return;
+    timeoutSentRef.current = now;
+    sendDurakAction(numericRoomId, 'timeout').then(() => loadRoom());
+  }, [secsLeft, user, numericRoomId, loadRoom]);
+
   const toggleSound = () => {
     const next = !soundOn;
     setSoundOn(next);
@@ -396,6 +421,12 @@ export default function DurakGame() {
                       )}
                     </div>
                     <p className="mt-1 text-[11px] text-emerald-100/60">Бито: {state!.discard}</p>
+                    {playing && secsLeft !== null && (
+                      <p className={`mt-1 flex items-center gap-1 text-xs font-bold ${secsLeft <= 10 ? 'text-red-400' : 'text-amber-300'}`}>
+                        <Icon name="Timer" size={13} />
+                        {secsLeft} сек
+                      </p>
+                    )}
                   </div>
 
                   <div className="flex-1 min-h-[150px] flex flex-wrap content-start justify-center gap-x-5 gap-y-4">
