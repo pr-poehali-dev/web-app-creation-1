@@ -1,0 +1,1 @@
+ALTER TABLE t_p42562714_web_app_creation_1.game_room_players ADD COLUMN IF NOT EXISTS last_seen_at TIMESTAMP NULL;

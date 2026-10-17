@@ -205,6 +205,12 @@ def handler(event: Dict[str, Any], context: Any) -> Dict[str, Any]:
                     )
                     players = cur.fetchall()
 
+                    cur.execute(
+                        f"UPDATE {DB_SCHEMA}.game_room_players SET last_seen_at = NOW() WHERE room_id = %s AND user_id = %s",
+                        (params['room_id'], user['id'])
+                    )
+                    conn.commit()
+
                     room_data = dict(room)
                     room_data['players'] = [dict(p) for p in players]
 
