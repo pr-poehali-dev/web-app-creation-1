@@ -121,6 +121,7 @@ export default function BaarysGame() {
     const added = myHand.filter((c) => !prev.includes(c));
     if (!added.length) return;
     setFresh(added);
+    if (isSoundOn() && state?.log?.[state.log.length - 1]?.t !== 'deal') sounds.draw(added.length);
     const t = setTimeout(() => setFresh([]), 450 + added.length * 220);
     return () => clearTimeout(t);
     // eslint-disable-next-line react-hooks/exhaustive-deps
@@ -133,6 +134,7 @@ export default function BaarysGame() {
     if (prev === null || oppCount <= prev) return;
     const n = oppCount - prev;
     setOppFresh(n);
+    if (isSoundOn() && state?.log?.[state.log.length - 1]?.t !== 'deal') sounds.draw(n);
     const t = setTimeout(() => setOppFresh(0), 450 + n * 220);
     return () => clearTimeout(t);
   }, [oppCount]);

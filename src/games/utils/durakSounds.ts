@@ -49,6 +49,9 @@ export const noise = (start: number, dur: number, vol = 0.12, cutoff = 2500) => 
 };
 
 export const sounds = {
+  draw: (count = 1) => {
+    for (let i = 0; i < count; i++) noise(i * 0.22, 0.07, 0.12, 3200);
+  },
   deal: () => {
     for (let i = 0; i < 6; i++) noise(i * 0.09, 0.07, 0.1, 3000);
   },
