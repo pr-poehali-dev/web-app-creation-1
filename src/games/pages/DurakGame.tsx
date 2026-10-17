@@ -149,6 +149,48 @@ export default function DurakGame() {
     if (selected && !myHand.includes(selected)) setSelected(null);
   }, [myHand, selected]);
 
+  const [fresh, setFresh] = useState<string[]>([]);
+  const prevHandRef = useRef<string[] | null>(null);
+  const [oppFresh, setOppFresh] = useState<Record<string, number>>({});
+  const prevCountsRef = useRef<Record<string, number> | null>(null);
+
+  useEffect(() => {
+    const prev = prevHandRef.current;
+    prevHandRef.current = myHand;
+    if (!prev) return;
+    const added = myHand.filter((c) => !prev.includes(c));
+    if (!added.length) return;
+    setFresh(added);
+    if (isSoundOn() && state?.log?.[state.log.length - 1]?.t !== 'deal') sounds.draw(added.length);
+    const t = setTimeout(() => setFresh([]), 450 + added.length * 220);
+    return () => clearTimeout(t);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [myHand.join(',')]);
+
+  const countsKey = JSON.stringify(state?.counts ?? {});
+  useEffect(() => {
+    const counts = (state?.counts ?? {}) as Record<string, number>;
+    const prev = prevCountsRef.current;
+    prevCountsRef.current = counts;
+    if (!prev) return;
+    const added: Record<string, number> = {};
+    let max = 0;
+    Object.keys(counts).forEach((uid) => {
+      if (uid === myUid) return;
+      const d = counts[uid] - (prev[uid] ?? counts[uid]);
+      if (d > 0) {
+        added[uid] = d;
+        max = Math.max(max, d);
+      }
+    });
+    if (!max) return;
+    setOppFresh(added);
+    if (isSoundOn() && state?.log?.[state.log.length - 1]?.t !== 'deal') sounds.draw(max);
+    const t = setTimeout(() => setOppFresh({}), 450 + max * 220);
+    return () => clearTimeout(t);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [countsKey]);
+
   if (!user) return null;
 
   const players = room?.players || [];
@@ -382,9 +424,20 @@ export default function DurakGame() {
                         ) : (
                           <div className="mt-1 flex items-center justify-center">
                             <div className="flex -space-x-5">
-                              {Array.from({ length: Math.min(count, 6) }).map((_, i) => (
-                                <DurakCard key={i} hidden size="xs" />
-                              ))}
+                              {Array.from({ length: Math.min(count, 6) }).map((_, i, arr) => {
+                                const nf = oppFresh[uid] ?? 0;
+                                const k = i - (arr.length - nf);
+                                const isNew = nf > 0 && k >= 0;
+                                return (
+                                  <div
+                                    key={i}
+                                    className={isNew ? 'baarys-deal' : ''}
+                                    style={isNew ? { animationDelay: `${k * 220}ms` } : undefined}
+                                  >
+                                    <DurakCard hidden size="xs" />
+                                  </div>
+                                );
+                              })}
                             </div>
                             <span className="ml-1.5 text-xs font-bold text-slate-200">{count}</span>
                           </div>
@@ -538,14 +591,19 @@ export default function DurakGame() {
                     myHand.map((card) => {
                       const usable = playing && !iAmOut && (iAmDefender || canAddCard(state!, myUid, card));
                       return (
-                        <DurakCard
+                        <div
                           key={card}
-                          card={card}
-                          trump={card[1] === state!.trump}
-                          selected={selected === card}
-                          dimmed={playing && !usable}
-                          onClick={playing ? () => handleHandCard(card) : undefined}
-                        />
+                          className={fresh.includes(card) ? 'baarys-deal' : ''}
+                          style={fresh.includes(card) ? { animationDelay: `${fresh.indexOf(card) * 220}ms` } : undefined}
+                        >
+                          <DurakCard
+                            card={card}
+                            trump={card[1] === state!.trump}
+                            selected={selected === card}
+                            dimmed={playing && !usable}
+                            onClick={playing ? () => handleHandCard(card) : undefined}
+                          />
+                        </div>
                       );
                     })
                   )}
