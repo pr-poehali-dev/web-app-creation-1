@@ -142,8 +142,16 @@ def handler(event: Dict[str, Any], context: Any) -> Dict[str, Any]:
                        FROM {DB_SCHEMA}.game_chat_messages c
                        JOIN {DB_SCHEMA}.game_users u ON u.id = c.user_id
                        WHERE c.room_id = %s
+                         AND (
+                           c.created_at >= (SELECT MIN(p.joined_at) FROM {DB_SCHEMA}.game_room_players p WHERE p.room_id = c.room_id AND p.user_id = %s)
+                           OR EXISTS (
+                             SELECT 1 FROM {DB_SCHEMA}.game_rooms pr
+                             JOIN {DB_SCHEMA}.game_room_players pp ON pp.room_id = pr.id
+                             WHERE pr.rematch_room_id = c.room_id AND pp.user_id = %s
+                           )
+                         )
                        ORDER BY c.created_at ASC LIMIT 200""",
-                    (room_id,)
+                    (room_id, user['id'], user['id'])
                 )
                 messages = cur.fetchall()
                 last_id = max([m['id'] for m in messages], default=0)
