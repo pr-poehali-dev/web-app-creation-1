@@ -416,7 +416,7 @@ export default function DurakGame() {
                         isTurn ? 'border-amber-400 bg-amber-500/10' : 'border-slate-700/60 bg-slate-900/50'
                       } ${out ? 'opacity-50' : ''}`}
                     >
-                      <div className="flex justify-center"><PlayerAvatar emoji={p.avatar_emoji} url={p.avatar_url} size={28} /></div>
+                      <div className="flex justify-center"><PlayerAvatar emoji={p.avatar_emoji} url={p.avatar_url} size={28} online={p.online} /></div>
                       <p className="text-xs font-semibold text-slate-100 truncate max-w-[92px] mx-auto">{p.nickname}</p>
                       {hasGame && (
                         out ? (

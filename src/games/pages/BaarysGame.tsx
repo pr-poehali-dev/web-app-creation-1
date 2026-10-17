@@ -376,7 +376,7 @@ export default function BaarysGame() {
                   <div className={`rounded-xl p-2 min-w-[120px] text-center border-2 ${
                     playing && room.current_turn_user_id === opponent.user_id ? 'border-amber-400 bg-amber-500/10' : 'border-slate-700/60 bg-slate-900/50'
                   }`}>
-                    <div className="flex justify-center"><PlayerAvatar emoji={opponent.avatar_emoji} url={opponent.avatar_url} size={28} /></div>
+                    <div className="flex justify-center"><PlayerAvatar emoji={opponent.avatar_emoji} url={opponent.avatar_url} size={28} online={opponent.online} /></div>
                     <p className="text-xs font-semibold text-slate-100 truncate max-w-[104px] mx-auto">{opponent.nickname}</p>
                     {hasGame && (
                       <div className="mt-1 flex items-center justify-center">

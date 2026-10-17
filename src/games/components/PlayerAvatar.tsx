@@ -7,9 +7,10 @@ interface PlayerAvatarProps {
   size?: number;
   className?: string;
   zoomable?: boolean;
+  online?: boolean;
 }
 
-export default function PlayerAvatar({ emoji, url, size = 32, className = '', zoomable = true }: PlayerAvatarProps) {
+function PlayerAvatarBase({ emoji, url, size = 32, className = '', zoomable = true }: PlayerAvatarProps) {
   const [open, setOpen] = useState(false);
 
   if (url) {
@@ -50,6 +51,20 @@ export default function PlayerAvatar({ emoji, url, size = 32, className = '', zo
   return (
     <span className={`shrink-0 leading-none ${className}`} style={{ fontSize: size * 0.8 }}>
       {emoji || '👤'}
+    </span>
+  );
+}
+
+
+export default function PlayerAvatar(props: PlayerAvatarProps) {
+  if (props.online === undefined) return <PlayerAvatarBase {...props} />;
+  return (
+    <span className="relative inline-flex shrink-0">
+      <PlayerAvatarBase {...props} />
+      <span
+        title={props.online ? 'В игре' : 'Не в игре'}
+        className={`absolute -bottom-0.5 -right-0.5 h-3 w-3 rounded-full border-2 border-slate-900 ${props.online ? 'bg-emerald-400' : 'bg-slate-500'}`}
+      />
     </span>
   );
 }
