@@ -40,6 +40,8 @@ export default function BaarysGame() {
   const [isNotifying, setIsNotifying] = useState(false);
   const [fresh, setFresh] = useState<string[]>([]);
   const prevHandRef = useRef<string[] | null>(null);
+  const [oppFresh, setOppFresh] = useState(0);
+  const prevOppRef = useRef<number | null>(null);
   const [soundOn, setSoundState] = useState(isSoundOn());
   const prevRef = useRef<{ sig: string; turn: boolean; phase: string } | null>(null);
 
@@ -123,6 +125,17 @@ export default function BaarysGame() {
     return () => clearTimeout(t);
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [myHand.join(',')]);
+
+  const oppCount = state?.counts?.[String(room?.players?.find((p) => p.user_id !== user?.id)?.user_id ?? '')] ?? 0;
+  useEffect(() => {
+    const prev = prevOppRef.current;
+    prevOppRef.current = oppCount;
+    if (prev === null || oppCount <= prev) return;
+    const n = oppCount - prev;
+    setOppFresh(n);
+    const t = setTimeout(() => setOppFresh(0), 450 + n * 220);
+    return () => clearTimeout(t);
+  }, [oppCount]);
 
   useEffect(() => {
     setSelected((cur) => cur.filter((c) => myHand.includes(c)));
@@ -366,9 +379,19 @@ export default function BaarysGame() {
                     {hasGame && (
                       <div className="mt-1 flex items-center justify-center">
                         <div className="flex -space-x-5">
-                          {Array.from({ length: Math.min(state!.counts?.[oppUid] ?? 0, 6) }).map((_, i) => (
-                            <DurakCard key={i} hidden size="xs" />
-                          ))}
+                          {Array.from({ length: Math.min(state!.counts?.[oppUid] ?? 0, 6) }).map((_, i, arr) => {
+                            const k = i - (arr.length - oppFresh);
+                            const isNew = oppFresh > 0 && k >= 0;
+                            return (
+                              <div
+                                key={i}
+                                className={isNew ? 'baarys-deal' : ''}
+                                style={isNew ? { animationDelay: `${k * 220}ms` } : undefined}
+                              >
+                                <DurakCard hidden size="xs" />
+                              </div>
+                            );
+                          })}
                         </div>
                         <span className="ml-1.5 text-xs font-bold text-slate-200">{state!.counts?.[oppUid] ?? 0}</span>
                       </div>
