@@ -135,6 +135,7 @@ export default function BaarysGame() {
   const iLead = playing && isMyTurn && state!.lead.length === 0;
   const iRespond = playing && isMyTurn && state!.lead.length > 0;
   const needCount = iRespond ? state!.lead.length : 0;
+  const canSwap = playing && isMyTurn && state!.deck_count > 0 && state!.trump_card !== `6${state!.trump}` && myHand.includes(`6${state!.trump}`);
   const canDemand = iLead && state!.deck_count === 0 && selected.length > 0 && selected.every((c) => c[1] === state!.trump);
 
   const act = async (action: BaarysAction, extra?: { cards?: string[]; demand?: boolean }) => {
@@ -209,6 +210,7 @@ export default function BaarysGame() {
       case 'last': return `${who} забрал последний ход +${e.n}`;
       case 'game_end': return `Партия ${e.n} завершена, новая раздача`;
       case 'baarys': return `${who} ходит шестью козырями: Баарыс!`;
+      case 'swap': return `${who} поменял козырь на козырную шестёрку`;
       case 'left': return `${who} покинул игру`;
       case 'timeout': return `${who} не успел: ход сделан автоматически`;
       case 'forfeit': return `${who} долго не отвечал и проиграл`;
@@ -468,6 +470,12 @@ export default function BaarysGame() {
                         <input type="checkbox" checked={demand} onChange={(e) => setDemand(e.target.checked)} />
                         Требовать козыри
                       </label>
+                    )}
+                    {canSwap && (
+                      <Button size="sm" disabled={isActing} onClick={() => act('swap')} className="bg-amber-500 hover:bg-amber-600 text-slate-950 font-semibold">
+                        <Icon name="Repeat" size={14} className="mr-1" />
+                        Поменять козырь
+                      </Button>
                     )}
                     {(iLead || iRespond) && (
                       <Button

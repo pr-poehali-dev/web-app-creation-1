@@ -6,7 +6,7 @@
 import random
 from typing import Dict, Any, List, Optional
 
-RANKS = '6789TJQKA'
+RANKS = '6789JQKTA'
 SUITS = 'SHDC'
 HAND_SIZE = 6
 TARGET = 101
@@ -238,6 +238,23 @@ def _respond(s, uid: str, body) -> Optional[str]:
     return None
 
 
+def _swap(s, uid: str) -> Optional[str]:
+    six = '6' + s['trump']
+    hand = s['hands'][uid]
+    if six not in hand:
+        return 'У вас нет козырной шестёрки'
+    if not s['deck'] or s['trump_card'] == six:
+        return 'Козырь уже нельзя поменять'
+    if current_turn(s) != uid:
+        return 'Поменять козырь можно в свой ход'
+    hand.remove(six)
+    hand.append(s['trump_card'])
+    s['deck'][0] = six
+    s['trump_card'] = six
+    _log(s, t='swap', by=uid, card=six)
+    return None
+
+
 def apply_action(s, uid: str, action: str, body: Dict[str, Any]) -> Optional[str]:
     if s.get('phase') != 'playing':
         return 'Партия уже закончена'
@@ -245,6 +262,8 @@ def apply_action(s, uid: str, action: str, body: Dict[str, Any]) -> Optional[str
         return _lead(s, uid, body)
     if action == 'respond':
         return _respond(s, uid, body)
+    if action == 'swap':
+        return _swap(s, uid)
     return 'Неизвестное действие'
 
 

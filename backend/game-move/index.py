@@ -1100,7 +1100,7 @@ def handle_durak_action(cur, conn, room, user, body):
 
 def handle_baarys_action(cur, conn, room, user, body):
     action = body.get('action')
-    if action not in ('start', 'lead', 'respond', 'timeout'):
+    if action not in ('start', 'lead', 'respond', 'swap', 'timeout'):
         return error_response(400, 'Неизвестное действие')
 
     room_id = room['id']

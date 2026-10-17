@@ -3,7 +3,7 @@ import { getGameToken } from './gameAuth';
 
 const GAME_MOVE_API = (func2url as Record<string, string>)['game-move'] || '';
 
-export type BaarysAction = 'start' | 'lead' | 'respond' | 'timeout';
+export type BaarysAction = 'start' | 'lead' | 'respond' | 'swap' | 'timeout';
 
 export interface BaarysTrick {
   leader: string;
@@ -20,6 +20,7 @@ export interface BaarysLogEvent {
   by?: string | null;
   n?: number;
   demand?: boolean;
+  card?: string;
 }
 
 export interface BaarysState {
@@ -47,7 +48,7 @@ export interface BaarysState {
 }
 
 export const TARGET = 101;
-const RANKS = '6789TJQKA';
+const RANKS = '6789JQKTA';
 
 export const rankOf = (card: string) => RANKS.indexOf(card[0]);
 
