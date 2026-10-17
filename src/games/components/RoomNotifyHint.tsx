@@ -34,10 +34,12 @@ export default function RoomNotifyHint() {
     try {
       const ok = await setupPushNotifications(`game_${user.id}`);
       if (ok) {
-        toast({ title: 'Уведомления включены', description: 'Сообщим о ходе соперника и новых сообщениях' });
+        toast({ title: 'Уведомления включены' });
         setVisible(false);
       } else if (Notification.permission === 'denied') {
         setBlocked(true);
+      } else {
+        toast({ variant: 'destructive', title: 'Не удалось включить уведомления', description: 'Попробуйте ещё раз' });
       }
     } finally {
       setLoading(false);
@@ -55,11 +57,11 @@ export default function RoomNotifyHint() {
     <div className="mb-4 flex items-start gap-3 rounded-xl border border-amber-500/30 bg-amber-500/10 p-3">
       <Icon name="BellRing" size={20} className="mt-0.5 shrink-0 text-amber-400" />
       <div className="flex-1 text-sm">
-        <p className="font-medium text-slate-100">Не пропустите ход соперника</p>
+        <p className="font-medium text-slate-100">Узнавайте о ходе соперника</p>
         <p className="mt-0.5 text-slate-400">
           {blocked
-            ? 'Уведомления заблокированы. Разрешите их в настройках браузера для этого сайта, и мы сообщим, когда соперник сходит или напишет в чат.'
-            : 'Разрешите уведомления, и мы сообщим, когда соперник сделал ход и ждёт вас или написал в чат комнаты.'}
+            ? 'Уведомления заблокированы. Нажмите на значок замка рядом с адресом сайта и выберите «Разрешить» для уведомлений.'
+            : 'Мы пришлём уведомление, когда соперник сходит.'}
         </p>
         {!blocked && (
           <Button
