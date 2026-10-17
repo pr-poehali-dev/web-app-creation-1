@@ -127,10 +127,11 @@ def forfeit(s, uid: str):
 
 
 def _refill(s, first: str):
-    for u in (first, other(s, first)):
-        h = s['hands'][u]
-        while len(h) < HAND_SIZE and s['deck']:
-            h.append(s['deck'].pop())
+    users = (first, other(s, first))
+    while s['deck'] and any(len(s['hands'][u]) < HAND_SIZE for u in users):
+        for u in users:
+            if s['deck'] and len(s['hands'][u]) < HAND_SIZE:
+                s['hands'][u].append(s['deck'].pop())
 
 
 def _validate_cards(hand: List[str], cards) -> Optional[str]:

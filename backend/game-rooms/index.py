@@ -349,6 +349,10 @@ def handler(event: Dict[str, Any], context: Any) -> Dict[str, Any]:
                            VALUES (%s, %s, %s, %s, %s)""",
                         (room['id'], user['id'], count, side, chips)
                     )
+                    cur.execute(
+                        f"INSERT INTO {DB_SCHEMA}.game_chat_messages (room_id, user_id, message, is_system) VALUES (%s, %s, %s, TRUE)",
+                        (room['id'], user['id'], f"{user['nickname']} вошёл(а) в комнату"[:500])
+                    )
 
                     new_count = count + 1
                     # Покер собирает до 8 игроков — не запускаем автоматически при 2,
