@@ -5,6 +5,7 @@ import { Input } from '@/components/ui/input';
 import { useToast } from '@/hooks/use-toast';
 import { ChatMessage, sendChatMessage, deleteChatMessage, fileToDataUrl, imageToDataUrl } from '../utils/gameChat';
 import PlayerAvatar from './PlayerAvatar';
+import ImageViewer from './ImageViewer';
 
 interface GameChatPanelProps {
   roomId: number;
@@ -133,20 +134,7 @@ export default function GameChatPanel({ roomId, userId, messages, onSent }: Game
 
   return (
     <div className="bg-slate-900/60 border border-slate-800 rounded-xl flex flex-col h-[500px]">
-      {viewer && (
-        <div className="fixed inset-0 z-[100] bg-black/95 flex items-center justify-center p-4" onClick={() => setViewer(null)}>
-          <button
-            type="button"
-            onClick={() => setViewer(null)}
-            aria-label="Закрыть"
-            className="absolute top-4 right-4 z-10 h-11 w-11 rounded-full bg-red-600 text-white flex items-center justify-center shadow-lg hover:bg-red-500"
-            style={{ top: 'max(1rem, env(safe-area-inset-top))' }}
-          >
-            <Icon name="X" size={24} />
-          </button>
-          <img src={viewer} alt="Фото" className="max-w-full max-h-full object-contain" onClick={(e) => e.stopPropagation()} />
-        </div>
-      )}
+      {viewer && <ImageViewer src={viewer} onClose={() => setViewer(null)} />}
       <div className="p-3 border-b border-slate-800 font-semibold text-slate-200 flex items-center gap-2">
         <Icon name="MessageCircle" size={18} />
         Чат комнаты
