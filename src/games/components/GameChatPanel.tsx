@@ -24,6 +24,7 @@ export default function GameChatPanel({ roomId, userId, messages, onSent }: Game
   const [sending, setSending] = useState(false);
   const [recording, setRecording] = useState(false);
   const [seconds, setSeconds] = useState(0);
+  const [viewer, setViewer] = useState<string | null>(null);
   const containerRef = useRef<HTMLDivElement>(null);
   const fileRef = useRef<HTMLInputElement>(null);
   const recorderRef = useRef<MediaRecorder | null>(null);
@@ -132,6 +133,20 @@ export default function GameChatPanel({ roomId, userId, messages, onSent }: Game
 
   return (
     <div className="bg-slate-900/60 border border-slate-800 rounded-xl flex flex-col h-[500px]">
+      {viewer && (
+        <div className="fixed inset-0 z-[100] bg-black/95 flex items-center justify-center p-4" onClick={() => setViewer(null)}>
+          <button
+            type="button"
+            onClick={() => setViewer(null)}
+            aria-label="Закрыть"
+            className="absolute top-4 right-4 z-10 h-11 w-11 rounded-full bg-red-600 text-white flex items-center justify-center shadow-lg hover:bg-red-500"
+            style={{ top: 'max(1rem, env(safe-area-inset-top))' }}
+          >
+            <Icon name="X" size={24} />
+          </button>
+          <img src={viewer} alt="Фото" className="max-w-full max-h-full object-contain" onClick={(e) => e.stopPropagation()} />
+        </div>
+      )}
       <div className="p-3 border-b border-slate-800 font-semibold text-slate-200 flex items-center gap-2">
         <Icon name="MessageCircle" size={18} />
         Чат комнаты
@@ -159,9 +174,9 @@ export default function GameChatPanel({ roomId, userId, messages, onSent }: Game
                     }`}
                   >
                     {msg.media_type === 'image' && msg.media_url ? (
-                      <a href={msg.media_url} target="_blank" rel="noreferrer">
+                      <button type="button" onClick={() => setViewer(msg.media_url)} className="block">
                         <img src={msg.media_url} alt="Фото" loading="lazy" className="max-h-52 rounded-md" />
-                      </a>
+                      </button>
                     ) : msg.media_type === 'audio' && msg.media_url ? (
                       <audio controls preload="none" src={msg.media_url} className="h-9 w-48 max-w-full" />
                     ) : (
