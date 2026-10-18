@@ -7,7 +7,7 @@ interface ImageViewerProps {
 }
 
 const MIN_SCALE = 1;
-const MAX_SCALE = 6;
+const MAX_SCALE = 30;
 
 const clamp = (v: number, min: number, max: number) => Math.min(max, Math.max(min, v));
 
