@@ -11,6 +11,7 @@ import uuid
 import jwt
 import psycopg2
 import urllib.request
+import ssl
 from datetime import datetime, timezone, timedelta
 
 CORS = {
@@ -36,6 +37,15 @@ FREE_MODES  = ["eyes"]
 
 # Цена одного платного ИИ-обзора актива в разделе "Рынок" (в копейках) — дефолт, реальная берётся из site_settings
 MARKET_REVIEW_PRICE = 1500  # 15 руб
+
+_CA_FILE = os.path.join(os.path.dirname(os.path.abspath(__file__)), 'russian_ca.pem')
+
+
+def _ssl_ctx():
+    ctx = ssl.create_default_context()
+    ctx.load_verify_locations(cafile=_CA_FILE)
+    return ctx
+
 
 FRONTEND_URL = os.environ.get("FRONTEND_URL", "https://preview--web-app-creation-1.poehali.dev")
 
@@ -370,7 +380,7 @@ def handler(event: dict, context) -> dict:
             headers={"Content-Type": "application/json"},
             method="POST"
         )
-        with urllib.request.urlopen(req, timeout=15) as resp:
+        with urllib.request.urlopen(req, timeout=15, context=_ssl_ctx()) as resp:
             result = json.loads(resp.read())
 
         print(f"TBank response: Success={result.get('Success')}, Message={result.get('Message')}, Details={result.get('Details')}")
@@ -458,7 +468,7 @@ def handler(event: dict, context) -> dict:
             headers={"Content-Type": "application/json"},
             method="POST"
         )
-        with urllib.request.urlopen(req, timeout=15) as resp:
+        with urllib.request.urlopen(req, timeout=15, context=_ssl_ctx()) as resp:
             result = json.loads(resp.read())
 
         if not result.get("Success"):
@@ -519,7 +529,7 @@ def handler(event: dict, context) -> dict:
             headers={"Content-Type": "application/json"},
             method="POST"
         )
-        with urllib.request.urlopen(req, timeout=15) as resp:
+        with urllib.request.urlopen(req, timeout=15, context=_ssl_ctx()) as resp:
             result = json.loads(resp.read())
 
         if not result.get("Success"):
