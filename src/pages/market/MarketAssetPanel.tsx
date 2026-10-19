@@ -4,6 +4,7 @@ import MarketSearchBox from './MarketSearchBox';
 import MarketQuoteCard from './MarketQuoteCard';
 import MarketNewsList from './MarketNewsList';
 import MarketReviewBlock from './MarketReviewBlock';
+import MarketBlueChips from './MarketBlueChips';
 import Icon from '@/components/ui/icon';
 
 interface MarketAssetPanelProps {
@@ -43,10 +44,14 @@ export default function MarketAssetPanel({ marketHint, placeholder, emptyHint }:
       />
 
       {!selected ? (
-        <div className="text-center py-16 text-muted-foreground">
-          <Icon name="LineChart" size={40} className="mx-auto mb-3 opacity-30" />
-          <p className="font-medium">{emptyHint}</p>
-        </div>
+        marketHint === 'shares' ? (
+          <MarketBlueChips onSelect={handleSelect} />
+        ) : (
+          <div className="text-center py-16 text-muted-foreground">
+            <Icon name="LineChart" size={40} className="mx-auto mb-3 opacity-30" />
+            <p className="font-medium">{emptyHint}</p>
+          </div>
+        )
       ) : (
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-4">
           <div className="lg:col-span-2 space-y-4">
