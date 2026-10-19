@@ -582,9 +582,9 @@ def handler(event: dict, context) -> dict:
         order_id = str(uuid.uuid4())
 
         cur.execute(f"""
-            INSERT INTO {schema}.market_review_purchases (user_id, ticker, amount, status, tbank_order_id)
-            VALUES (%s, %s, %s, 'pending', %s) RETURNING id
-        """, (user_id, ticker, amount, order_id))
+            INSERT INTO {schema}.market_review_purchases (user_id, ticker, amount, status, tbank_order_id, asset_name, market)
+            VALUES (%s, %s, %s, 'pending', %s, %s, %s) RETURNING id
+        """, (user_id, ticker, amount, order_id, name, market_hint))
         purchase_id = cur.fetchone()[0]
         conn.commit()
 

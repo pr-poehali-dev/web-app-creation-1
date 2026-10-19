@@ -4,7 +4,7 @@ import MarketSearchBox from './MarketSearchBox';
 import MarketQuoteCard from './MarketQuoteCard';
 import MarketNewsList from './MarketNewsList';
 import MarketReviewBlock from './MarketReviewBlock';
-import MarketBlueChips, { MarketFuturesList } from './MarketBlueChips';
+import MarketBlueChips, { MarketFuturesList, MarketMyAssets } from './MarketBlueChips';
 import Icon from '@/components/ui/icon';
 
 interface MarketAssetPanelProps {
@@ -60,6 +60,8 @@ export default function MarketAssetPanel({ marketHint, placeholder, initialAsset
         onSelect={handleSelect}
         placeholder={placeholder}
       />
+
+      {!selected && <MarketMyAssets market={marketHint} onSelect={handleSelect} />}
 
       {!selected ? (
         marketHint === 'shares' ? (

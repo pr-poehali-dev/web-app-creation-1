@@ -344,6 +344,27 @@ def market_review_generate(ticker: str, name: str, quote: dict, news: list) -> s
     return call_yandex_gpt(prompt, max_tokens=900)
 
 
+def market_my_assets(user_id: int, market: str) -> dict:
+    """Бумаги, по которым пользователь покупал обзор (последние сверху)."""
+    conn = get_db()
+    try:
+        with conn.cursor() as cur:
+            cur.execute(
+                """
+                SELECT ticker, MAX(asset_name) AS name, MAX(created_at) AS last_at,
+                       BOOL_OR((created_at AT TIME ZONE 'Europe/Moscow')::date = (NOW() AT TIME ZONE 'Europe/Moscow')::date) AS today
+                FROM market_review_purchases
+                WHERE user_id = %s AND status = 'paid' AND COALESCE(market, 'shares') = %s
+                GROUP BY ticker ORDER BY last_at DESC LIMIT 30
+                """,
+                (user_id, market),
+            )
+            rows = cur.fetchall()
+    finally:
+        conn.close()
+    return {"items": [{"ticker": r["ticker"], "name": r["name"] or r["ticker"], "reviewToday": bool(r["today"])} for r in rows]}
+
+
 def market_review_list(user_id: int, ticker: str) -> dict:
     """Оплаченные обзоры пользователя по тикеру: сегодняшний (МСК) и история."""
     conn = get_db()
@@ -404,6 +425,16 @@ def handler(event: dict, context) -> dict:
             result = {"items": []}
         return {"statusCode": 200, "headers": {**CORS, "Content-Type": "application/json"},
                 "body": json.dumps(result, ensure_ascii=False)}
+
+    if method == "GET" and query_action == "market_my_assets":
+        h = event.get("headers", {}) or {}
+        uid_raw = h.get("X-User-Id") or h.get("x-user-id")
+        if not uid_raw or not str(uid_raw).isdigit():
+            return {"statusCode": 200, "headers": {**CORS, "Content-Type": "application/json"},
+                    "body": json.dumps({"items": []})}
+        mk = "futures" if params.get("market") == "futures" else "shares"
+        return {"statusCode": 200, "headers": {**CORS, "Content-Type": "application/json"},
+                "body": json.dumps(market_my_assets(int(uid_raw), mk), ensure_ascii=False)}
 
     if method == "GET" and query_action == "market_review_list":
         h = event.get("headers", {}) or {}
