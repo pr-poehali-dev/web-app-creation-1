@@ -143,7 +143,13 @@ export function useMarketReviewPrice() {
   return priceKopeks;
 }
 
-export type ReviewStatus = 'idle' | 'creating' | 'pending' | 'paid' | 'error';
+export type ReviewStatus = 'idle' | 'creating' | 'awaiting' | 'pending' | 'paid' | 'error';
+
+export interface ReviewHistoryItem {
+  id: number;
+  createdAt: string;
+  text: string;
+}
 
 const POLL_INTERVAL_MS = 4000;
 const POLL_MAX_ATTEMPTS = 75; // ~5 минут ожидания оплаты, дальше просим проверить вручную
@@ -153,6 +159,9 @@ export function useMarketReview() {
   const [reviewText, setReviewText] = useState<string | null>(null);
   const [purchaseId, setPurchaseId] = useState<number | null>(null);
   const [error, setError] = useState<string | null>(null);
+  const [paymentUrl, setPaymentUrl] = useState<string | null>(null);
+  const [sbpUrl, setSbpUrl] = useState<string | null>(null);
+  const [history, setHistory] = useState<ReviewHistoryItem[]>([]);
   const pollRef = useRef<ReturnType<typeof setInterval> | null>(null);
   const pollAttemptsRef = useRef(0);
   const purchaseIdRef = useRef<number | null>(null);
@@ -164,7 +173,7 @@ export function useMarketReview() {
     }
   }, []);
 
-  const buy = useCallback(async (ticker: string, name: string) => {
+  const buy = useCallback(async (ticker: string, name: string, market: string = 'shares') => {
     const token = getJwtToken();
     const session = getSession();
     if (!token || !session) {
@@ -178,9 +187,9 @@ export function useMarketReview() {
       const res = await fetch(`${TBANK_PAYMENT_API}?action=pay-market-review`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json', 'X-Authorization': `Bearer ${token}` },
-        body: JSON.stringify({ ticker, name }),
+        body: JSON.stringify({ ticker, name, market }),
       });
-      let data: { ok?: boolean; payment_url?: string; purchaseId?: number; error?: string } = {};
+      let data: { ok?: boolean; payment_url?: string; sbp_url?: string | null; purchaseId?: number; error?: string } = {};
       try {
         data = await res.json();
       } catch {
@@ -194,17 +203,12 @@ export function useMarketReview() {
         return;
       }
 
-      const paymentWindow = window.open(data.payment_url, '_blank');
-      if (!paymentWindow) {
-        setError('Браузер заблокировал окно оплаты. Разрешите всплывающие окна для сайта и попробуйте снова');
-        setStatus('error');
-        return;
-      }
-
       purchaseIdRef.current = data.purchaseId ?? null;
       setPurchaseId(data.purchaseId ?? null);
+      setPaymentUrl(data.payment_url);
+      setSbpUrl(data.sbp_url || null);
       pollAttemptsRef.current = 0;
-      setStatus('pending');
+      setStatus('awaiting');
     } catch {
       setError('Ошибка соединения');
       setStatus('error');
@@ -251,6 +255,40 @@ export function useMarketReview() {
     }
   }, [stopPolling]);
 
+  const loadToday = useCallback(async (ticker: string) => {
+    const session = getSession();
+    if (!session?.id || !ticker) return null;
+    try {
+      const res = await fetch(`${AI_ASSIST_API}?action=market_review_list&ticker=${encodeURIComponent(ticker)}`, {
+        headers: { 'X-User-Id': String(session.id) },
+      });
+      if (!res.ok) return null;
+      const data: { todayPurchaseId: number | null; todayText: string | null; history: ReviewHistoryItem[] } = await res.json();
+      setHistory(data.history || []);
+      if (data.todayText) {
+        setReviewText(data.todayText);
+        setStatus('paid');
+      }
+      return data;
+    } catch {
+      return null;
+    }
+  }, []);
+
+  const resume = useCallback((id: number) => {
+    purchaseIdRef.current = id;
+    setPurchaseId(id);
+    pollAttemptsRef.current = 0;
+    setError(null);
+    setReviewText(null);
+    setStatus('pending');
+  }, []);
+
+  const startWaiting = useCallback(() => {
+    pollAttemptsRef.current = 0;
+    setStatus('pending');
+  }, []);
+
   const checkPending = useCallback((ticker: string, name: string) => {
     if (!purchaseIdRef.current) return;
     stopPolling();
@@ -277,8 +315,11 @@ export function useMarketReview() {
     purchaseIdRef.current = null;
     pollAttemptsRef.current = 0;
     setError(null);
+    setPaymentUrl(null);
+    setSbpUrl(null);
+    setHistory([]);
     stopPolling();
   }, [stopPolling]);
 
-  return { status, reviewText, error, buy, checkPending, reset };
+  return { status, reviewText, error, paymentUrl, sbpUrl, history, purchaseId, buy, checkPending, reset, loadToday, resume, startWaiting };
 }

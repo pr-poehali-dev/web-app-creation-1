@@ -290,25 +290,89 @@ def market_news(ticker: str, name: str) -> dict:
     return {"news": items[:10]}
 
 
+def _technical_summary(candles: list) -> str:
+    closes = [c["close"] for c in candles if c.get("close") is not None]
+    if len(closes) < 5:
+        return ""
+    last = closes[-1]
+    parts = []
+    for n in (10, 20, 50):
+        if len(closes) >= n:
+            parts.append(f"SMA{n}={sum(closes[-n:]) / n:.2f}")
+    if len(closes) >= 15:
+        gains = losses = 0.0
+        for i in range(len(closes) - 14, len(closes)):
+            d = closes[i] - closes[i - 1]
+            if d > 0:
+                gains += d
+            else:
+                losses -= d
+        rsi = 100.0 if losses == 0 else 100 - 100 / (1 + gains / losses)
+        parts.append(f"RSI14={rsi:.0f}")
+    recent = candles[-20:]
+    highs = [c["high"] for c in recent if c.get("high") is not None]
+    lows = [c["low"] for c in recent if c.get("low") is not None]
+    if highs and lows:
+        parts.append(f"сопротивление(макс 20д)={max(highs):.2f}, поддержка(мин 20д)={min(lows):.2f}")
+    first = closes[0]
+    if first:
+        parts.append(f"изменение за период={(last / first - 1) * 100:.1f}%")
+    return f"Техданные (дневные свечи, последняя цена {last}): " + "; ".join(parts) + "."
+
+
 def market_review_generate(ticker: str, name: str, quote: dict, news: list) -> str:
-    """Формирует промпт и вызывает YandexGPT для фундаментального обзора."""
+    """Формирует промпт и вызывает YandexGPT для фундаментального и технического обзора."""
     news_lines = "\n".join(f"- {n['title']}" for n in news[:5]) or "Свежих новостей не найдено."
     quote_line = ""
+    tech_line = ""
     if quote and not quote.get("error"):
         quote_line = f"Текущая цена: {quote.get('last')}, изменение: {quote.get('changePercent')}%."
+        tech_line = _technical_summary(quote.get("candles") or [])
 
     prompt = (
-        f"Напиши краткий фундаментальный обзор финансового инструмента «{name}» (тикер {ticker}) "
-        f"для российского инвестора.\n"
-        f"{quote_line}\n"
+        f"Напиши краткий обзор финансового инструмента «{name}» (тикер {ticker}) "
+        f"для российского инвестора: фундаментальный и технический анализ.\n"
+        f"{quote_line}\n{tech_line}\n"
         f"Последние новости:\n{news_lines}\n\n"
-        f"Структура ответа: 1) краткий вывод по текущей динамике, 2) ключевые факторы влияния, "
-        f"3) на что обратить внимание в ближайшее время. "
+        f"Структура ответа: 1) Фундаментальный анализ: динамика, ключевые факторы влияния, новостной фон; "
+        f"2) Технический анализ: тренд, уровни поддержки и сопротивления, RSI и скользящие средние по данным выше; "
+        f"3) На что обратить внимание в ближайшее время. "
         f"Пиши нейтрально, без прямых инвестиционных советов, в конце обязательно добавь фразу "
         f"«Не является индивидуальной инвестиционной рекомендацией». "
-        f"Не более 900 символов."
+        f"Не более 1500 символов."
     )
-    return call_yandex_gpt(prompt, max_tokens=500)
+    return call_yandex_gpt(prompt, max_tokens=900)
+
+
+def market_review_list(user_id: int, ticker: str) -> dict:
+    """Оплаченные обзоры пользователя по тикеру: сегодняшний (МСК) и история."""
+    conn = get_db()
+    try:
+        with conn.cursor() as cur:
+            cur.execute(
+                """
+                SELECT id, review_text,
+                       to_char(created_at AT TIME ZONE 'Europe/Moscow', 'YYYY-MM-DD HH24:MI') AS created,
+                       (created_at AT TIME ZONE 'Europe/Moscow')::date = (NOW() AT TIME ZONE 'Europe/Moscow')::date AS is_today
+                FROM market_review_purchases
+                WHERE user_id = %s AND ticker = %s AND status = 'paid'
+                ORDER BY created_at DESC LIMIT 30
+                """,
+                (user_id, ticker),
+            )
+            rows = cur.fetchall()
+    finally:
+        conn.close()
+    today = next((r for r in rows if r["is_today"]), None)
+    history = [
+        {"id": r["id"], "createdAt": r["created"], "text": r["review_text"]}
+        for r in rows if not r["is_today"] and r["review_text"]
+    ]
+    return {
+        "todayPurchaseId": today["id"] if today else None,
+        "todayText": today["review_text"] if today else None,
+        "history": history,
+    }
 
 
 def handler(event: dict, context) -> dict:
@@ -338,6 +402,16 @@ def handler(event: dict, context) -> dict:
             result = market_futures_list()
         except Exception:
             result = {"items": []}
+        return {"statusCode": 200, "headers": {**CORS, "Content-Type": "application/json"},
+                "body": json.dumps(result, ensure_ascii=False)}
+
+    if method == "GET" and query_action == "market_review_list":
+        h = event.get("headers", {}) or {}
+        uid_raw = h.get("X-User-Id") or h.get("x-user-id")
+        if not uid_raw or not str(uid_raw).isdigit():
+            return {"statusCode": 401, "headers": {**CORS, "Content-Type": "application/json"},
+                    "body": json.dumps({"error": "Требуется авторизация"})}
+        result = market_review_list(int(uid_raw), (params.get("ticker") or "").strip().upper())
         return {"statusCode": 200, "headers": {**CORS, "Content-Type": "application/json"},
                 "body": json.dumps(result, ensure_ascii=False)}
 

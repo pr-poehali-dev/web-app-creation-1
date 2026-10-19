@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import { useMarketSearch, useMarketAsset, useMarketReview, useMarketReviewPrice, SearchResult } from './useMarketData';
 import MarketSearchBox from './MarketSearchBox';
 import MarketQuoteCard from './MarketQuoteCard';
@@ -11,11 +11,13 @@ interface MarketAssetPanelProps {
   marketHint: 'shares' | 'futures';
   placeholder: string;
   emptyHint: string;
+  initialAsset?: SearchResult | null;
+  initialPurchaseId?: number | null;
 }
 
-export default function MarketAssetPanel({ marketHint, placeholder, emptyHint }: MarketAssetPanelProps) {
+export default function MarketAssetPanel({ marketHint, placeholder, initialAsset, initialPurchaseId }: MarketAssetPanelProps) {
   const { query, setQuery, results, isSearching } = useMarketSearch();
-  const [selected, setSelected] = useState<SearchResult | null>(null);
+  const [selected, setSelected] = useState<SearchResult | null>(initialAsset || null);
 
   const { quote, news, isLoadingQuote, isLoadingNews } = useMarketAsset(
     selected?.ticker || null,
@@ -26,10 +28,26 @@ export default function MarketAssetPanel({ marketHint, placeholder, emptyHint }:
   const review = useMarketReview();
   const priceKopeks = useMarketReviewPrice();
 
+  const { loadToday, resume } = review;
+
+  useEffect(() => {
+    if (!selected) return;
+    (async () => {
+      const data = await loadToday(selected.ticker);
+      if (data?.todayText) return;
+      if (data?.todayPurchaseId) {
+        resume(data.todayPurchaseId);
+      } else if (initialPurchaseId && initialAsset?.ticker === selected.ticker) {
+        resume(initialPurchaseId);
+      }
+    })();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [selected?.ticker]);
+
   const handleSelect = (r: SearchResult) => {
+    review.reset();
     setSelected(r);
     setQuery('');
-    review.reset();
   };
 
   return (
@@ -59,8 +77,12 @@ export default function MarketAssetPanel({ marketHint, placeholder, emptyHint }:
               status={review.status}
               reviewText={review.reviewText}
               error={review.error}
+              paymentUrl={review.paymentUrl}
+              sbpUrl={review.sbpUrl}
+              history={review.history}
+              onStartWaiting={review.startWaiting}
               priceKopeks={priceKopeks}
-              onBuy={() => review.buy(selected.ticker, selected.name)}
+              onBuy={() => review.buy(selected.ticker, selected.name, marketHint)}
               onCheckPending={() => review.checkPending(selected.ticker, selected.name)}
             />
           </div>

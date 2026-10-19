@@ -11,6 +11,7 @@ import uuid
 import jwt
 import psycopg2
 import urllib.request
+import urllib.parse
 import ssl
 from datetime import datetime, timezone, timedelta
 
@@ -568,6 +569,7 @@ def handler(event: dict, context) -> dict:
         body = json.loads(event.get("body") or "{}")
         ticker = (body.get("ticker") or "").strip().upper()
         name = (body.get("name") or ticker).strip()
+        market_hint = "futures" if body.get("market") == "futures" else "shares"
 
         if not ticker:
             cur.close(); conn.close()
@@ -592,8 +594,8 @@ def handler(event: dict, context) -> dict:
             "Amount": amount,
             "OrderId": order_id,
             "Description": f"ИИ-обзор актива {name}",
-            "SuccessURL": f"{frontend}/market?payment=success&purchaseId={purchase_id}",
-            "FailURL": f"{frontend}/market?payment=fail&purchaseId={purchase_id}",
+            "SuccessURL": f"{frontend}/market?payment=success&purchaseId={purchase_id}&ticker={urllib.parse.quote(ticker)}&name={urllib.parse.quote(name)}&market={market_hint}",
+            "FailURL": f"{frontend}/market?payment=fail&purchaseId={purchase_id}&ticker={urllib.parse.quote(ticker)}&name={urllib.parse.quote(name)}&market={market_hint}",
             "NotificationURL": "https://functions.poehali.dev/48623d77-3c76-4711-99a9-3223aae78b96",
         }
         params["Token"] = get_tbank_token(params, secret_key)
@@ -620,8 +622,26 @@ def handler(event: dict, context) -> dict:
                     (payment_id_tbank, purchase_id))
         conn.commit()
         cur.close(); conn.close()
+
+        sbp_url = None
+        try:
+            qr_params = {"TerminalKey": terminal_key, "PaymentId": payment_id_tbank, "DataType": "PAYLOAD"}
+            qr_params["Token"] = get_tbank_token(qr_params, secret_key)
+            qr_req = urllib.request.Request(
+                "https://securepay.tinkoff.ru/v2/GetQr",
+                data=json.dumps(qr_params).encode(),
+                headers={"Content-Type": "application/json"},
+                method="POST"
+            )
+            with urllib.request.urlopen(qr_req, timeout=10, context=_ssl_ctx()) as qr_resp:
+                qr_result = json.loads(qr_resp.read())
+            if qr_result.get("Success") and qr_result.get("Data"):
+                sbp_url = qr_result["Data"]
+        except Exception as e:
+            print(f"[PAY] GetQr failed: {e}")
+
         return {"statusCode": 200, "headers": {**CORS, "Content-Type": "application/json"},
-                "body": json.dumps({"ok": True, "payment_url": payment_url, "order_id": order_id, "purchaseId": purchase_id})}
+                "body": json.dumps({"ok": True, "payment_url": payment_url, "sbp_url": sbp_url, "order_id": order_id, "purchaseId": purchase_id})}
 
     # ── GET ?action=market-review-status&purchaseId=N — статус оплаты обзора ──
     if method == "GET" and action == "market-review-status":
