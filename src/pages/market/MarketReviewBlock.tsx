@@ -85,7 +85,7 @@ export default function MarketReviewBlock({ ticker, name, status, reviewText, er
             {sbpUrl ? 'Картой или другим способом' : `Перейти к оплате${priceLabel ? ` · ${priceLabel} ₽` : ''}`}
           </Button>
           <p className="text-[11px] text-muted-foreground text-center">
-            После оплаты обзор появится автоматически и будет доступен весь торговый день.
+            После оплаты вы вернётесь на сайт, обзор появится сам, как только банк подтвердит платёж.
           </p>
         </CardContent>
       </Card>

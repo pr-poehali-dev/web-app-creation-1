@@ -39,7 +39,7 @@ NEWS_FEEDS = [
 ]
 
 
-def call_yandex_gpt(prompt: str, max_tokens: int = 400) -> str:
+def call_yandex_gpt(prompt: str, max_tokens: int = 400, model: str = "yandexgpt-lite", timeout: int = 25, temperature: float = 0.7, system: str = "") -> str:
     api_key = os.environ["YANDEX_API_KEY"]
     folder_id = os.environ["YANDEX_FOLDER_ID"]
     response = requests.post(
@@ -50,21 +50,21 @@ def call_yandex_gpt(prompt: str, max_tokens: int = 400) -> str:
             "x-folder-id": folder_id,
         },
         json={
-            "modelUri": f"gpt://{folder_id}/yandexgpt-lite",
+            "modelUri": f"gpt://{folder_id}/{model}",
             "completionOptions": {
                 "stream": False,
-                "temperature": 0.7,
+                "temperature": temperature,
                 "maxTokens": max_tokens,
             },
             "messages": [
                 {
                     "role": "system",
-                    "text": "Ты помощник для торговой платформы ЕРТТП (Единая Российская Торговая Площадка). Отвечай кратко, строго по заданию, без лишних пояснений."
+                    "text": system or "Ты помощник для торговой платформы ЕРТТП (Единая Российская Торговая Площадка). Отвечай кратко, строго по заданию, без лишних пояснений."
                 },
                 {"role": "user", "text": prompt}
             ],
         },
-        timeout=25,
+        timeout=timeout,
     )
     response.raise_for_status()
     text = response.json()["result"]["alternatives"][0]["message"]["text"].strip()
@@ -136,7 +136,7 @@ def _detect_board(ticker: str, market_hint: str) -> dict:
     return KNOWN_BOARDS["shares"]
 
 
-def market_quote(ticker: str, market_hint: str = "") -> dict:
+def market_quote(ticker: str, market_hint: str = "", days: int = 90) -> dict:
     """Текущая котировка + свечи за последний квартал для графика."""
     ticker = (ticker or "").strip().upper()
     if not ticker:
@@ -166,7 +166,7 @@ def market_quote(ticker: str, market_hint: str = "") -> dict:
     change_pct = md.get("LASTCHANGEPRCNT") or md.get("LASTCHANGETOOPENPRC") or md.get("LASTCHANGEPRC")
 
     till = datetime.now().strftime("%Y-%m-%d")
-    since = (datetime.now() - timedelta(days=90)).strftime("%Y-%m-%d")
+    since = (datetime.now() - timedelta(days=days)).strftime("%Y-%m-%d")
     candles = []
     try:
         craw = _moex_get(
@@ -199,6 +199,8 @@ def market_quote(ticker: str, market_hint: str = "") -> dict:
         "low": md.get("LOW"),
         "updateTime": md.get("UPDATETIME") or md.get("TIME"),
         "candles": candles,
+        "capitalization": md.get("ISSUECAPITALIZATION"),
+        "openPosition": md.get("OPENPOSITION"),
         "market": market,
         "engine": engine,
     }
@@ -290,58 +292,153 @@ def market_news(ticker: str, name: str) -> dict:
     return {"news": items[:10]}
 
 
+def _ema(values: list, n: int) -> list:
+    k = 2 / (n + 1)
+    out = [values[0]]
+    for v in values[1:]:
+        out.append(v * k + out[-1] * (1 - k))
+    return out
+
+
 def _technical_summary(candles: list) -> str:
-    closes = [c["close"] for c in candles if c.get("close") is not None]
-    if len(closes) < 5:
+    rows = [c for c in candles if c.get("close") is not None]
+    closes = [c["close"] for c in rows]
+    if len(closes) < 15:
         return ""
     last = closes[-1]
-    parts = []
-    for n in (10, 20, 50):
+    lines = [f"Последняя цена закрытия: {last}. Дневных свечей: {len(closes)}."]
+    sma = []
+    for n in (20, 50, 100, 200):
         if len(closes) >= n:
-            parts.append(f"SMA{n}={sum(closes[-n:]) / n:.2f}")
-    if len(closes) >= 15:
-        gains = losses = 0.0
-        for i in range(len(closes) - 14, len(closes)):
-            d = closes[i] - closes[i - 1]
-            if d > 0:
-                gains += d
-            else:
-                losses -= d
-        rsi = 100.0 if losses == 0 else 100 - 100 / (1 + gains / losses)
-        parts.append(f"RSI14={rsi:.0f}")
-    recent = candles[-20:]
-    highs = [c["high"] for c in recent if c.get("high") is not None]
-    lows = [c["low"] for c in recent if c.get("low") is not None]
+            v = sum(closes[-n:]) / n
+            sma.append(f"SMA{n}={v:.2f} (цена {'выше' if last > v else 'ниже'})")
+    if sma:
+        lines.append("Скользящие средние: " + "; ".join(sma) + ".")
+    gains = losses = 0.0
+    for i in range(len(closes) - 14, len(closes)):
+        d = closes[i] - closes[i - 1]
+        if d > 0:
+            gains += d
+        else:
+            losses -= d
+    rsi = 100.0 if losses == 0 else 100 - 100 / (1 + gains / losses)
+    lines.append(f"RSI(14)={rsi:.0f}.")
+    if len(closes) >= 35:
+        macd = [a - b for a, b in zip(_ema(closes, 12), _ema(closes, 26))]
+        sig = _ema(macd, 9)
+        lines.append(f"MACD={macd[-1]:.2f}, сигнальная={sig[-1]:.2f} ({'бычий' if macd[-1] > sig[-1] else 'медвежий'} сигнал).")
+    if len(closes) >= 20:
+        m = sum(closes[-20:]) / 20
+        sd = (sum((x - m) ** 2 for x in closes[-20:]) / 20) ** 0.5
+        lines.append(f"Полосы Боллинджера(20): нижняя={m - 2 * sd:.2f}, верхняя={m + 2 * sd:.2f}.")
+    highs = [c["high"] for c in rows if c.get("high") is not None]
+    lows = [c["low"] for c in rows if c.get("low") is not None]
     if highs and lows:
-        parts.append(f"сопротивление(макс 20д)={max(highs):.2f}, поддержка(мин 20д)={min(lows):.2f}")
-    first = closes[0]
-    if first:
-        parts.append(f"изменение за период={(last / first - 1) * 100:.1f}%")
-    return f"Техданные (дневные свечи, последняя цена {last}): " + "; ".join(parts) + "."
+        lines.append(f"Максимум периода={max(highs):.2f}, минимум периода={min(lows):.2f}.")
+        r20, l20 = highs[-20:], lows[-20:]
+        lines.append(f"Ближайшее сопротивление (макс 20 дн)={max(r20):.2f}, поддержка (мин 20 дн)={min(l20):.2f}.")
+    for label, n in (("за месяц", 21), ("за 3 месяца", 63), ("за полгода", 126), ("за период", len(closes) - 1)):
+        if len(closes) > n and closes[-n - 1]:
+            lines.append(f"Изменение {label}: {(last / closes[-n - 1] - 1) * 100:.1f}%.")
+    vols = [c["volume"] for c in rows if c.get("volume") is not None]
+    if len(vols) >= 40:
+        v1, v2 = sum(vols[-20:]) / 20, sum(vols[-40:-20]) / 20
+        if v2:
+            lines.append(f"Средний объём за 20 дн {'вырос' if v1 > v2 else 'снизился'} на {abs(v1 / v2 - 1) * 100:.0f}% к предыдущим 20 дням.")
+    return "\n".join(lines)
+
+
+def _moex_fundamentals(ticker: str, quote: dict) -> str:
+    lines = []
+    if quote.get("capitalization"):
+        lines.append(f"Капитализация эмитента: {float(quote['capitalization']) / 1e9:.1f} млрд руб.")
+    if quote.get("openPosition"):
+        lines.append(f"Открытый интерес по контракту: {quote['openPosition']}.")
+    try:
+        raw = _moex_get(f"securities/{ticker}", {"iss.meta": "off"})
+        desc = {d.get("name"): d.get("value") for d in _rows_to_dicts(raw.get("description", {}))}
+        for key, label in (("NAME", "Полное название"), ("ISIN", "ISIN"), ("ISSUESIZE", "Объём выпуска, акций"),
+                           ("FACEVALUE", "Номинал"), ("LISTLEVEL", "Уровень листинга"), ("TYPENAME", "Тип"),
+                           ("ASSETCODE", "Базовый актив"), ("LASTTRADEDATE", "Последний день торгов")):
+            if desc.get(key):
+                lines.append(f"{label}: {desc[key]}.")
+    except Exception:
+        pass
+    try:
+        raw = _moex_get(f"securities/{ticker}/dividends", {"iss.meta": "off"})
+        divs = _rows_to_dicts(raw.get("dividends", {}))[-6:]
+        if divs:
+            lines.append("Дивиденды (дата закрытия реестра: размер на акцию, руб): " +
+                         "; ".join(f"{d.get('registryclosedate')}: {d.get('value')}" for d in divs) + ".")
+    except Exception:
+        pass
+    return "\n".join(lines)
+
+
+def _google_news(query: str, limit: int = 15) -> list:
+    url = "https://news.google.com/rss/search?" + urllib.parse.urlencode(
+        {"q": f"{query} when:30d", "hl": "ru", "gl": "RU", "ceid": "RU:ru"})
+    try:
+        req = urllib.request.Request(url, headers={"User-Agent": "Mozilla/5.0"})
+        with urllib.request.urlopen(req, timeout=8) as resp:
+            xml_text = resp.read().decode("utf-8", errors="ignore")
+    except Exception:
+        return []
+    out = []
+    for m in re.finditer(r"<item>(.*?)</item>", xml_text, re.S):
+        block = m.group(1)
+        t = re.search(r"<title>(?:<!\[CDATA\[)?(.*?)(?:\]\]>)?</title>", block, re.S)
+        d = re.search(r"<pubDate>(.*?)</pubDate>", block, re.S)
+        if t:
+            out.append(f"{(d.group(1)[5:16] if d else '')} — {_strip_html(t.group(1))}")
+        if len(out) >= limit:
+            break
+    return out
 
 
 def market_review_generate(ticker: str, name: str, quote: dict, news: list) -> str:
-    """Формирует промпт и вызывает YandexGPT для фундаментального и технического обзора."""
-    news_lines = "\n".join(f"- {n['title']}" for n in news[:5]) or "Свежих новостей не найдено."
-    quote_line = ""
-    tech_line = ""
+    """Подробный платный обзор: данные MOEX + интернет-новости + технический анализ, генерирует YandexGPT Pro."""
+    is_futures = (quote or {}).get("market") == "forts"
+    price_line = ""
     if quote and not quote.get("error"):
-        quote_line = f"Текущая цена: {quote.get('last')}, изменение: {quote.get('changePercent')}%."
-        tech_line = _technical_summary(quote.get("candles") or [])
+        price_line = (f"Текущая цена: {quote.get('last')}, изменение за день: {quote.get('changePercent')}%, "
+                      f"день: {quote.get('low')}–{quote.get('high')}.")
+    tech = _technical_summary((quote or {}).get("candles") or [])
+    fundamentals = _moex_fundamentals(ticker, quote or {})
 
+    web = _google_news(f"{name} акции" if not is_futures else f"{name} фьючерс")
+    rss = [f"{n['title']}" for n in news[:8]]
+    seen, all_news = set(), []
+    for n in web + rss:
+        key = n[-60:].lower()
+        if key not in seen:
+            seen.add(key)
+            all_news.append(n)
+    news_text = "\n".join(f"- {n}" for n in all_news[:20]) or "Свежих новостей не найдено."
+
+    system = ("Ты опытный аналитик российского фондового рынка. Пишешь подробные, конкретные, "
+              "профессиональные обзоры на русском языке только на основе переданных данных и общеизвестных "
+              "фактов о компании или активе. Не перекладывай работу на читателя: не пиши «изучите отчётность», "
+              "«следите за новостями» — сам делай выводы. Не выдумывай цифры, которых нет в данных: если данных нет, "
+              "так и скажи, опираясь на то, что известно о бизнесе компании.")
+    kind = "фьючерсного контракта" if is_futures else "акции"
     prompt = (
-        f"Напиши краткий обзор финансового инструмента «{name}» (тикер {ticker}) "
-        f"для российского инвестора: фундаментальный и технический анализ.\n"
-        f"{quote_line}\n{tech_line}\n"
-        f"Последние новости:\n{news_lines}\n\n"
-        f"Структура ответа: 1) Фундаментальный анализ: динамика, ключевые факторы влияния, новостной фон; "
-        f"2) Технический анализ: тренд, уровни поддержки и сопротивления, RSI и скользящие средние по данным выше; "
-        f"3) На что обратить внимание в ближайшее время. "
-        f"Пиши нейтрально, без прямых инвестиционных советов, в конце обязательно добавь фразу "
-        f"«Не является индивидуальной инвестиционной рекомендацией». "
-        f"Не более 1500 символов."
+        f"Сделай подробный платный аналитический обзор {kind} «{name}» (тикер {ticker}).\n\n"
+        f"ДАННЫЕ БИРЖИ:\n{price_line}\n{fundamentals}\n\n"
+        f"ТЕХНИЧЕСКИЕ ПОКАЗАТЕЛИ:\n{tech or 'Недостаточно данных.'}\n\n"
+        f"НОВОСТИ ЗА 30 ДНЕЙ (из интернета):\n{news_text}\n\n"
+        f"Структура ответа (используй заголовки):\n"
+        f"1. КРАТКИЙ ВЫВОД — 2-3 предложения: общая картина и перспектива.\n"
+        f"2. ФУНДАМЕНТАЛЬНЫЙ АНАЛИЗ — чем занимается компания/что лежит в основе актива, положение в отрасли, "
+        f"финансовое состояние и оценка по известным данным, дивиденды, драйверы роста, риски, "
+        f"разбор каждой значимой новости и её влияние на цену.\n"
+        f"3. ТЕХНИЧЕСКИЙ АНАЛИЗ — тренд (краткосрочный и долгосрочный), скользящие средние, RSI, MACD, Боллинджер, "
+        f"объёмы, конкретные уровни поддержки и сопротивления.\n"
+        f"4. СЦЕНАРИИ — бычий и медвежий сценарий с конкретными ценовыми уровнями.\n"
+        f"5. ИТОГ — взвешенная оценка (позитивно / нейтрально / негативно) с обоснованием.\n"
+        f"Объём 3000–4500 символов. В конце фраза: «Не является индивидуальной инвестиционной рекомендацией»."
     )
-    return call_yandex_gpt(prompt, max_tokens=900)
+    return call_yandex_gpt(prompt, max_tokens=2000, model="yandexgpt", timeout=55, temperature=0.3, system=system)
 
 
 def market_my_assets(user_id: int, market: str) -> dict:
@@ -484,7 +581,7 @@ def handler(event: dict, context) -> dict:
         try:
             with conn.cursor() as cur:
                 cur.execute(
-                    "SELECT id, user_id, ticker, status, review_text FROM market_review_purchases WHERE id = %s",
+                    "SELECT id, user_id, ticker, status, review_text, market FROM market_review_purchases WHERE id = %s",
                     (purchase_id,),
                 )
                 purchase = cur.fetchone()
@@ -503,7 +600,8 @@ def handler(event: dict, context) -> dict:
                     return {"statusCode": 200, "headers": {**CORS, "Content-Type": "application/json"},
                             "body": json.dumps({"result": purchase["review_text"]}, ensure_ascii=False)}
 
-                quote = market_quote(ticker)
+                market_hint = purchase.get("market") or "shares"
+                quote = market_quote(ticker, market_hint, 365)
                 news = market_news(ticker, name).get("news", [])
                 result = market_review_generate(ticker, name, quote, news)
 
