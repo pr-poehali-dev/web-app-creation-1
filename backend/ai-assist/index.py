@@ -204,6 +204,38 @@ def market_quote(ticker: str, market_hint: str = "") -> dict:
     }
 
 
+FUTURES_BLUE_CHIPS = [
+    ("SBRF", "Сбербанк"), ("GAZR", "Газпром"), ("LKOH", "ЛУКОЙЛ"), ("GMKN", "Норильский никель"),
+    ("YDEX", "Яндекс"), ("ROSN", "Роснефть"), ("TATN", "Татнефть"), ("SNGR", "Сургутнефтегаз"),
+    ("NLMK", "НЛМК"), ("MAGN", "ММК"), ("ALRS", "АЛРОСА"), ("MTSI", "МТС"), ("MOEX", "Московская биржа"),
+    ("VTBR", "Банк ВТБ"), ("PHOR", "ФосАгро"), ("OZON", "Ozon"),
+    ("BR", "Нефть Brent"), ("GOLD", "Золото"), ("SILV", "Серебро"), ("NG", "Природный газ"),
+    ("Si", "Доллар/рубль"), ("RTS", "Индекс РТС"), ("MIX", "Индекс МосБиржи"),
+]
+
+
+def market_futures_list() -> dict:
+    """Ближайшие активные фьючерсные контракты по голубым фишкам и основным активам."""
+    raw = _moex_get(
+        "engines/futures/markets/forts/boards/RFUD/securities",
+        {"iss.meta": "off", "iss.only": "securities", "securities.columns": "SECID,SHORTNAME,ASSETCODE,LASTTRADEDATE"},
+    )
+    today = datetime.now().strftime("%Y-%m-%d")
+    nearest = {}
+    for r in _rows_to_dicts(raw.get("securities", {})):
+        code, last = r.get("ASSETCODE"), r.get("LASTTRADEDATE") or ""
+        if not code or last < today:
+            continue
+        if code not in nearest or last < nearest[code]["LASTTRADEDATE"]:
+            nearest[code] = r
+    items = []
+    for code, title in FUTURES_BLUE_CHIPS:
+        r = nearest.get(code)
+        if r:
+            items.append({"ticker": r["SECID"], "name": title, "shortname": r.get("SHORTNAME"), "expiry": r.get("LASTTRADEDATE")})
+    return {"items": items}
+
+
 def _strip_html(text: str) -> str:
     return re.sub(r"<[^>]+>", "", text or "").strip()
 
@@ -298,6 +330,14 @@ def handler(event: dict, context) -> dict:
     # ── GET: рыночные данные (бесплатно, без GPT) ──────────────────────────
     if method == "GET" and query_action == "market_search":
         result = market_search(params.get("q", ""))
+        return {"statusCode": 200, "headers": {**CORS, "Content-Type": "application/json"},
+                "body": json.dumps(result, ensure_ascii=False)}
+
+    if method == "GET" and query_action == "market_futures_list":
+        try:
+            result = market_futures_list()
+        except Exception:
+            result = {"items": []}
         return {"statusCode": 200, "headers": {**CORS, "Content-Type": "application/json"},
                 "body": json.dumps(result, ensure_ascii=False)}
 

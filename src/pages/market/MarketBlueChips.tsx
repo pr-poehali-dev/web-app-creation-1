@@ -1,4 +1,6 @@
+import { useEffect, useState } from 'react';
 import Icon from '@/components/ui/icon';
+import func2url from '../../../backend/func2url.json';
 import { SearchResult } from './useMarketData';
 
 const BLUE_CHIPS: SearchResult[] = [
@@ -44,6 +46,56 @@ export default function MarketBlueChips({ onSelect }: MarketBlueChipsProps) {
           >
             <span className="text-sm font-medium truncate">{r.name}</span>
             <span className="shrink-0 text-xs font-mono bg-primary/10 text-primary px-2 py-0.5 rounded">{r.ticker}</span>
+          </button>
+        ))}
+      </div>
+    </div>
+  );
+}
+
+interface FutureItem extends SearchResult {
+  expiry?: string;
+}
+
+const fmtExpiry = (d?: string) => (d ? d.split('-').reverse().join('.') : '');
+
+export function MarketFuturesList({ onSelect }: MarketBlueChipsProps) {
+  const [items, setItems] = useState<FutureItem[] | null>(null);
+
+  useEffect(() => {
+    fetch(`${func2url['ai-assist']}?action=market_futures_list`)
+      .then((r) => r.json())
+      .then((d) => setItems(d.items || []))
+      .catch(() => setItems([]));
+  }, []);
+
+  if (items === null) {
+    return (
+      <div className="flex justify-center py-12 text-muted-foreground">
+        <Icon name="Loader2" size={24} className="animate-spin" />
+      </div>
+    );
+  }
+  if (items.length === 0) return null;
+
+  return (
+    <div>
+      <h3 className="text-sm font-semibold mb-3 flex items-center gap-1.5">
+        <Icon name="Star" size={16} />
+        Активные фьючерсы на голубые фишки и ключевые активы
+      </h3>
+      <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-2">
+        {items.map((r) => (
+          <button
+            key={r.ticker}
+            onClick={() => onSelect(r)}
+            className="text-left bg-card border rounded-lg px-3 py-2.5 hover:bg-muted transition-colors"
+          >
+            <div className="flex items-center justify-between gap-2">
+              <span className="text-sm font-medium truncate">{r.name}</span>
+              <span className="shrink-0 text-xs font-mono bg-primary/10 text-primary px-2 py-0.5 rounded">{r.ticker}</span>
+            </div>
+            <div className="text-[11px] text-muted-foreground mt-1">до {fmtExpiry(r.expiry)}</div>
           </button>
         ))}
       </div>
