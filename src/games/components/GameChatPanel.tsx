@@ -162,7 +162,7 @@ export default function GameChatPanel({ roomId, userId, messages, onSent }: Game
                     }`}
                   >
                     {msg.media_type === 'image' && msg.media_url ? (
-                      <button type="button" onClick={() => setViewer(msg.media_url)} className="block">
+                      <button type="button" onClick={() => setViewer(msg.media_url ?? null)} className="block">
                         <img src={msg.media_url} alt="Фото" loading="lazy" className="max-h-52 rounded-md" />
                       </button>
                     ) : msg.media_type === 'audio' && msg.media_url ? (

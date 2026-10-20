@@ -251,6 +251,8 @@ def apply_action(s, uid: str, action: str, body: Dict[str, Any]) -> Optional[str
             return 'Перевести может только отбивающийся'
         if s['taking']:
             return 'Вы уже решили взять карты'
+        if not s['deck']:
+            return 'Когда колода закончилась, переводить нельзя'
         t = s['table']
         if not t or any(p['d'] for p in t):
             return 'Перевести можно, пока не побита ни одна карта'
