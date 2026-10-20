@@ -234,8 +234,12 @@ export default function DurakGame() {
       }
       if (!state!.taking && !canTransferCard(state!, card)) {
         const targets = state!.table.map((p, i) => ({ p, i })).filter(({ p }) => !p.d && canBeat(p.a, card, state!.trump));
-        if (targets.length === 1) {
+        if (targets.length > 0 && targets.every(({ p }) => p.a[0] === targets[0].p.a[0])) {
           act('defend', { card, target: targets[0].i });
+          return;
+        }
+        if (targets.length === 0) {
+          toast({ title: 'Этой картой не побить', description: 'Побейте старшей картой той же масти или козырем' });
           return;
         }
       }
@@ -283,7 +287,7 @@ export default function DurakGame() {
     const s = state!;
     if (iAmDefender) {
       if (s.taking) return 'Вы берёте карты — ждём, пока доподкинут';
-      if (unbeaten.length) return selected ? 'Нажмите на карту на столе, чтобы побить, или переведите' : 'Выберите карту из руки: побить, перевести или «Беру»';
+      if (unbeaten.length) return selected ? 'Теперь нажмите на карту на столе, которую хотите побить' : 'Выберите карту из руки: побить, перевести или «Беру»';
       return 'Всё отбито — ждём «бито» или подкидывание';
     }
     if (!s.table.length) return myUid === s.attacker ? 'Ваш заход: нажмите на карту' : `${nick(s.attacker)} выбирает карту для захода`;
