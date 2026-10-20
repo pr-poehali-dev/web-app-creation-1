@@ -17,8 +17,7 @@ import Icon from '@/components/ui/icon';
 import { useOrdersData, type OrderTab } from '@/hooks/useOrdersData';
 import { offersAPI } from '@/services/api';
 import { getSession } from '@/utils/auth';
-import type { Offer } from '@/types/offer';
-import type { Order } from '@/types/order';
+import type { Order, Offer } from '@/types/offer';
 
 interface MyOrdersProps {
   isAuthenticated: boolean;
