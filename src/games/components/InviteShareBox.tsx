@@ -4,7 +4,7 @@ import { Button } from '@/components/ui/button';
 import { useToast } from '@/hooks/use-toast';
 import { GameRoomDetail } from '../utils/gameRooms';
 import { GameUser } from '../utils/gameAuth';
-import { buildInviteUrl, makeShareUrl } from '../utils/gameLinks';
+import { buildInviteUrl, makeShareUrl, shareLink } from '../utils/gameLinks';
 
 interface InviteShareBoxProps {
   room: GameRoomDetail;
@@ -23,23 +23,14 @@ export default function InviteShareBox({ room, user }: InviteShareBoxProps) {
   const inviteUrl = buildInviteUrl(room.invite_code);
 
   const handleShare = async () => {
-    const shareUrl = await makeShareUrl(inviteUrl, user.nickname, room.game_type);
-    if (navigator.share) {
-      try {
-        await navigator.share({ url: shareUrl });
-        return;
-      } catch {
-        // пользователь закрыл диалог — просто fallback на копирование ниже не нужен
-        return;
-      }
-    }
-    try {
-      await navigator.clipboard.writeText(shareUrl);
+    const shareUrl = makeShareUrl(inviteUrl, user.nickname, room.game_type);
+    const result = await shareLink(shareUrl, `${user.nickname} приглашает тебя сыграть. Заходи:`);
+    if (result === 'copied') {
       setCopied(true);
-      toast({ title: 'Ссылка скопирована' });
+      toast({ title: 'Ссылка скопирована', description: 'Отправьте её в любой мессенджер' });
       setTimeout(() => setCopied(false), 2000);
-    } catch {
-      toast({ variant: 'destructive', title: 'Ошибка', description: 'Не удалось скопировать ссылку' });
+    } else if (result === 'failed') {
+      toast({ variant: 'destructive', title: 'Ошибка', description: 'Не удалось поделиться ссылкой' });
     }
   };
 
