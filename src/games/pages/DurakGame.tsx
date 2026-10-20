@@ -199,7 +199,7 @@ export default function DurakGame() {
   const playing = room?.status === 'playing' && hasGame && state!.phase === 'playing';
   const finished = room?.status === 'finished' && hasGame;
   const iAmDefender = playing && state!.defender === myUid;
-  const iAmOut = !!state?.out?.includes(myUid);
+  const iAmOut = !!state?.out?.includes(myUid) || (hasGame && !!state?.order?.includes(myUid) && state?.phase === 'playing' && state?.deck_count === 0 && myHand.length === 0);
   const unbeaten = hasGame ? state!.table.filter((p) => !p.d) : [];
   const turnPlayer = players.find((p) => p.user_id === room?.current_turn_user_id);
   const isMyTurn = room?.current_turn_user_id === user.id;
@@ -279,7 +279,7 @@ export default function DurakGame() {
 
   const hint = (() => {
     if (!playing) return '';
-    if (iAmOut) return 'Вы вышли из игры — остальные доигрывают';
+    if (iAmOut) return 'Вы вышли из игры с победой — остальные доигрывают';
     const s = state!;
     if (iAmDefender) {
       if (s.taking) return 'Вы берёте карты — ждём, пока доподкинут';
@@ -543,7 +543,7 @@ export default function DurakGame() {
                         <span className={`mr-2 rounded-full px-2 py-0.5 text-xs font-semibold ${
                           iAmDefender ? 'bg-sky-500/20 text-sky-300' : myUid === state!.attacker ? 'bg-red-500/20 text-red-300' : 'bg-slate-700 text-slate-300'
                         }`}>
-                          {iAmOut ? 'Вышли' : iAmDefender ? 'Отбиваетесь' : myUid === state!.attacker ? 'Атакуете' : 'Подкидываете'}
+                          {iAmOut ? 'Победа' : iAmDefender ? 'Отбиваетесь' : myUid === state!.attacker ? 'Атакуете' : 'Подкидываете'}
                         </span>
                         {hint}
                       </>
@@ -586,7 +586,7 @@ export default function DurakGame() {
 
                 <div className="flex flex-wrap justify-center gap-1.5 sm:gap-2 pt-3 min-h-[7rem]">
                   {myHand.length === 0 ? (
-                    <p className="self-center text-sm text-slate-500">{iAmOut ? 'У вас не осталось карт' : 'Карт нет'}</p>
+                    <p className="self-center text-sm text-slate-500">{iAmOut ? 'Вы вышли из игры с победой! Остальные доигрывают' : 'Карт нет'}</p>
                   ) : (
                     myHand.map((card) => {
                       const usable = playing && !iAmOut && (iAmDefender || canAddCard(state!, myUid, card));
