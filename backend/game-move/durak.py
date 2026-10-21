@@ -304,8 +304,24 @@ def apply_action(s, uid: str, action: str, body: Dict[str, Any]) -> Optional[str
     else:
         return 'Неизвестное действие'
 
+    if action in ('attack', 'transfer'):
+        _early_win(s, uid)
+
     resolve(s)
     return None
+
+
+def _early_win(s, uid: str):
+    if s['deck'] or s['hands'][uid] or uid in s['out'] or s['phase'] != 'playing':
+        return
+    opp = s['defender'] if s['defender'] != uid else None
+    if opp is None or len(s['hands'][opp]) <= 2:
+        return
+    s['out'].append(uid)
+    _log(s, t='out', by=uid)
+    remaining = [u for u in s['order'] if u not in s['out']]
+    if len(remaining) <= 1:
+        _finish(s, remaining)
 
 
 def auto_move(s, uid: str):

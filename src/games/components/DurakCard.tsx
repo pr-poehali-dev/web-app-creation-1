@@ -1,4 +1,4 @@
-const SUIT_SYMBOLS: Record<string, string> = { S: '♠', H: '♥', D: '♦', C: '♣' };
+const SUIT_SYMBOLS: Record<string, string> = { S: '♠', H: '♥', D: '♦', C: '♧' };
 
 interface DurakCardProps {
   card?: string;
