@@ -520,6 +520,11 @@ export default function DurakGame() {
                   {state!.loser !== myUid && state!.loser && (
                     <p className="text-sm text-emerald-300">Вы выиграли партию</p>
                   )}
+                  {state!.loser && (
+                    <p className="text-sm text-slate-300">
+                      {state!.loser === myUid ? 'В следующей партии вы ходите первым' : `В следующей партии первым ходит ${nick(state!.loser)}`}
+                    </p>
+                  )}
                   {isOwner && (
                     <Button
                       onClick={() => act('start')}
