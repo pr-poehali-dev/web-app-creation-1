@@ -215,7 +215,7 @@ export function useMarketReview() {
     }
   }, []);
 
-  const fetchReview = useCallback(async (id: number, ticker: string, name: string) => {
+  const fetchReview = useCallback(async (id: number, ticker: string, name: string, retried = false): Promise<void> => {
     const session = getSession();
     if (!session?.id) return;
     try {
@@ -226,7 +226,13 @@ export function useMarketReview() {
       });
 
       if (res.status === 402) {
-        // оплата ещё не подтверждена банком — это ожидаемо, продолжаем ждать
+        const token = getJwtToken();
+        if (!token || retried) return;
+        const st = await fetch(`${TBANK_PAYMENT_API}?action=market-review-status&purchaseId=${id}`, {
+          headers: { 'X-Authorization': `Bearer ${token}` },
+        });
+        const stData: { status?: string } = await st.json().catch(() => ({}));
+        if (stData.status === 'paid') await fetchReview(id, ticker, name, true);
         return;
       }
 
@@ -292,6 +298,7 @@ export function useMarketReview() {
   const checkPending = useCallback((ticker: string, name: string) => {
     if (!purchaseIdRef.current) return;
     stopPolling();
+    fetchReview(purchaseIdRef.current, ticker, name);
     pollRef.current = setInterval(() => {
       pollAttemptsRef.current += 1;
       if (pollAttemptsRef.current > POLL_MAX_ATTEMPTS) {

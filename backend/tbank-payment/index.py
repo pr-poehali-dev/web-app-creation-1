@@ -651,10 +651,27 @@ def handler(event: dict, context) -> dict:
             return {"statusCode": 400, "headers": {**CORS, "Content-Type": "application/json"},
                     "body": json.dumps({"ok": False, "error": "purchaseId обязателен"})}
         cur.execute(f"""
-            SELECT id, status, review_text FROM {schema}.market_review_purchases
+            SELECT id, status, review_text, tbank_payment_id FROM {schema}.market_review_purchases
             WHERE id=%s AND user_id=%s
         """, (purchase_id, user_id))
         row = cur.fetchone()
+        if row and row[1] != "paid" and row[3]:
+            try:
+                st_params = {"TerminalKey": os.environ["TBANK_TERMINAL_KEY"], "PaymentId": str(row[3])}
+                st_params["Token"] = get_tbank_token(st_params, get_secret_key())
+                st_req = urllib.request.Request(
+                    "https://securepay.tinkoff.ru/v2/GetState",
+                    data=json.dumps(st_params).encode(),
+                    headers={"Content-Type": "application/json"}, method="POST"
+                )
+                with urllib.request.urlopen(st_req, timeout=8, context=_ssl_ctx()) as st_resp:
+                    st = json.loads(st_resp.read())
+                if st.get("Success") and st.get("Status") in ("CONFIRMED", "AUTHORIZED"):
+                    cur.execute(f"UPDATE {schema}.market_review_purchases SET status='paid', updated_at=NOW() WHERE id=%s AND status<>'paid'", (row[0],))
+                    conn.commit()
+                    row = (row[0], "paid", row[2], row[3])
+            except Exception as e:
+                print(f"[PAY] GetState failed: {e}")
         cur.close(); conn.close()
         if not row:
             return {"statusCode": 404, "headers": {**CORS, "Content-Type": "application/json"},

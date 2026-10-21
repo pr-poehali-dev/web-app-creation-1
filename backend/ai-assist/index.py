@@ -449,7 +449,7 @@ def market_my_assets(user_id: int, market: str) -> dict:
             cur.execute(
                 """
                 SELECT ticker, MAX(asset_name) AS name, MAX(created_at) AS last_at,
-                       BOOL_OR((created_at AT TIME ZONE 'Europe/Moscow')::date = (NOW() AT TIME ZONE 'Europe/Moscow')::date) AS today
+                       BOOL_OR(created_at > NOW() - INTERVAL '24 hours') AS today
                 FROM market_review_purchases
                 WHERE user_id = %s AND status = 'paid' AND COALESCE(market, 'shares') = %s
                 GROUP BY ticker ORDER BY last_at DESC LIMIT 30
@@ -471,7 +471,7 @@ def market_review_list(user_id: int, ticker: str) -> dict:
                 """
                 SELECT id, review_text,
                        to_char(created_at AT TIME ZONE 'Europe/Moscow', 'YYYY-MM-DD HH24:MI') AS created,
-                       (created_at AT TIME ZONE 'Europe/Moscow')::date = (NOW() AT TIME ZONE 'Europe/Moscow')::date AS is_today
+                       created_at > NOW() - INTERVAL '24 hours' AS is_today
                 FROM market_review_purchases
                 WHERE user_id = %s AND ticker = %s AND status = 'paid'
                 ORDER BY created_at DESC LIMIT 30
