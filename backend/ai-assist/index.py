@@ -470,7 +470,7 @@ def market_review_list(user_id: int, ticker: str) -> dict:
             cur.execute(
                 """
                 SELECT id, review_text,
-                       to_char(created_at AT TIME ZONE 'Europe/Moscow', 'YYYY-MM-DD HH24:MI') AS created,
+                       to_char(created_at + INTERVAL '3 hours', 'YYYY-MM-DD HH24:MI') AS created,
                        created_at > NOW() - INTERVAL '24 hours' AS is_today
                 FROM market_review_purchases
                 WHERE user_id = %s AND ticker = %s AND status = 'paid'

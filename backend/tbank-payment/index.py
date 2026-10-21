@@ -331,7 +331,7 @@ def handler(event: dict, context) -> dict:
     user_id = user[0]
 
     # ── GET / — статус подписки ──────────────────────────────────────────────
-    if method == "GET":
+    if method == "GET" and not action:
         cur.execute(f"""
             SELECT plan, status, expires_at FROM {schema}.subscriptions
             WHERE user_id=%s ORDER BY created_at DESC LIMIT 1
