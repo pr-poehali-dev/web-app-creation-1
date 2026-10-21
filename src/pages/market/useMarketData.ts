@@ -166,6 +166,7 @@ export function useMarketReview() {
   const pollAttemptsRef = useRef(0);
   const purchaseIdRef = useRef<number | null>(null);
   const inflightRef = useRef(false);
+  const generatingRef = useRef(false);
   const [generating, setGenerating] = useState(false);
 
   const stopPolling = useCallback(() => {
@@ -230,6 +231,7 @@ export function useMarketReview() {
       if (stData.status !== 'paid') return;
 
       setGenerating(true);
+      generatingRef.current = true;
       const res = await fetch(AI_ASSIST_API, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json', 'X-User-Id': String(session.id) },
@@ -240,6 +242,10 @@ export function useMarketReview() {
       try {
         data = await res.json();
       } catch {
+        setError('Оплата прошла, но обзор не успел создаться. Нажмите «Получить обзор» ещё раз — повторно платить не нужно.');
+        setStatus('error');
+        setGenerating(false);
+        stopPolling();
         return;
       }
 
@@ -258,9 +264,15 @@ export function useMarketReview() {
         stopPolling();
       }
     } catch {
-      // сетевая ошибка одного тика — пробуем на следующем
+      if (generatingRef.current) {
+        setError('Обзор не успел создаться. Откройте бумагу ещё раз — повторно платить не нужно.');
+        setStatus('error');
+        setGenerating(false);
+        stopPolling();
+      }
     } finally {
       inflightRef.current = false;
+      generatingRef.current = false;
     }
   }, [stopPolling]);
 

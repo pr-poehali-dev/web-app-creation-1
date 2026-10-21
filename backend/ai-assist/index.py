@@ -404,9 +404,12 @@ def market_review_generate(ticker: str, name: str, quote: dict, news: list) -> s
         price_line = (f"Текущая цена: {quote.get('last')}, изменение за день: {quote.get('changePercent')}%, "
                       f"день: {quote.get('low')}–{quote.get('high')}.")
     tech = _technical_summary((quote or {}).get("candles") or [])
-    fundamentals = _moex_fundamentals(ticker, quote or {})
-
-    web = _google_news(f"{name} акции" if not is_futures else f"{name} фьючерс")
+    from concurrent.futures import ThreadPoolExecutor
+    with ThreadPoolExecutor(max_workers=2) as ex:
+        f_fund = ex.submit(_moex_fundamentals, ticker, quote or {})
+        f_web = ex.submit(_google_news, f"{name} акции" if not is_futures else f"{name} фьючерс")
+        fundamentals = f_fund.result()
+        web = f_web.result()
     rss = [f"{n['title']}" for n in news[:8]]
     seen, all_news = set(), []
     for n in web + rss:
@@ -601,8 +604,12 @@ def handler(event: dict, context) -> dict:
                             "body": json.dumps({"result": purchase["review_text"]}, ensure_ascii=False)}
 
                 market_hint = purchase.get("market") or "shares"
-                quote = market_quote(ticker, market_hint, 365)
-                news = market_news(ticker, name).get("news", [])
+                from concurrent.futures import ThreadPoolExecutor
+                with ThreadPoolExecutor(max_workers=2) as ex:
+                    f_q = ex.submit(market_quote, ticker, market_hint, 365)
+                    f_n = ex.submit(market_news, ticker, name)
+                    quote = f_q.result()
+                    news = f_n.result().get("news", [])
                 result = market_review_generate(ticker, name, quote, news)
 
                 cur.execute(

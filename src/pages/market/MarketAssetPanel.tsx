@@ -85,7 +85,7 @@ export default function MarketAssetPanel({ marketHint, placeholder, initialAsset
               history={review.history}
               onStartWaiting={review.startWaiting}
               priceKopeks={priceKopeks}
-              onBuy={() => review.buy(selected.ticker, selected.name, marketHint)}
+              onBuy={() => (review.status === 'error' && review.purchaseId ? review.resume(review.purchaseId) : review.buy(selected.ticker, selected.name, marketHint))}
               onCheckPending={() => review.checkPending(selected.ticker, selected.name)}
             />
           </div>
