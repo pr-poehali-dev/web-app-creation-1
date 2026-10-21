@@ -53,7 +53,10 @@ def new_game(order: List[str], prev_loser: Optional[str] = None) -> Dict[str, An
         tr = [rank(c) for c in hands[u] if suit(c) == trump]
         if tr and (best is None or min(tr) < best[0]):
             best = (min(tr), u)
-    attacker = prev_loser if prev_loser in order else (best[1] if best else random.choice(order))
+    if prev_loser in order:
+        attacker = order[(order.index(prev_loser) - 1) % len(order)]
+    else:
+        attacker = best[1] if best else random.choice(order)
     s = {
         'phase': 'playing', 'order': list(order), 'hands': hands, 'deck': deck,
         'trump': trump, 'trump_card': trump_card, 'attacker': attacker, 'defender': None,

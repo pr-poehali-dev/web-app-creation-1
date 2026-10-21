@@ -522,7 +522,7 @@ export default function DurakGame() {
                   )}
                   {state!.loser && (
                     <p className="text-sm text-slate-300">
-                      {state!.loser === myUid ? 'В следующей партии вы ходите первым' : `В следующей партии первым ходит ${nick(state!.loser)}`}
+                      {state!.loser === myUid ? 'В следующей партии вы отбиваетесь первым' : `В следующей партии первым отбивается ${nick(state!.loser)}`}
                     </p>
                   )}
                   {isOwner && (
