@@ -28,7 +28,7 @@ import {
   canTransferCard,
 } from '../utils/gameDurak';
 
-const cardName = (c?: string) => (c ? `${c[0] === 'T' ? '10' : c[0]}${{ S: '♠', H: '♥', D: '♦', C: '♣' }[c[1]]}` : '');
+const cardName = (c?: string) => (c ? `${c[0] === 'T' ? '10' : c[0]}${{ S: '♠', H: '♥', D: '♦', C: '♧' }[c[1]]}` : '');
 
 export default function DurakGame() {
   const { roomId } = useParams<{ roomId: string }>();
