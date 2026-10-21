@@ -8,6 +8,7 @@ interface MarketReviewBlockProps {
   ticker: string;
   name: string;
   status: ReviewStatus;
+  generating?: boolean;
   reviewText: string | null;
   error: string | null;
   priceKopeks: number | null;
@@ -19,7 +20,7 @@ interface MarketReviewBlockProps {
   onCheckPending: () => void;
 }
 
-export default function MarketReviewBlock({ ticker, name, status, reviewText, error, priceKopeks, paymentUrl, sbpUrl, history, onStartWaiting, onBuy, onCheckPending }: MarketReviewBlockProps) {
+export default function MarketReviewBlock({ ticker, name, status, generating, reviewText, error, priceKopeks, paymentUrl, sbpUrl, history, onStartWaiting, onBuy, onCheckPending }: MarketReviewBlockProps) {
   const priceLabel = priceKopeks ? (priceKopeks / 100).toLocaleString('ru-RU', { minimumFractionDigits: priceKopeks % 100 === 0 ? 0 : 2 }) : null;
   useEffect(() => {
     if (status === 'pending') onCheckPending();
@@ -107,7 +108,7 @@ export default function MarketReviewBlock({ ticker, name, status, reviewText, er
         {status === 'pending' && (
           <div className="flex items-center justify-center gap-2 text-sm text-muted-foreground py-2">
             <Icon name="Loader2" size={16} className="animate-spin" />
-            Ожидаем подтверждение оплаты…
+            {generating ? 'Оплата подтверждена, готовим обзор…' : 'Проверяем оплату…'}
           </div>
         )}
 

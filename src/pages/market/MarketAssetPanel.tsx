@@ -77,6 +77,7 @@ export default function MarketAssetPanel({ marketHint, placeholder, initialAsset
               ticker={selected.ticker}
               name={selected.name}
               status={review.status}
+              generating={review.generating}
               reviewText={review.reviewText}
               error={review.error}
               paymentUrl={review.paymentUrl}

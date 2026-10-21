@@ -165,6 +165,8 @@ export function useMarketReview() {
   const pollRef = useRef<ReturnType<typeof setInterval> | null>(null);
   const pollAttemptsRef = useRef(0);
   const purchaseIdRef = useRef<number | null>(null);
+  const inflightRef = useRef(false);
+  const [generating, setGenerating] = useState(false);
 
   const stopPolling = useCallback(() => {
     if (pollRef.current) {
@@ -215,26 +217,24 @@ export function useMarketReview() {
     }
   }, []);
 
-  const fetchReview = useCallback(async (id: number, ticker: string, name: string, retried = false): Promise<void> => {
+  const fetchReview = useCallback(async (id: number, ticker: string, name: string): Promise<void> => {
     const session = getSession();
-    if (!session?.id) return;
+    const token = getJwtToken();
+    if (!session?.id || !token || inflightRef.current) return;
+    inflightRef.current = true;
     try {
+      const st = await fetch(`${TBANK_PAYMENT_API}?action=market-review-status&purchaseId=${id}`, {
+        headers: { 'X-Authorization': `Bearer ${token}` },
+      });
+      const stData: { status?: string } = await st.json().catch(() => ({}));
+      if (stData.status !== 'paid') return;
+
+      setGenerating(true);
       const res = await fetch(AI_ASSIST_API, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json', 'X-User-Id': String(session.id) },
         body: JSON.stringify({ action: 'market_review', purchaseId: id, ticker, name }),
       });
-
-      if (res.status === 402) {
-        const token = getJwtToken();
-        if (!token || retried) return;
-        const st = await fetch(`${TBANK_PAYMENT_API}?action=market-review-status&purchaseId=${id}`, {
-          headers: { 'X-Authorization': `Bearer ${token}` },
-        });
-        const stData: { status?: string } = await st.json().catch(() => ({}));
-        if (stData.status === 'paid') await fetchReview(id, ticker, name, true);
-        return;
-      }
 
       let data: { result?: string; error?: string } = {};
       try {
@@ -246,18 +246,21 @@ export function useMarketReview() {
       if (res.ok && data.result) {
         setReviewText(data.result);
         setStatus('paid');
+        setGenerating(false);
         stopPolling();
         return;
       }
 
-      if (!res.ok && data.error) {
-        // реальная ошибка от сервера (не "ждём оплату") — сообщаем пользователю и прекращаем опрос
+      if (!res.ok && res.status !== 402 && data.error) {
         setError(data.error);
         setStatus('error');
+        setGenerating(false);
         stopPolling();
       }
     } catch {
-      // сетевая ошибка одного тика — пробуем на следующем, не прерываем сразу
+      // сетевая ошибка одного тика — пробуем на следующем
+    } finally {
+      inflightRef.current = false;
     }
   }, [stopPolling]);
 
@@ -325,8 +328,9 @@ export function useMarketReview() {
     setPaymentUrl(null);
     setSbpUrl(null);
     setHistory([]);
+    setGenerating(false);
     stopPolling();
   }, [stopPolling]);
 
-  return { status, reviewText, error, paymentUrl, sbpUrl, history, purchaseId, buy, checkPending, reset, loadToday, resume, startWaiting };
+  return { generating, status, reviewText, error, paymentUrl, sbpUrl, history, purchaseId, buy, checkPending, reset, loadToday, resume, startWaiting };
 }
