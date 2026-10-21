@@ -1010,7 +1010,8 @@ def handle_durak_action(cur, conn, room, user, body):
             return error_response(400, 'Игра уже идёт')
         if not 2 <= len(order) <= 6:
             return error_response(400, 'Для игры нужно от 2 до 6 игроков')
-        state = durak.new_game(order)
+        prev = room['state'] or {}
+        state = durak.new_game(order, prev.get('loser') if room['status'] == 'finished' else None)
         state['skips'] = {}
         state['deadline'] = time.time() + durak.TURN_SECONDS
         turn = durak.current_turn(state)

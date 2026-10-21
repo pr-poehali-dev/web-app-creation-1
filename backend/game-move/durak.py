@@ -39,7 +39,7 @@ def next_active(s: Dict[str, Any], uid: str) -> Optional[str]:
     return None
 
 
-def new_game(order: List[str]) -> Dict[str, Any]:
+def new_game(order: List[str], prev_loser: Optional[str] = None) -> Dict[str, Any]:
     deck = [r + sd for r in RANKS for sd in SUITS]
     random.shuffle(deck)
     hands = {u: [] for u in order}
@@ -53,7 +53,7 @@ def new_game(order: List[str]) -> Dict[str, Any]:
         tr = [rank(c) for c in hands[u] if suit(c) == trump]
         if tr and (best is None or min(tr) < best[0]):
             best = (min(tr), u)
-    attacker = best[1] if best else random.choice(order)
+    attacker = prev_loser if prev_loser in order else (best[1] if best else random.choice(order))
     s = {
         'phase': 'playing', 'order': list(order), 'hands': hands, 'deck': deck,
         'trump': trump, 'trump_card': trump_card, 'attacker': attacker, 'defender': None,
