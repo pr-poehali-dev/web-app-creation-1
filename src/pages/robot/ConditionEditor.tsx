@@ -9,6 +9,8 @@ export const CONDITION_TYPES: { value: string; label: string; group: string }[] 
   { value: 'price_vs_sma', label: 'Цена выше или ниже средней', group: 'Индикаторы' },
   { value: 'macd', label: 'MACD пересёк сигнальную', group: 'Индикаторы' },
   { value: 'bollinger', label: 'Цена вышла за полосу Боллинджера', group: 'Индикаторы' },
+  { value: 'divergence_rsi', label: 'Дивергенция по RSI', group: 'Индикаторы' },
+  { value: 'divergence_macd', label: 'Дивергенция по MACD', group: 'Индикаторы' },
   { value: 'breakout', label: 'Пробой максимума или минимума', group: 'Уровни' },
   { value: 'range_breakout', label: 'Выход из узкого диапазона', group: 'Фигуры' },
   { value: 'double_bottom', label: 'Двойное дно', group: 'Фигуры' },
@@ -20,6 +22,8 @@ const DEFAULTS: Record<string, Condition> = {
   sma_cross: { type: 'sma_cross', fast: 20, slow: 50, dir: 'up' },
   price_vs_sma: { type: 'price_vs_sma', period: 50, op: 'above' },
   macd: { type: 'macd', dir: 'up' },
+  divergence_rsi: { type: 'divergence_rsi', dir: 'up' },
+  divergence_macd: { type: 'divergence_macd', dir: 'up' },
   bollinger: { type: 'bollinger', op: 'below_lower' },
   breakout: { type: 'breakout', period: 20, dir: 'up' },
   range_breakout: { type: 'range_breakout', period: 20, dir: 'up' },
@@ -90,6 +94,8 @@ function ConditionRow({ cond, onChange, onRemove }: RowProps) {
         </>
       )}
       {cond.type === 'macd' && dirSelect('вверх', 'вниз')}
+      {(cond.type === 'divergence_rsi' || cond.type === 'divergence_macd') &&
+        dirSelect('бычья (цена ниже, индикатор выше)', 'медвежья (цена выше, индикатор ниже)')}
       {cond.type === 'bollinger' && (
         <select className={selectCls} value={cond.op} onChange={(e) => set({ op: e.target.value })}>
           <option value="below_lower">ниже нижней полосы</option>

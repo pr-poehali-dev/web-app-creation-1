@@ -8,6 +8,8 @@ LABELS = {
     "double_bottom": "Двойное дно",
     "double_top": "Двойная вершина",
     "range_breakout": "Выход из узкого диапазона",
+    "divergence_rsi": "Дивергенция по RSI",
+    "divergence_macd": "Дивергенция по MACD",
 }
 
 
@@ -46,6 +48,8 @@ def sanitize(conds) -> list:
             out.append({"type": t, "period": int(_num(c.get("period"), 5, 100, 20)), "dir": d})
         elif t in ("double_bottom", "double_top"):
             out.append({"type": t})
+        elif t in ("divergence_rsi", "divergence_macd"):
+            out.append({"type": t, "dir": d})
         elif t == "range_breakout":
             out.append({"type": t, "period": int(_num(c.get("period"), 8, 60, 20)), "dir": d})
     return out
@@ -69,6 +73,9 @@ def describe(c: dict) -> str:
         return "двойное дно с пробоем линии шеи"
     if t == "double_top":
         return "двойная вершина с пробоем линии шеи"
+    if t in ("divergence_rsi", "divergence_macd"):
+        name = "RSI" if t == "divergence_rsi" else "MACD"
+        return f"{'бычья' if c['dir'] == 'up' else 'медвежья'} дивергенция по {name}"
     if t == "range_breakout":
         return f"выход {'вверх' if c['dir'] == 'up' else 'вниз'} из узкого диапазона {c['period']} ч"
     return t
@@ -106,9 +113,9 @@ def _pivots(values, kind, side=2):
     res = []
     for i in range(side, len(values) - side):
         window = values[i - side:i + side + 1]
-        if kind == "low" and values[i] == min(window):
+        if kind == "low" and values[i] == min(window) and window.index(values[i]) == side:
             res.append(i)
-        if kind == "high" and values[i] == max(window):
+        if kind == "high" and values[i] == max(window) and window.index(values[i]) == side:
             res.append(i)
     return res
 
@@ -136,6 +143,42 @@ def _double_pattern(candles, bottom: bool) -> bool:
         if not bottom and last < neck and prev >= neck:
             return True
     return False
+
+
+def _rsi_series(closes, n=14):
+    out = [None] * len(closes)
+    for i in range(n, len(closes)):
+        gains = losses = 0.0
+        for k in range(i - n + 1, i + 1):
+            d = closes[k] - closes[k - 1]
+            if d > 0:
+                gains += d
+            else:
+                losses -= d
+        out[i] = 100.0 if losses == 0 else 100 - 100 / (1 + gains / losses)
+    return out
+
+
+def _macd_series(closes):
+    macd = [a - b for a, b in zip(_ema(closes, 12), _ema(closes, 26))]
+    return [v if i >= 35 else None for i, v in enumerate(macd)]
+
+
+def _divergence(candles, series, bullish: bool) -> bool:
+    n = len(candles)
+    start = max(0, n - 70)
+    key = "low" if bullish else "high"
+    vals = [c[key] for c in candles]
+    piv = [i + start for i in _pivots(vals[start:], key, side=3)]
+    piv = [i for i in piv if series[i] is not None]
+    if len(piv) < 2:
+        return False
+    a, b = piv[-2], piv[-1]
+    if b < n - 15 or b - a < 5:
+        return False
+    if bullish:
+        return vals[b] < vals[a] * 0.999 and series[b] > series[a]
+    return vals[b] > vals[a] * 1.001 and series[b] < series[a]
 
 
 def check(c: dict, candles: list) -> bool:
@@ -173,6 +216,14 @@ def check(c: dict, candles: list) -> bool:
         if c["dir"] == "up":
             return closes[-1] > max(x["high"] for x in prev)
         return closes[-1] < min(x["low"] for x in prev)
+    if t == "divergence_rsi":
+        if len(closes) < 40:
+            return False
+        return _divergence(candles, _rsi_series(closes), c["dir"] == "up")
+    if t == "divergence_macd":
+        if len(closes) < 50:
+            return False
+        return _divergence(candles, _macd_series(closes), c["dir"] == "up")
     if t == "double_bottom":
         return _double_pattern(candles, True)
     if t == "double_top":
