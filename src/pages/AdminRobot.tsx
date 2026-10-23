@@ -72,7 +72,7 @@ export default function AdminRobot({ isAuthenticated, onLogout }: Props) {
         </div>
 
         {denied ? (
-          <p className="text-sm text-muted-foreground">Раздел доступен только администратору.</p>
+          <p className="text-sm text-muted-foreground">Раздел доступен только ООО «Дойдум-Инвест».</p>
         ) : (
           <Tabs defaultValue="signals">
             <TabsList className="mb-4">

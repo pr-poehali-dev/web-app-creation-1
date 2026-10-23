@@ -123,6 +123,12 @@ export default function HeaderUserMenu({
           <Icon name="Brain" className="mr-2 h-4 w-4 text-purple-500" />
           Нейро-звук для мозга
         </DropdownMenuItem>
+        {currentUser?.inn === '1400022716' && (
+          <DropdownMenuItem onClick={() => navigate('/admin/robot')} className="border-2 border-border rounded-md mb-1">
+            <Icon name="Bot" className="mr-2 h-4 w-4 text-primary" />
+            Торговый робот
+          </DropdownMenuItem>
+        )}
         {currentUser?.role === 'admin' && (
           <>
             <DropdownMenuSeparator />
@@ -132,10 +138,6 @@ export default function HeaderUserMenu({
             <DropdownMenuItem onClick={() => navigate('/admin/panel')} className="border-2 border-border rounded-md mb-1">
               <Icon name="LayoutDashboard" className="mr-2 h-4 w-4" />
               Админ-панель
-            </DropdownMenuItem>
-            <DropdownMenuItem onClick={() => navigate('/admin/robot')} className="border-2 border-border rounded-md mb-1">
-              <Icon name="Bot" className="mr-2 h-4 w-4" />
-              Торговый робот
             </DropdownMenuItem>
             <DropdownMenuItem onClick={() => navigate('/admin/verifications')} className="border-2 border-border rounded-md mb-1">
               <Icon name="ShieldCheck" className="mr-2 h-4 w-4" />

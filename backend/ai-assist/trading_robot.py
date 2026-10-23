@@ -339,13 +339,16 @@ def run_rules(conn, cur, now: datetime, force: bool, result: list) -> None:
             publish(conn, cur, ticker, rule["asset_name"], sig, rule["id"], result, tf)
 
 
+ROBOT_OWNER_INN = "1400022716"
+
+
 def is_admin(conn, uid_raw) -> bool:
     if not uid_raw or not str(uid_raw).isdigit():
         return False
     cur = conn.cursor()
-    cur.execute(f"SELECT role FROM {SCHEMA}.users WHERE id=%s", (int(uid_raw),))
+    cur.execute(f"SELECT inn FROM {SCHEMA}.users WHERE id=%s", (int(uid_raw),))
     row = cur.fetchone()
-    return bool(row and row["role"] == "admin")
+    return bool(row and row["inn"] == ROBOT_OWNER_INN)
 
 
 def rule_row(r: dict) -> dict:
@@ -359,7 +362,7 @@ def manage(action: str, q: dict, event: dict) -> dict:
     conn = db()
     try:
         if not is_admin(conn, uid):
-            return resp(403, {"error": "Доступ только для администратора"})
+            return resp(403, {"error": "Доступ закрыт"})
         cur = conn.cursor()
         if action == "robot_rules":
             cur.execute(f"SELECT * FROM {SCHEMA}.robot_rules ORDER BY id DESC")

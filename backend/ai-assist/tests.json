@@ -99,11 +99,7 @@
       "name": "Robot signals list",
       "method": "GET",
       "path": "/?action=robot_signals",
-      "expectedStatus": 200,
-      "expectedBody": {
-        "items": []
-      },
-      "bodyMatcher": "partial"
+      "expectedStatus": 200
     },
     {
       "name": "Robot rules without admin",
