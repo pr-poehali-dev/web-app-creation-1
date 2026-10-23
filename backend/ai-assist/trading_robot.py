@@ -125,9 +125,99 @@ def market_open(kind: str, now: datetime) -> bool:
     return 10 * 60 + 5 <= minutes <= 18 * 60 + 50
 
 
+def pnl(direction: str, entry: float, price: float) -> float:
+    if not entry:
+        return 0.0
+    d = (price - entry) / entry * 100
+    return d if direction == "ЛОНГ" else -d
+
+
+def track_exits(conn, now: datetime, force: bool) -> list:
+    cur = conn.cursor()
+    cur.execute(f"SELECT * FROM {SCHEMA}.robot_signals WHERE status='open' ORDER BY created_at")
+    open_items = cur.fetchall()
+    if not open_items:
+        return []
+    cur.execute(f"SELECT ticker FROM {SCHEMA}.robot_watchlist WHERE kind='share'")
+    shares = {r["ticker"] for r in cur.fetchall()}
+    events = []
+    utc_now = datetime.utcnow()
+    for s in open_items:
+        ticker = s["ticker"]
+        kind = "share" if ticker in shares else "future"
+        if not force and not market_open(kind, now):
+            continue
+        try:
+            candles = hourly_candles(ticker, kind)
+        except Exception as e:
+            events.append({"ticker": ticker, "status": f"ошибка данных: {e}"})
+            continue
+        if not candles:
+            continue
+        direction = s["direction"]
+        is_long = direction == "ЛОНГ"
+        entry, stop = float(s["entry"]), float(s["stop_loss"])
+        t1, t2 = float(s["target1"]), float(s["target2"])
+        was_t1 = bool(s["t1_hit"])
+        t1_hit = was_t1
+        start = (s["created_at"] + timedelta(hours=3)).strftime("%Y-%m-%d %H:00:00")
+        exit_price, reason = None, ""
+        for c in candles:
+            if c["begin"] < start:
+                continue
+            cur_stop = entry if t1_hit else stop
+            if (c["low"] <= cur_stop) if is_long else (c["high"] >= cur_stop):
+                exit_price = cur_stop
+                reason = "Цена вернулась ко входу после цели 1 (стоп в безубытке)" if t1_hit else "Сработал стоп"
+                break
+            if (c["high"] >= t2) if is_long else (c["low"] <= t2):
+                exit_price, reason = t2, "Достигнута цель 2"
+                break
+            if not t1_hit and ((c["high"] >= t1) if is_long else (c["low"] <= t1)):
+                t1_hit = True
+        last = candles[-1]["close"]
+        if exit_price is None:
+            closes = [c["close"] for c in candles]
+            if len(closes) >= 50:
+                sma20 = sum(closes[-20:]) / 20
+                sma50 = sum(closes[-50:]) / 50
+                if is_long and sma20 < sma50 and last < sma50:
+                    exit_price, reason = last, "Тренд развернулся против позиции (SMA20 ниже SMA50)"
+                elif not is_long and sma20 > sma50 and last > sma50:
+                    exit_price, reason = last, "Тренд развернулся против позиции (SMA20 выше SMA50)"
+            if exit_price is None and (utc_now - s["created_at"]).days >= 7:
+                exit_price, reason = last, "Прошло 7 дней, сигнал устарел"
+        name = f"{s['asset_name']} ({ticker}) {direction}"
+        if exit_price is not None:
+            pct = pnl(direction, entry, exit_price)
+            if t1_hit:
+                pct = 0.5 * pnl(direction, entry, t1) + 0.5 * pct
+            text = (f"Выход из сделки\n{name}\n{reason}\nВход: {entry:.2f}, выход: {exit_price:.2f}\n"
+                    f"Результат: {pct:+.2f}%" + (" (половина позиции закрыта по цели 1)" if t1_hit else "") +
+                    "\n\nЭто сигнал, а не рекомендация. Заявки робот не выставляет.")
+            send_whatsapp(text)
+            cur.execute(
+                f"UPDATE {SCHEMA}.robot_signals SET status='closed', t1_hit=%s, exit_price=%s, exit_reason=%s, "
+                f"result_pct=%s, closed_at=NOW() WHERE id=%s", (t1_hit, exit_price, reason, round(pct, 2), s["id"]))
+            conn.commit()
+            events.append({"ticker": ticker, "status": f"закрыта: {reason}, {pct:+.2f}%"})
+        elif t1_hit and not was_t1:
+            text = (f"Цель 1 достигнута\n{name}\nЦена: {last:.2f}, цель 1: {t1:.2f}\n"
+                    f"Зафиксируйте часть позиции, стоп перенесите на цену входа {entry:.2f}. Цель 2: {t2:.2f}\n\n"
+                    f"Это сигнал, а не рекомендация. Заявки робот не выставляет.")
+            send_whatsapp(text)
+            cur.execute(f"UPDATE {SCHEMA}.robot_signals SET t1_hit=TRUE WHERE id=%s", (s["id"],))
+            conn.commit()
+            events.append({"ticker": ticker, "status": "цель 1 достигнута"})
+        else:
+            events.append({"ticker": ticker, "status": "позиция открыта"})
+    return events
+
+
 def run(force: bool) -> dict:
     now = datetime.now(MSK)
     conn = db()
+    exits = track_exits(conn, now, force)
     cur = conn.cursor()
     cur.execute(f"SELECT ticker, asset_name, kind, asset_code FROM {SCHEMA}.robot_watchlist WHERE enabled")
     items = cur.fetchall()
@@ -153,7 +243,7 @@ def run(force: bool) -> dict:
             continue
         direction, entry, stop, t1, t2, reason, price, atr = sig
         cur.execute(
-            f"SELECT 1 FROM {SCHEMA}.robot_signals WHERE ticker=%s AND direction=%s AND created_at > NOW() - INTERVAL '{DEDUP_HOURS} hours'",
+            f"SELECT 1 FROM {SCHEMA}.robot_signals WHERE ticker=%s AND direction=%s AND (status='open' OR created_at > NOW() - INTERVAL '{DEDUP_HOURS} hours')",
             (ticker, direction))
         if cur.fetchone():
             result.append({"ticker": ticker, "status": "сигнал уже отправлялся"})
@@ -172,7 +262,7 @@ def run(force: bool) -> dict:
         conn.commit()
         result.append({"ticker": ticker, "status": f"{direction}, отправлено: {sent}"})
     conn.close()
-    return {"checked": result, "time": now.strftime("%Y-%m-%d %H:%M")}
+    return {"checked": result, "exits": exits, "time": now.strftime("%Y-%m-%d %H:%M")}
 
 
 def list_signals() -> dict:
@@ -180,8 +270,13 @@ def list_signals() -> dict:
     cur = conn.cursor()
     cur.execute(f"SELECT * FROM {SCHEMA}.robot_signals ORDER BY created_at DESC LIMIT 50")
     data = cur.fetchall()
+    cur.execute(
+        f"SELECT COUNT(*) AS closed, COUNT(*) FILTER (WHERE result_pct > 0) AS wins, "
+        f"COALESCE(ROUND(AVG(result_pct), 2), 0) AS avg_pct, COALESCE(SUM(result_pct), 0) AS total_pct "
+        f"FROM {SCHEMA}.robot_signals WHERE status='closed'")
+    stats = cur.fetchone()
     conn.close()
-    return {"items": data}
+    return {"items": data, "stats": stats}
 
 
 def handle_action(action: str, q: dict) -> dict:
