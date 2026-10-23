@@ -1,0 +1,192 @@
+import json
+import os
+from datetime import datetime, timedelta, timezone
+from urllib.parse import urlencode
+
+import psycopg2
+import requests
+from psycopg2.extras import RealDictCursor
+
+SCHEMA = os.environ.get("MAIN_DB_SCHEMA") or os.environ.get("DB_SCHEMA", "public")
+MOEX = "https://iss.moex.com/iss"
+MSK = timezone(timedelta(hours=3))
+DEDUP_HOURS = 6
+HEADERS = {"Content-Type": "application/json", "Access-Control-Allow-Origin": "*"}
+
+
+def resp(code: int, data: dict) -> dict:
+    return {"statusCode": code, "headers": HEADERS, "body": json.dumps(data, ensure_ascii=False, default=str)}
+
+
+def db():
+    return psycopg2.connect(os.environ["DATABASE_URL"], cursor_factory=RealDictCursor)
+
+
+def moex(path: str, params: dict) -> dict:
+    r = requests.get(f"{MOEX}/{path}.json?{urlencode(params)}", timeout=8, headers={"User-Agent": "erttp-robot/1.0"})
+    r.raise_for_status()
+    return r.json()
+
+
+def rows(block: dict) -> list:
+    cols = block.get("columns", [])
+    return [dict(zip(cols, row)) for row in block.get("data", [])]
+
+
+def resolve_future(asset_code: str) -> str:
+    today = datetime.now(MSK).strftime("%Y-%m-%d")
+    raw = moex("engines/futures/markets/forts/boards/RFUD/securities",
+               {"iss.meta": "off", "iss.only": "securities", "securities.columns": "SECID,ASSETCODE,LASTTRADEDATE"})
+    best = None
+    for r in rows(raw.get("securities", {})):
+        last = r.get("LASTTRADEDATE") or ""
+        if r.get("ASSETCODE") == asset_code and last > today:
+            if best is None or last < best["LASTTRADEDATE"]:
+                best = r
+    return best["SECID"] if best else ""
+
+
+def hourly_candles(ticker: str, kind: str) -> list:
+    if kind == "future":
+        path = f"engines/futures/markets/forts/boards/RFUD/securities/{ticker}/candles"
+    else:
+        path = f"engines/stock/markets/shares/boards/TQBR/securities/{ticker}/candles"
+    since = (datetime.now(MSK) - timedelta(days=14)).strftime("%Y-%m-%d")
+    raw = moex(path, {"iss.meta": "off", "interval": "60", "from": since})
+    out = []
+    for c in rows(raw.get("candles", {})):
+        if None in (c.get("close"), c.get("high"), c.get("low")):
+            continue
+        out.append({"begin": c["begin"], "high": float(c["high"]), "low": float(c["low"]), "close": float(c["close"])})
+    now = datetime.now(MSK)
+    if out and out[-1]["begin"][:13] == now.strftime("%Y-%m-%d %H"):
+        out = out[:-1]
+    return out
+
+
+def analyze(candles: list, allow_short: bool):
+    closes = [c["close"] for c in candles]
+    if len(closes) < 55:
+        return None
+    last = closes[-1]
+    sma20 = sum(closes[-20:]) / 20
+    sma50 = sum(closes[-50:]) / 50
+    gains = losses = 0.0
+    for i in range(len(closes) - 14, len(closes)):
+        d = closes[i] - closes[i - 1]
+        if d > 0:
+            gains += d
+        else:
+            losses -= d
+    rsi = 100.0 if losses == 0 else 100 - 100 / (1 + gains / losses)
+    trs = []
+    for i in range(len(candles) - 14, len(candles)):
+        c, pc = candles[i], candles[i - 1]["close"]
+        trs.append(max(c["high"] - c["low"], abs(c["high"] - pc), abs(c["low"] - pc)))
+    atr = sum(trs) / len(trs)
+    prev = candles[-21:-1]
+    hh = max(c["high"] for c in prev)
+    ll = min(c["low"] for c in prev)
+    up = last > sma50 and sma20 > sma50
+    down = last < sma50 and sma20 < sma50
+
+    if up and last > hh:
+        return ("ЛОНГ", last, last - 1.5 * atr, last + 1.5 * atr, last + 3 * atr,
+                f"Пробой максимума 20 часов {hh:.2f} в восходящем тренде (SMA20>SMA50), RSI {rsi:.0f}", last, atr)
+    if up and rsi < 40:
+        return ("ЛОНГ", last, min(ll, last - 1.5 * atr), last + 1.5 * atr, last + 3 * atr,
+                f"Откат в восходящем тренде, RSI {rsi:.0f}", last, atr)
+    if allow_short and down and last < ll:
+        return ("ШОРТ", last, last + 1.5 * atr, last - 1.5 * atr, last - 3 * atr,
+                f"Пробой минимума 20 часов {ll:.2f} в нисходящем тренде (SMA20<SMA50), RSI {rsi:.0f}", last, atr)
+    if allow_short and down and rsi > 60:
+        return ("ШОРТ", last, max(hh, last + 1.5 * atr), last - 1.5 * atr, last - 3 * atr,
+                f"Отскок в нисходящем тренде, RSI {rsi:.0f}", last, atr)
+    return None
+
+
+def send_whatsapp(text: str) -> bool:
+    inst = os.environ.get("GREEN_API_INSTANCE_ID")
+    token = os.environ.get("GREEN_API_TOKEN")
+    phone = "".join(ch for ch in os.environ.get("ROBOT_WHATSAPP_PHONE", "") if ch.isdigit())
+    if not (inst and token and phone):
+        return False
+    r = requests.post(f"https://api.green-api.com/waInstance{inst}/sendMessage/{token}",
+                      json={"chatId": f"{phone}@c.us", "message": text}, timeout=10)
+    return r.status_code == 200
+
+
+def market_open(kind: str, now: datetime) -> bool:
+    if now.weekday() >= 5:
+        return False
+    minutes = now.hour * 60 + now.minute
+    if kind == "future":
+        return 9 * 60 + 5 <= minutes <= 23 * 60 + 45
+    return 10 * 60 + 5 <= minutes <= 18 * 60 + 50
+
+
+def run(force: bool) -> dict:
+    now = datetime.now(MSK)
+    conn = db()
+    cur = conn.cursor()
+    cur.execute(f"SELECT ticker, asset_name, kind, asset_code FROM {SCHEMA}.robot_watchlist WHERE enabled")
+    items = cur.fetchall()
+    result = []
+    for it in items:
+        kind = it["kind"]
+        if not force and not market_open(kind, now):
+            result.append({"ticker": it["ticker"], "status": "рынок закрыт"})
+            continue
+        ticker = it["ticker"]
+        if kind == "future":
+            ticker = resolve_future(it["asset_code"] or it["ticker"])
+            if not ticker:
+                result.append({"ticker": it["ticker"], "status": "контракт не найден"})
+                continue
+        try:
+            sig = analyze(hourly_candles(ticker, kind), allow_short=(kind == "future"))
+        except Exception as e:
+            result.append({"ticker": it["ticker"], "status": f"ошибка данных: {e}"})
+            continue
+        if not sig:
+            result.append({"ticker": it["ticker"], "status": "сигнала нет"})
+            continue
+        direction, entry, stop, t1, t2, reason, price, atr = sig
+        cur.execute(
+            f"SELECT 1 FROM {SCHEMA}.robot_signals WHERE ticker=%s AND direction=%s AND created_at > NOW() - INTERVAL '{DEDUP_HOURS} hours'",
+            (ticker, direction))
+        if cur.fetchone():
+            result.append({"ticker": ticker, "status": "сигнал уже отправлялся"})
+            continue
+        risk = abs(entry - stop)
+        rr = abs(t1 - entry) / risk if risk else 0
+        text = (f"Сигнал робота (1 час)\n{it['asset_name']} ({ticker}): {direction}\n"
+                f"Цена: {price:.2f}\nВход: {entry:.2f}\nСтоп: {stop:.2f}\n"
+                f"Цель 1: {t1:.2f}\nЦель 2: {t2:.2f}\nРиск/прибыль: 1:{rr:.1f}\n"
+                f"Основание: {reason}\n\nЭто сигнал, а не рекомендация. Заявки робот не выставляет.")
+        sent = send_whatsapp(text)
+        cur.execute(
+            f"INSERT INTO {SCHEMA}.robot_signals (ticker, asset_name, timeframe, direction, price, entry, stop_loss, target1, target2, reason, sent) "
+            f"VALUES (%s,%s,'1h',%s,%s,%s,%s,%s,%s,%s,%s)",
+            (ticker, it["asset_name"], direction, price, entry, stop, t1, t2, reason, sent))
+        conn.commit()
+        result.append({"ticker": ticker, "status": f"{direction}, отправлено: {sent}"})
+    conn.close()
+    return {"checked": result, "time": now.strftime("%Y-%m-%d %H:%M")}
+
+
+def list_signals() -> dict:
+    conn = db()
+    cur = conn.cursor()
+    cur.execute(f"SELECT * FROM {SCHEMA}.robot_signals ORDER BY created_at DESC LIMIT 50")
+    data = cur.fetchall()
+    conn.close()
+    return {"items": data}
+
+
+def handle_action(action: str, q: dict) -> dict:
+    if action == "robot_signals":
+        return resp(200, list_signals())
+    if action == "robot_test":
+        return resp(200, {"sent": send_whatsapp("Тест: робот ЕРТТП подключён к WhatsApp. Сигналы будут приходить сюда.")})
+    return resp(200, run(force=q.get("force") == "1"))

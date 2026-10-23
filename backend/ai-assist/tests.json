@@ -94,6 +94,16 @@
         "success": true
       },
       "bodyMatcher": "partial"
+    },
+    {
+      "name": "Robot signals list",
+      "method": "GET",
+      "path": "/?action=robot_signals",
+      "expectedStatus": 200,
+      "expectedBody": {
+        "items": []
+      },
+      "bodyMatcher": "partial"
     }
   ]
 }
