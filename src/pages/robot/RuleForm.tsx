@@ -3,7 +3,7 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { useToast } from '@/hooks/use-toast';
-import ConditionEditor from './ConditionEditor';
+import ConditionEditor, { TF_OPTIONS } from './ConditionEditor';
 import { saveRule, type RuleDraft } from './robotApi';
 
 const EMPTY: RuleDraft = {
@@ -12,12 +12,33 @@ const EMPTY: RuleDraft = {
   asset_name: '',
   kind: 'share',
   direction: 'ЛОНГ',
+  timeframe: 60,
   entry_conditions: [{ type: 'rsi', op: '<', value: 30 }],
   exit_conditions: [],
   stop_atr: 1.5,
   target1_atr: 1.5,
   target2_atr: 3,
 };
+
+const FUTURES = [
+  { code: 'BR', name: 'Нефть Brent' },
+  { code: 'ALRS', name: 'АЛРОСА' },
+  { code: 'VTBR', name: 'Банк ВТБ' },
+  { code: 'GAZR', name: 'Газпром' },
+  { code: 'SBRF', name: 'Сбербанк' },
+  { code: 'LKOH', name: 'Лукойл' },
+  { code: 'ROSN', name: 'Роснефть' },
+  { code: 'GMKN', name: 'Норникель' },
+  { code: 'TATN', name: 'Татнефть' },
+  { code: 'MGNT', name: 'Магнит' },
+  { code: 'MOEX', name: 'Мосбиржа' },
+  { code: 'SNGR', name: 'Сургутнефтегаз' },
+  { code: 'YDEX', name: 'Яндекс' },
+  { code: 'MTSI', name: 'МТС' },
+  { code: 'AFLT', name: 'Аэрофлот' },
+  { code: 'Si', name: 'Доллар/рубль' },
+  { code: 'NG', name: 'Природный газ' },
+];
 
 const selectCls = 'h-10 w-full rounded-md border border-input bg-background px-3 text-sm';
 
@@ -56,7 +77,7 @@ export default function RuleForm({ onSaved }: { onSaved: () => void }) {
             <select
               className={selectCls}
               value={d.kind}
-              onChange={(e) => set({ kind: e.target.value, direction: e.target.value === 'share' ? 'ЛОНГ' : d.direction })}
+              onChange={(e) => set({ kind: e.target.value, ticker: '', asset_name: '', direction: e.target.value === 'share' ? 'ЛОНГ' : d.direction })}
             >
               <option value="share">Акция</option>
               <option value="future">Фьючерс</option>
@@ -64,9 +85,25 @@ export default function RuleForm({ onSaved }: { onSaved: () => void }) {
           </div>
           <div>
             <label className="mb-1 block text-sm">
-              {d.kind === 'future' ? 'Код актива (BR, Si, GD)' : 'Тикер (SBER, VTBR)'}
+              {d.kind === 'future' ? 'Фьючерс' : 'Тикер (SBER, VTBR)'}
             </label>
-            <Input value={d.ticker} onChange={(e) => set({ ticker: e.target.value })} />
+            {d.kind === 'future' ? (
+              <select
+                className={selectCls}
+                value={d.ticker}
+                onChange={(e) => {
+                  const f = FUTURES.find((x) => x.code === e.target.value);
+                  set({ ticker: e.target.value, asset_name: f ? f.name : '' });
+                }}
+              >
+                <option value="">Выберите из списка</option>
+                {FUTURES.map((f) => (
+                  <option key={f.code} value={f.code}>{f.name} ({f.code})</option>
+                ))}
+              </select>
+            ) : (
+              <Input value={d.ticker} onChange={(e) => set({ ticker: e.target.value })} />
+            )}
           </div>
           <div>
             <label className="mb-1 block text-sm">Название для сообщения</label>
@@ -77,7 +114,24 @@ export default function RuleForm({ onSaved }: { onSaved: () => void }) {
             <select className={selectCls} value={d.direction} onChange={(e) => set({ direction: e.target.value })}>
               <option value="ЛОНГ">Лонг (покупка)</option>
               {d.kind === 'future' && <option value="ШОРТ">Шорт (продажа)</option>}
+              {d.kind === 'future' && <option value="ОБА">Лонг и шорт (зеркально)</option>}
             </select>
+            {d.direction === 'ОБА' && (
+              <p className="mt-1 text-xs text-muted-foreground">
+                Условия задайте для лонга. Для шорта робот зеркально развернёт их: RSI ниже 30 станет выше 70, двойное дно станет двойной вершиной, бычья дивергенция станет медвежьей.
+              </p>
+            )}
+          </div>
+          <div>
+            <label className="mb-1 block text-sm">Основной таймфрейм правила</label>
+            <select className={selectCls} value={d.timeframe} onChange={(e) => set({ timeframe: Number(e.target.value) })}>
+              {TF_OPTIONS.map((t) => (
+                <option key={t.value} value={t.value}>{t.label}</option>
+              ))}
+            </select>
+            <p className="mt-1 text-xs text-muted-foreground">
+              По нему считаются вход, стоп и цели. Для отдельного условия можно выбрать свой таймфрейм.
+            </p>
           </div>
         </div>
 

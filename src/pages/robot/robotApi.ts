@@ -11,6 +11,7 @@ export interface Condition {
   slow?: number;
   period?: number;
   dir?: string;
+  tf?: number;
 }
 
 export interface Rule {
@@ -20,6 +21,7 @@ export interface Rule {
   asset_name: string;
   kind: string;
   direction: string;
+  timeframe: number;
   entry_text: string[];
   exit_text: string[];
   stop_atr: string;
@@ -33,6 +35,7 @@ export interface Signal {
   ticker: string;
   asset_name: string;
   direction: string;
+  timeframe: string;
   entry: string;
   stop_loss: string;
   target1: string;
@@ -58,6 +61,7 @@ export interface RuleDraft {
   asset_name: string;
   kind: string;
   direction: string;
+  timeframe: number;
   entry_conditions: Condition[];
   exit_conditions: Condition[];
   stop_atr: number;

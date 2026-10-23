@@ -21,13 +21,35 @@ def _num(v, lo, hi, default):
     return max(lo, min(hi, v))
 
 
+TIMEFRAMES = (5, 10, 60)
+POLL_MINUTES = 15
+
+
+def tf_label(tf: int) -> str:
+    return "1 час" if tf == 60 else f"{tf} мин"
+
+
 def sanitize(conds) -> list:
     out = []
     if not isinstance(conds, list):
         return out
     for c in conds[:6]:
+        before = len(out)
+        _sanitize_one(c, out)
+        if len(out) > before:
+            try:
+                tf = int(c.get("tf"))
+            except (TypeError, ValueError):
+                tf = 0
+            if tf in TIMEFRAMES:
+                out[-1]["tf"] = tf
+    return out
+
+
+def _sanitize_one(c, out: list) -> None:
+    if True:
         if not isinstance(c, dict) or c.get("type") not in LABELS:
-            continue
+            return
         t = c["type"]
         d = c.get("dir") if c.get("dir") in ("up", "down") else "up"
         if t == "rsi":
@@ -52,10 +74,14 @@ def sanitize(conds) -> list:
             out.append({"type": t, "dir": d})
         elif t == "range_breakout":
             out.append({"type": t, "period": int(_num(c.get("period"), 8, 60, 20)), "dir": d})
-    return out
 
 
 def describe(c: dict) -> str:
+    text = _describe(c)
+    return f"{text} ({tf_label(c['tf'])})" if c.get("tf") else text
+
+
+def _describe(c: dict) -> str:
     t = c["type"]
     if t == "rsi":
         return f"RSI {'<' if c['op'] == '<' else '>'} {c['value']:.0f}"
@@ -247,23 +273,91 @@ def atr(candles: list, n: int = 14) -> float:
     return sum(trs) / len(trs)
 
 
-def evaluate_entry(rule: dict, candles: list):
+def rule_tf(rule: dict) -> int:
+    tf = int(rule.get("timeframe") or 60)
+    return tf if tf in TIMEFRAMES else 60
+
+
+def needed_tfs(rule: dict, with_exit: bool = True) -> set:
+    base = rule_tf(rule)
+    tfs = {base}
+    for c in (rule.get("entry_conditions") or []) + ((rule.get("exit_conditions") or []) if with_exit else []):
+        tfs.add(c.get("tf") or base)
+    return tfs
+
+
+def cond_true(c: dict, base_tf: int, by_tf: dict) -> bool:
+    tf = c.get("tf") or base_tf
+    cs = by_tf.get(tf) or []
+    lookback = max(1, -(-POLL_MINUTES // tf))
+    for k in range(lookback):
+        part = cs[:len(cs) - k] if k else cs
+        if len(part) >= 30 and check(c, part):
+            return True
+    return False
+
+
+def evaluate_entry(rule: dict, by_tf: dict):
     conds = rule["entry_conditions"] or []
-    if not conds or len(candles) < 30:
+    base = rule_tf(rule)
+    main = by_tf.get(base) or []
+    if not conds or len(main) < 30:
         return None
-    if not all(check(c, candles) for c in conds):
+    if not all(cond_true(c, base, by_tf) for c in conds):
         return None
-    last = candles[-1]["close"]
-    a = atr(candles)
+    last = main[-1]["close"]
+    a = atr(main)
     sa, t1a, t2a = float(rule["stop_atr"]), float(rule["target1_atr"]), float(rule["target2_atr"])
-    reason = f"Правило «{rule['name']}»: " + "; ".join(describe(c) for c in conds)
+    reason = f"Правило «{rule['name']}» ({tf_label(base)}): " + "; ".join(describe(c) for c in conds)
     if rule["direction"] == "ЛОНГ":
         return ("ЛОНГ", last, last - sa * a, last + t1a * a, last + t2a * a, reason, last, a)
     return ("ШОРТ", last, last + sa * a, last - t1a * a, last - t2a * a, reason, last, a)
 
 
-def exit_reason(conds: list, candles: list) -> str:
-    for c in conds or []:
-        if check(c, candles):
+def exit_reason(rule: dict, by_tf: dict) -> str:
+    base = rule_tf(rule)
+    for c in rule.get("exit_conditions") or []:
+        if cond_true(c, base, by_tf):
             return describe(c)
     return ""
+
+
+def mirror(conds: list) -> list:
+    flip = {"up": "down", "down": "up"}
+    out = []
+    for c in conds:
+        m = dict(c)
+        t = c["type"]
+        if t == "rsi":
+            m["op"] = ">" if c["op"] == "<" else "<"
+            m["value"] = round(100 - c["value"], 1)
+        elif t == "price_vs_sma":
+            m["op"] = "below" if c["op"] == "above" else "above"
+        elif t == "bollinger":
+            m["op"] = "above_upper" if c["op"] == "below_lower" else "below_lower"
+        elif t == "double_bottom":
+            m["type"] = "double_top"
+        elif t == "double_top":
+            m["type"] = "double_bottom"
+        elif "dir" in c:
+            m["dir"] = flip[c["dir"]]
+        out.append(m)
+    return out
+
+
+def variants(rule: dict) -> list:
+    if rule.get("direction") != "ОБА":
+        return [rule]
+    return [
+        {**rule, "direction": "ЛОНГ"},
+        {**rule, "direction": "ШОРТ",
+         "entry_conditions": mirror(rule["entry_conditions"] or []),
+         "exit_conditions": mirror(rule["exit_conditions"] or [])},
+    ]
+
+
+def variant_for(rule: dict, direction: str) -> dict:
+    for v in variants(rule):
+        if v["direction"] == direction:
+            return v
+    return rule

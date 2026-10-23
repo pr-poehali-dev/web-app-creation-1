@@ -22,7 +22,10 @@ export default function RulesList({ rules, onChanged }: { rules: Rule[]; onChang
             <div className="flex flex-wrap items-center gap-2">
               <span className="font-semibold">{r.name}</span>
               <Badge variant="outline">{r.asset_name} ({r.ticker})</Badge>
-              <Badge className={r.direction === 'ЛОНГ' ? 'bg-green-600 text-white' : 'bg-red-600 text-white'}>{r.direction}</Badge>
+              <Badge className={r.direction === 'ЛОНГ' ? 'bg-green-600 text-white' : r.direction === 'ШОРТ' ? 'bg-red-600 text-white' : 'bg-slate-700 text-white'}>
+                {r.direction === 'ОБА' ? 'ЛОНГ + ШОРТ' : r.direction}
+              </Badge>
+              <Badge variant="outline">{r.timeframe === 60 ? '1 час' : `${r.timeframe} мин`}</Badge>
               <div className="ml-auto flex gap-1">
                 <Button size="sm" variant="outline" onClick={() => act('robot_rule_toggle', r.id)}>
                   <Icon name={r.enabled ? 'Pause' : 'Play'} className="mr-1 h-4 w-4" />

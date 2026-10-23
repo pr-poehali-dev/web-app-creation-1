@@ -37,6 +37,7 @@ export default function SignalsList({ items, stats }: { items: Signal[]; stats: 
               <div className="flex flex-wrap items-center gap-2">
                 <span className="font-semibold">{s.asset_name} ({s.ticker})</span>
                 <Badge className={s.direction === 'ЛОНГ' ? 'bg-green-600 text-white' : 'bg-red-600 text-white'}>{s.direction}</Badge>
+                <Badge variant="outline">{s.timeframe === '1h' ? '1 час' : s.timeframe?.replace('m', ' мин')}</Badge>
                 <Badge variant="outline">{s.status === 'open' ? 'Открыта' : 'Закрыта'}</Badge>
                 {pct !== null && (
                   <span className={pct >= 0 ? 'font-semibold text-green-600' : 'font-semibold text-red-600'}>

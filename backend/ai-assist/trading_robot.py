@@ -34,12 +34,20 @@ def rows(block: dict) -> list:
     return [dict(zip(cols, row)) for row in block.get("data", [])]
 
 
+_SEC_CACHE = {"day": "", "rows": []}
+TF_BY_LABEL = {"5m": 5, "10m": 10, "1h": 60}
+LABEL_BY_TF = {5: "5m", 10: "10m", 60: "1h"}
+
+
 def resolve_future(asset_code: str) -> str:
     today = datetime.now(MSK).strftime("%Y-%m-%d")
-    raw = moex("engines/futures/markets/forts/boards/RFUD/securities",
-               {"iss.meta": "off", "iss.only": "securities", "securities.columns": "SECID,ASSETCODE,LASTTRADEDATE"})
+    if _SEC_CACHE["day"] != today:
+        raw = moex("engines/futures/markets/forts/boards/RFUD/securities",
+                   {"iss.meta": "off", "iss.only": "securities", "securities.columns": "SECID,ASSETCODE,LASTTRADEDATE"})
+        _SEC_CACHE["rows"] = rows(raw.get("securities", {}))
+        _SEC_CACHE["day"] = today
     best = None
-    for r in rows(raw.get("securities", {})):
+    for r in _SEC_CACHE["rows"]:
         last = r.get("LASTTRADEDATE") or ""
         if r.get("ASSETCODE") == asset_code and last > today:
             if best is None or last < best["LASTTRADEDATE"]:
@@ -47,22 +55,56 @@ def resolve_future(asset_code: str) -> str:
     return best["SECID"] if best else ""
 
 
-def hourly_candles(ticker: str, kind: str) -> list:
+def _candles_path(ticker: str, kind: str) -> str:
     if kind == "future":
-        path = f"engines/futures/markets/forts/boards/RFUD/securities/{ticker}/candles"
-    else:
-        path = f"engines/stock/markets/shares/boards/TQBR/securities/{ticker}/candles"
-    since = (datetime.now(MSK) - timedelta(days=14)).strftime("%Y-%m-%d")
-    raw = moex(path, {"iss.meta": "off", "interval": "60", "from": since})
+        return f"engines/futures/markets/forts/boards/RFUD/securities/{ticker}/candles"
+    return f"engines/stock/markets/shares/boards/TQBR/securities/{ticker}/candles"
+
+
+def _clean(block: dict) -> list:
     out = []
-    for c in rows(raw.get("candles", {})):
+    for c in rows(block):
         if None in (c.get("close"), c.get("high"), c.get("low")):
             continue
         out.append({"begin": c["begin"], "high": float(c["high"]), "low": float(c["low"]), "close": float(c["close"])})
-    now = datetime.now(MSK)
-    if out and out[-1]["begin"][:13] == now.strftime("%Y-%m-%d %H"):
-        out = out[:-1]
     return out
+
+
+def get_candles(ticker: str, kind: str, tf: int) -> list:
+    path = _candles_path(ticker, kind)
+    now = datetime.now(MSK).replace(tzinfo=None)
+    if tf == 5:
+        since = (now - timedelta(days=3)).strftime("%Y-%m-%d")
+        minute = []
+        for start in (0, 500):
+            raw = moex(path, {"iss.meta": "off", "interval": "1", "from": since, "iss.reverse": "true", "start": start})
+            minute += _clean(raw.get("candles", {}))
+        minute.reverse()
+        out = []
+        for c in minute:
+            b = c["begin"]
+            m = int(b[14:16])
+            key = f"{b[:14]}{m - m % 5:02d}:00"
+            if out and out[-1]["begin"] == key:
+                out[-1]["high"] = max(out[-1]["high"], c["high"])
+                out[-1]["low"] = min(out[-1]["low"], c["low"])
+                out[-1]["close"] = c["close"]
+            else:
+                out.append({"begin": key, "high": c["high"], "low": c["low"], "close": c["close"]})
+    else:
+        days = 14 if tf == 60 else 4
+        since = (now - timedelta(days=days)).strftime("%Y-%m-%d")
+        raw = moex(path, {"iss.meta": "off", "interval": str(tf), "from": since})
+        out = _clean(raw.get("candles", {}))
+    if out:
+        begun = datetime.strptime(out[-1]["begin"], "%Y-%m-%d %H:%M:%S")
+        if begun + timedelta(minutes=tf) > now:
+            out = out[:-1]
+    return out
+
+
+def hourly_candles(ticker: str, kind: str) -> list:
+    return get_candles(ticker, kind, 60)
 
 
 def analyze(candles: list, allow_short: bool):
@@ -153,8 +195,16 @@ def track_exits(conn, now: datetime, force: bool) -> list:
         kind = "share" if ticker in shares else "future"
         if not force and not market_open(kind, now):
             continue
+        tf = TF_BY_LABEL.get(s.get("timeframe"), 60)
+        rule = rules_by_id.get(s.get("rule_id")) if s.get("rule_id") else None
+        rule_view = rules_engine.variant_for(rule, s["direction"]) if rule else None
         try:
-            candles = hourly_candles(ticker, kind)
+            candles = get_candles(ticker, kind, tf)
+            by_tf = {tf: candles}
+            if rule_view and rule_view["exit_conditions"]:
+                for t in rules_engine.needed_tfs(rule_view):
+                    if t not in by_tf:
+                        by_tf[t] = get_candles(ticker, kind, t)
         except Exception as e:
             events.append({"ticker": ticker, "status": f"ошибка данных: {e}"})
             continue
@@ -166,9 +216,10 @@ def track_exits(conn, now: datetime, force: bool) -> list:
         t1, t2 = float(s["target1"]), float(s["target2"])
         was_t1 = bool(s["t1_hit"])
         t1_hit = was_t1
-        start = (s["created_at"] + timedelta(hours=3)).strftime("%Y-%m-%d %H:00:00")
+        opened = s["created_at"] + timedelta(hours=3)
+        floor_min = opened.minute - opened.minute % tf if tf < 60 else 0
+        start = opened.strftime("%Y-%m-%d %H:") + f"{floor_min:02d}:00"
         exit_price, reason = None, ""
-        rule = rules_by_id.get(s.get("rule_id")) if s.get("rule_id") else None
         for c in candles:
             if c["begin"] < start:
                 continue
@@ -183,8 +234,8 @@ def track_exits(conn, now: datetime, force: bool) -> list:
             if not t1_hit and ((c["high"] >= t1) if is_long else (c["low"] <= t1)):
                 t1_hit = True
         last = candles[-1]["close"]
-        if exit_price is None and rule and rule["exit_conditions"]:
-            why = rules_engine.exit_reason(rule["exit_conditions"], candles)
+        if exit_price is None and rule_view and rule_view["exit_conditions"]:
+            why = rules_engine.exit_reason(rule_view, by_tf)
             if why:
                 exit_price, reason = last, f"Сработало условие выхода: {why}"
         if exit_price is None and not rule:
@@ -196,8 +247,9 @@ def track_exits(conn, now: datetime, force: bool) -> list:
                     exit_price, reason = last, "Тренд развернулся против позиции (SMA20 ниже SMA50)"
                 elif not is_long and sma20 > sma50 and last > sma50:
                     exit_price, reason = last, "Тренд развернулся против позиции (SMA20 выше SMA50)"
-        if exit_price is None and (utc_now - s["created_at"]).days >= 7:
-            exit_price, reason = last, "Прошло 7 дней, сигнал устарел"
+        max_days = 7 if tf == 60 else 1
+        if exit_price is None and (utc_now - s["created_at"]).days >= max_days:
+            exit_price, reason = last, f"Прошло {max_days} дн., сигнал устарел"
         name = f"{s['asset_name']} ({ticker}) {direction}"
         if exit_price is not None:
             pct = pnl(direction, entry, exit_price)
@@ -225,7 +277,7 @@ def track_exits(conn, now: datetime, force: bool) -> list:
     return events
 
 
-def publish(conn, cur, ticker: str, asset_name: str, sig, rule_id, result: list) -> None:
+def publish(conn, cur, ticker: str, asset_name: str, sig, rule_id, result: list, tf: int = 60) -> None:
     direction, entry, stop, t1, t2, reason, price, atr = sig
     if rule_id:
         cur.execute(
@@ -240,15 +292,15 @@ def publish(conn, cur, ticker: str, asset_name: str, sig, rule_id, result: list)
         return
     risk = abs(entry - stop)
     rr = abs(t1 - entry) / risk if risk else 0
-    text = (f"Сигнал робота (1 час)\n{asset_name} ({ticker}): {direction}\n"
+    text = (f"Сигнал робота ({rules_engine.tf_label(tf)})\n{asset_name} ({ticker}): {direction}\n"
             f"Цена: {price:.2f}\nВход: {entry:.2f}\nСтоп: {stop:.2f}\n"
             f"Цель 1: {t1:.2f}\nЦель 2: {t2:.2f}\nРиск/прибыль: 1:{rr:.1f}\n"
             f"Основание: {reason}\n\nЭто сигнал, а не рекомендация. Заявки робот не выставляет.")
     sent = send_whatsapp(text)
     cur.execute(
         f"INSERT INTO {SCHEMA}.robot_signals (ticker, asset_name, timeframe, direction, price, entry, stop_loss, target1, target2, reason, sent, rule_id) "
-        f"VALUES (%s,%s,'1h',%s,%s,%s,%s,%s,%s,%s,%s,%s)",
-        (ticker, asset_name, direction, price, entry, stop, t1, t2, reason, sent, rule_id))
+        f"VALUES (%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s)",
+        (ticker, asset_name, LABEL_BY_TF.get(tf, "1h"), direction, price, entry, stop, t1, t2, reason, sent, rule_id))
     conn.commit()
     result.append({"ticker": ticker, "status": f"{direction}, отправлено: {sent}"})
 
@@ -268,17 +320,23 @@ def run_rules(conn, cur, now: datetime, force: bool, result: list) -> None:
             if not ticker:
                 result.append({"ticker": label, "status": "контракт не найден"})
                 continue
+        tf = rules_engine.rule_tf(rule)
         try:
-            if ticker not in cache:
-                cache[ticker] = hourly_candles(ticker, kind)
-            sig = rules_engine.evaluate_entry(rule, cache[ticker])
+            by_tf = {}
+            for t in rules_engine.needed_tfs(rule, with_exit=False) | {tf}:
+                if (ticker, t) not in cache:
+                    cache[(ticker, t)] = get_candles(ticker, kind, t)
+                by_tf[t] = cache[(ticker, t)]
+            sigs = [rules_engine.evaluate_entry(v, by_tf) for v in rules_engine.variants(rule)]
         except Exception as e:
             result.append({"ticker": label, "status": f"ошибка данных: {e}"})
             continue
-        if not sig:
+        sigs = [x for x in sigs if x]
+        if not sigs:
             result.append({"ticker": label, "status": "условия не выполнены"})
             continue
-        publish(conn, cur, ticker, rule["asset_name"], sig, rule["id"], result)
+        for sig in sigs:
+            publish(conn, cur, ticker, rule["asset_name"], sig, rule["id"], result, tf)
 
 
 def is_admin(conn, uid_raw) -> bool:
@@ -318,9 +376,15 @@ def manage(action: str, q: dict, event: dict) -> dict:
             if not name or not ticker or not entry:
                 return resp(400, {"error": "Укажите название, бумагу и хотя бы одно условие входа"})
             kind = "future" if body.get("kind") == "future" else "share"
-            direction = "ШОРТ" if body.get("direction") == "ШОРТ" else "ЛОНГ"
-            if direction == "ШОРТ" and kind != "future":
+            direction = body.get("direction") if body.get("direction") in ("ЛОНГ", "ШОРТ", "ОБА") else "ЛОНГ"
+            if direction != "ЛОНГ" and kind != "future":
                 return resp(400, {"error": "Шорт доступен только для фьючерсов"})
+            try:
+                tf = int(body.get("timeframe") or 60)
+            except (TypeError, ValueError):
+                tf = 60
+            if tf not in rules_engine.TIMEFRAMES:
+                tf = 60
             asset_name = (body.get("asset_name") or ticker).strip()[:100]
             asset_code = (body.get("asset_code") or ticker).strip().upper()[:10] if kind == "future" else None
 
@@ -331,9 +395,9 @@ def manage(action: str, q: dict, event: dict) -> dict:
                     return default
             cur.execute(
                 f"INSERT INTO {SCHEMA}.robot_rules (name, ticker, asset_name, kind, asset_code, direction, entry_conditions, "
-                f"exit_conditions, stop_atr, target1_atr, target2_atr, created_by) VALUES (%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s) RETURNING id",
+                f"exit_conditions, stop_atr, target1_atr, target2_atr, created_by, timeframe) VALUES (%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s) RETURNING id",
                 (name, ticker, asset_name, kind, asset_code, direction, json.dumps(entry), json.dumps(exit_c),
-                 f("stop_atr", 1.5), f("target1_atr", 1.5), f("target2_atr", 3), int(uid)))
+                 f("stop_atr", 1.5), f("target1_atr", 1.5), f("target2_atr", 3), int(uid), tf))
             new_id = cur.fetchone()["id"]
             conn.commit()
             return resp(200, {"id": new_id})

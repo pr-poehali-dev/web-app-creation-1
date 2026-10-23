@@ -31,6 +31,12 @@ const DEFAULTS: Record<string, Condition> = {
   double_top: { type: 'double_top' },
 };
 
+export const TF_OPTIONS = [
+  { value: 5, label: '5 мин' },
+  { value: 10, label: '10 мин' },
+  { value: 60, label: '1 час' },
+];
+
 const selectCls = 'h-9 rounded-md border border-input bg-background px-2 text-sm';
 
 interface RowProps {
@@ -57,7 +63,7 @@ function ConditionRow({ cond, onChange, onRemove }: RowProps) {
       <select
         className={selectCls}
         value={cond.type}
-        onChange={(e) => onChange(DEFAULTS[e.target.value])}
+        onChange={(e) => onChange({ ...DEFAULTS[e.target.value], ...(cond.tf ? { tf: cond.tf } : {}) })}
       >
         {CONDITION_TYPES.map((t) => (
           <option key={t.value} value={t.value}>{t.group}: {t.label}</option>
@@ -110,6 +116,24 @@ function ConditionRow({ cond, onChange, onRemove }: RowProps) {
           <span className="text-sm">ч</span>
         </>
       )}
+
+      <select
+        className={selectCls}
+        value={cond.tf ?? 0}
+        title="Таймфрейм условия"
+        onChange={(e) => {
+          const tf = Number(e.target.value);
+          const next = { ...cond };
+          if (tf) next.tf = tf;
+          else delete next.tf;
+          onChange(next);
+        }}
+      >
+        <option value={0}>таймфрейм правила</option>
+        {TF_OPTIONS.map((t) => (
+          <option key={t.value} value={t.value}>на {t.label}</option>
+        ))}
+      </select>
 
       <Button type="button" variant="ghost" size="icon" className="ml-auto h-8 w-8" onClick={onRemove}>
         <Icon name="X" className="h-4 w-4" />
