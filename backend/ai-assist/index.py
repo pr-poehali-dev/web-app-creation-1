@@ -543,9 +543,9 @@ def handler(event: dict, context) -> dict:
     params = event.get("queryStringParameters") or {}
     query_action = params.get("action", "")
 
-    if query_action in ("robot_run", "robot_signals", "robot_test"):
+    if query_action in ("robot_run", "robot_signals", "robot_test", "robot_rules", "robot_rule_save", "robot_rule_toggle", "robot_rule_delete"):
         from trading_robot import handle_action
-        return handle_action(query_action, params)
+        return handle_action(query_action, params, event)
 
     if query_action == "assistant_reminders":
         from assistant_reminders import run_reminders

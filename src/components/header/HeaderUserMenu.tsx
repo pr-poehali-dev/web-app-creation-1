@@ -133,6 +133,10 @@ export default function HeaderUserMenu({
               <Icon name="LayoutDashboard" className="mr-2 h-4 w-4" />
               Админ-панель
             </DropdownMenuItem>
+            <DropdownMenuItem onClick={() => navigate('/admin/robot')} className="border-2 border-border rounded-md mb-1">
+              <Icon name="Bot" className="mr-2 h-4 w-4" />
+              Торговый робот
+            </DropdownMenuItem>
             <DropdownMenuItem onClick={() => navigate('/admin/verifications')} className="border-2 border-border rounded-md mb-1">
               <Icon name="ShieldCheck" className="mr-2 h-4 w-4" />
               Верификация

@@ -104,6 +104,12 @@
         "items": []
       },
       "bodyMatcher": "partial"
+    },
+    {
+      "name": "Robot rules without admin",
+      "method": "GET",
+      "path": "/?action=robot_rules",
+      "expectedStatus": 403
     }
   ]
 }

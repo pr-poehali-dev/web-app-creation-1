@@ -5,6 +5,7 @@ from urllib.parse import urlencode
 
 import psycopg2
 import requests
+import rules_engine
 from psycopg2.extras import RealDictCursor
 
 SCHEMA = os.environ.get("MAIN_DB_SCHEMA") or os.environ.get("DB_SCHEMA", "public")
@@ -140,6 +141,11 @@ def track_exits(conn, now: datetime, force: bool) -> list:
         return []
     cur.execute(f"SELECT ticker FROM {SCHEMA}.robot_watchlist WHERE kind='share'")
     shares = {r["ticker"] for r in cur.fetchall()}
+    cur.execute(f"SELECT * FROM {SCHEMA}.robot_rules")
+    rules_by_id = {r["id"]: r for r in cur.fetchall()}
+    for r in rules_by_id.values():
+        if r["kind"] == "share":
+            shares.add(r["ticker"])
     events = []
     utc_now = datetime.utcnow()
     for s in open_items:
@@ -162,6 +168,7 @@ def track_exits(conn, now: datetime, force: bool) -> list:
         t1_hit = was_t1
         start = (s["created_at"] + timedelta(hours=3)).strftime("%Y-%m-%d %H:00:00")
         exit_price, reason = None, ""
+        rule = rules_by_id.get(s.get("rule_id")) if s.get("rule_id") else None
         for c in candles:
             if c["begin"] < start:
                 continue
@@ -176,7 +183,11 @@ def track_exits(conn, now: datetime, force: bool) -> list:
             if not t1_hit and ((c["high"] >= t1) if is_long else (c["low"] <= t1)):
                 t1_hit = True
         last = candles[-1]["close"]
-        if exit_price is None:
+        if exit_price is None and rule and rule["exit_conditions"]:
+            why = rules_engine.exit_reason(rule["exit_conditions"], candles)
+            if why:
+                exit_price, reason = last, f"Сработало условие выхода: {why}"
+        if exit_price is None and not rule:
             closes = [c["close"] for c in candles]
             if len(closes) >= 50:
                 sma20 = sum(closes[-20:]) / 20
@@ -185,8 +196,8 @@ def track_exits(conn, now: datetime, force: bool) -> list:
                     exit_price, reason = last, "Тренд развернулся против позиции (SMA20 ниже SMA50)"
                 elif not is_long and sma20 > sma50 and last > sma50:
                     exit_price, reason = last, "Тренд развернулся против позиции (SMA20 выше SMA50)"
-            if exit_price is None and (utc_now - s["created_at"]).days >= 7:
-                exit_price, reason = last, "Прошло 7 дней, сигнал устарел"
+        if exit_price is None and (utc_now - s["created_at"]).days >= 7:
+            exit_price, reason = last, "Прошло 7 дней, сигнал устарел"
         name = f"{s['asset_name']} ({ticker}) {direction}"
         if exit_price is not None:
             pct = pnl(direction, entry, exit_price)
@@ -212,6 +223,132 @@ def track_exits(conn, now: datetime, force: bool) -> list:
         else:
             events.append({"ticker": ticker, "status": "позиция открыта"})
     return events
+
+
+def publish(conn, cur, ticker: str, asset_name: str, sig, rule_id, result: list) -> None:
+    direction, entry, stop, t1, t2, reason, price, atr = sig
+    if rule_id:
+        cur.execute(
+            f"SELECT 1 FROM {SCHEMA}.robot_signals WHERE rule_id=%s AND ticker=%s AND direction=%s "
+            f"AND (status='open' OR created_at > NOW() - INTERVAL '{DEDUP_HOURS} hours')", (rule_id, ticker, direction))
+    else:
+        cur.execute(
+            f"SELECT 1 FROM {SCHEMA}.robot_signals WHERE rule_id IS NULL AND ticker=%s AND direction=%s "
+            f"AND (status='open' OR created_at > NOW() - INTERVAL '{DEDUP_HOURS} hours')", (ticker, direction))
+    if cur.fetchone():
+        result.append({"ticker": ticker, "status": "сигнал уже отправлялся"})
+        return
+    risk = abs(entry - stop)
+    rr = abs(t1 - entry) / risk if risk else 0
+    text = (f"Сигнал робота (1 час)\n{asset_name} ({ticker}): {direction}\n"
+            f"Цена: {price:.2f}\nВход: {entry:.2f}\nСтоп: {stop:.2f}\n"
+            f"Цель 1: {t1:.2f}\nЦель 2: {t2:.2f}\nРиск/прибыль: 1:{rr:.1f}\n"
+            f"Основание: {reason}\n\nЭто сигнал, а не рекомендация. Заявки робот не выставляет.")
+    sent = send_whatsapp(text)
+    cur.execute(
+        f"INSERT INTO {SCHEMA}.robot_signals (ticker, asset_name, timeframe, direction, price, entry, stop_loss, target1, target2, reason, sent, rule_id) "
+        f"VALUES (%s,%s,'1h',%s,%s,%s,%s,%s,%s,%s,%s,%s)",
+        (ticker, asset_name, direction, price, entry, stop, t1, t2, reason, sent, rule_id))
+    conn.commit()
+    result.append({"ticker": ticker, "status": f"{direction}, отправлено: {sent}"})
+
+
+def run_rules(conn, cur, now: datetime, force: bool, result: list) -> None:
+    cur.execute(f"SELECT * FROM {SCHEMA}.robot_rules WHERE enabled")
+    cache = {}
+    for rule in cur.fetchall():
+        kind = rule["kind"]
+        label = f"{rule['ticker']} · {rule['name']}"
+        if not force and not market_open(kind, now):
+            result.append({"ticker": label, "status": "рынок закрыт"})
+            continue
+        ticker = rule["ticker"]
+        if kind == "future":
+            ticker = resolve_future(rule["asset_code"] or rule["ticker"])
+            if not ticker:
+                result.append({"ticker": label, "status": "контракт не найден"})
+                continue
+        try:
+            if ticker not in cache:
+                cache[ticker] = hourly_candles(ticker, kind)
+            sig = rules_engine.evaluate_entry(rule, cache[ticker])
+        except Exception as e:
+            result.append({"ticker": label, "status": f"ошибка данных: {e}"})
+            continue
+        if not sig:
+            result.append({"ticker": label, "status": "условия не выполнены"})
+            continue
+        publish(conn, cur, ticker, rule["asset_name"], sig, rule["id"], result)
+
+
+def is_admin(conn, uid_raw) -> bool:
+    if not uid_raw or not str(uid_raw).isdigit():
+        return False
+    cur = conn.cursor()
+    cur.execute(f"SELECT role FROM {SCHEMA}.users WHERE id=%s", (int(uid_raw),))
+    row = cur.fetchone()
+    return bool(row and row["role"] == "admin")
+
+
+def rule_row(r: dict) -> dict:
+    return {**r, "entry_text": [rules_engine.describe(c) for c in r["entry_conditions"]],
+            "exit_text": [rules_engine.describe(c) for c in r["exit_conditions"]]}
+
+
+def manage(action: str, q: dict, event: dict) -> dict:
+    h = event.get("headers") or {}
+    uid = h.get("X-User-Id") or h.get("x-user-id")
+    conn = db()
+    try:
+        if not is_admin(conn, uid):
+            return resp(403, {"error": "Доступ только для администратора"})
+        cur = conn.cursor()
+        if action == "robot_rules":
+            cur.execute(f"SELECT * FROM {SCHEMA}.robot_rules ORDER BY id DESC")
+            return resp(200, {"items": [rule_row(r) for r in cur.fetchall()]})
+        try:
+            body = json.loads(event.get("body") or "{}")
+        except ValueError:
+            return resp(400, {"error": "Неверный формат"})
+        if action == "robot_rule_save":
+            entry = rules_engine.sanitize(body.get("entry_conditions"))
+            exit_c = rules_engine.sanitize(body.get("exit_conditions"))
+            name = (body.get("name") or "").strip()[:120]
+            ticker = (body.get("ticker") or "").strip().upper()[:20]
+            if not name or not ticker or not entry:
+                return resp(400, {"error": "Укажите название, бумагу и хотя бы одно условие входа"})
+            kind = "future" if body.get("kind") == "future" else "share"
+            direction = "ШОРТ" if body.get("direction") == "ШОРТ" else "ЛОНГ"
+            if direction == "ШОРТ" and kind != "future":
+                return resp(400, {"error": "Шорт доступен только для фьючерсов"})
+            asset_name = (body.get("asset_name") or ticker).strip()[:100]
+            asset_code = (body.get("asset_code") or ticker).strip().upper()[:10] if kind == "future" else None
+
+            def f(key, default):
+                try:
+                    return max(0.3, min(10.0, float(body.get(key, default))))
+                except (TypeError, ValueError):
+                    return default
+            cur.execute(
+                f"INSERT INTO {SCHEMA}.robot_rules (name, ticker, asset_name, kind, asset_code, direction, entry_conditions, "
+                f"exit_conditions, stop_atr, target1_atr, target2_atr, created_by) VALUES (%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s) RETURNING id",
+                (name, ticker, asset_name, kind, asset_code, direction, json.dumps(entry), json.dumps(exit_c),
+                 f("stop_atr", 1.5), f("target1_atr", 1.5), f("target2_atr", 3), int(uid)))
+            new_id = cur.fetchone()["id"]
+            conn.commit()
+            return resp(200, {"id": new_id})
+        rid = int(body.get("id") or 0)
+        if action == "robot_rule_toggle":
+            cur.execute(f"UPDATE {SCHEMA}.robot_rules SET enabled = NOT enabled WHERE id=%s", (rid,))
+            conn.commit()
+            return resp(200, {"ok": True})
+        if action == "robot_rule_delete":
+            cur.execute(f"DELETE FROM {SCHEMA}.robot_rules WHERE id=%s", (rid,))
+            conn.commit()
+            return resp(200, {"ok": True})
+        return resp(400, {"error": "Неизвестное действие"})
+    finally:
+        conn.close()
 
 
 def run(force: bool) -> dict:
@@ -241,26 +378,8 @@ def run(force: bool) -> dict:
         if not sig:
             result.append({"ticker": it["ticker"], "status": "сигнала нет"})
             continue
-        direction, entry, stop, t1, t2, reason, price, atr = sig
-        cur.execute(
-            f"SELECT 1 FROM {SCHEMA}.robot_signals WHERE ticker=%s AND direction=%s AND (status='open' OR created_at > NOW() - INTERVAL '{DEDUP_HOURS} hours')",
-            (ticker, direction))
-        if cur.fetchone():
-            result.append({"ticker": ticker, "status": "сигнал уже отправлялся"})
-            continue
-        risk = abs(entry - stop)
-        rr = abs(t1 - entry) / risk if risk else 0
-        text = (f"Сигнал робота (1 час)\n{it['asset_name']} ({ticker}): {direction}\n"
-                f"Цена: {price:.2f}\nВход: {entry:.2f}\nСтоп: {stop:.2f}\n"
-                f"Цель 1: {t1:.2f}\nЦель 2: {t2:.2f}\nРиск/прибыль: 1:{rr:.1f}\n"
-                f"Основание: {reason}\n\nЭто сигнал, а не рекомендация. Заявки робот не выставляет.")
-        sent = send_whatsapp(text)
-        cur.execute(
-            f"INSERT INTO {SCHEMA}.robot_signals (ticker, asset_name, timeframe, direction, price, entry, stop_loss, target1, target2, reason, sent) "
-            f"VALUES (%s,%s,'1h',%s,%s,%s,%s,%s,%s,%s,%s)",
-            (ticker, it["asset_name"], direction, price, entry, stop, t1, t2, reason, sent))
-        conn.commit()
-        result.append({"ticker": ticker, "status": f"{direction}, отправлено: {sent}"})
+        publish(conn, cur, ticker, it["asset_name"], sig, None, result)
+    run_rules(conn, cur, now, force, result)
     conn.close()
     return {"checked": result, "exits": exits, "time": now.strftime("%Y-%m-%d %H:%M")}
 
@@ -279,7 +398,9 @@ def list_signals() -> dict:
     return {"items": data, "stats": stats}
 
 
-def handle_action(action: str, q: dict) -> dict:
+def handle_action(action: str, q: dict, event: dict = None) -> dict:
+    if action in ("robot_rules", "robot_rule_save", "robot_rule_toggle", "robot_rule_delete"):
+        return manage(action, q, event or {})
     if action == "robot_signals":
         return resp(200, list_signals())
     if action == "robot_test":
