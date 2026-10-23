@@ -115,7 +115,11 @@ export async function shareContent({ title, text, url, imageUrl }: ShareOptions)
     ? ogUrl
     : prodUrl;
   const shortUrl = await createShortUrl(urlToShorten);
-  const shareUrl = shortUrl ?? ogUrl ?? prodUrl;
+  const isDynamic = prodUrl.includes('/offer/') || prodUrl.includes('/request/') || prodUrl.includes('/auction/');
+  const shortBase = (func2url as Record<string, string>)['short-url'];
+  const shortCode = shortUrl ? shortUrl.split('/s/')[1] : null;
+  const botFriendlyShort = isDynamic && shortBase && shortCode ? `${shortBase}?code=${shortCode}` : null;
+  const shareUrl = botFriendlyShort ?? shortUrl ?? ogUrl ?? prodUrl;
 
   if (navigator.share) {
     try {
