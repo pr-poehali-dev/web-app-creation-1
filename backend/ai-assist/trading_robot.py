@@ -522,6 +522,15 @@ def manage(action: str, q: dict, event: dict) -> dict:
                     return max(0.3, min(10.0, float(body.get(key, default))))
                 except (TypeError, ValueError):
                     return default
+            edit_id = int(body.get("id") or 0)
+            if edit_id:
+                cur.execute(
+                    f"UPDATE {SCHEMA}.robot_rules SET name=%s, ticker=%s, asset_name=%s, kind=%s, asset_code=%s, direction=%s, "
+                    f"entry_conditions=%s, exit_conditions=%s, stop_atr=%s, target1_atr=%s, target2_atr=%s, timeframe=%s WHERE id=%s",
+                    (name, ticker, asset_name, kind, asset_code, direction, json.dumps(entry), json.dumps(exit_c),
+                     f("stop_atr", 1.5), f("target1_atr", 1.5), f("target2_atr", 3), tf, edit_id))
+                conn.commit()
+                return resp(200, {"id": edit_id})
             cur.execute(
                 f"INSERT INTO {SCHEMA}.robot_rules (name, ticker, asset_name, kind, asset_code, direction, entry_conditions, "
                 f"exit_conditions, stop_atr, target1_atr, target2_atr, created_by, timeframe) VALUES (%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s) RETURNING id",

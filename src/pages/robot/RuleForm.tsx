@@ -4,7 +4,7 @@ import { Input } from '@/components/ui/input';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { useToast } from '@/hooks/use-toast';
 import ConditionEditor, { TF_OPTIONS } from './ConditionEditor';
-import { saveRule, type RuleDraft } from './robotApi';
+import { saveRule, type Rule, type RuleDraft } from './robotApi';
 
 const EMPTY: RuleDraft = {
   name: '',
@@ -42,9 +42,30 @@ const FUTURES = [
 
 const selectCls = 'h-10 w-full rounded-md border border-input bg-background px-3 text-sm';
 
-export default function RuleForm({ onSaved }: { onSaved: () => void }) {
+const toDraft = (r: Rule): RuleDraft => ({
+  id: r.id,
+  name: r.name,
+  ticker: r.ticker,
+  asset_name: r.asset_name,
+  kind: r.kind,
+  direction: r.direction,
+  timeframe: r.timeframe,
+  entry_conditions: r.entry_conditions,
+  exit_conditions: r.exit_conditions,
+  stop_atr: Number(r.stop_atr),
+  target1_atr: Number(r.target1_atr),
+  target2_atr: Number(r.target2_atr),
+});
+
+interface Props {
+  onSaved: () => void;
+  rule?: Rule;
+  onCancel?: () => void;
+}
+
+export default function RuleForm({ onSaved, rule, onCancel }: Props) {
   const { toast } = useToast();
-  const [d, setD] = useState<RuleDraft>(EMPTY);
+  const [d, setD] = useState<RuleDraft>(rule ? toDraft(rule) : EMPTY);
   const [busy, setBusy] = useState(false);
   const set = (patch: Partial<RuleDraft>) => setD((p) => ({ ...p, ...patch }));
 
@@ -57,14 +78,15 @@ export default function RuleForm({ onSaved }: { onSaved: () => void }) {
       return;
     }
     toast({ title: 'Правило сохранено' });
-    setD(EMPTY);
+    if (!rule) setD(EMPTY);
     onSaved();
+    onCancel?.();
   };
 
   return (
     <Card>
       <CardHeader>
-        <CardTitle className="text-lg">Новое правило</CardTitle>
+        <CardTitle className="text-lg">{rule ? "Изменить правило" : "Новое правило"}</CardTitle>
       </CardHeader>
       <CardContent className="space-y-5">
         <div className="grid gap-3 sm:grid-cols-2">
@@ -170,9 +192,14 @@ export default function RuleForm({ onSaved }: { onSaved: () => void }) {
           </div>
         </div>
 
-        <Button onClick={submit} disabled={busy} className="w-full sm:w-auto">
-          {busy ? 'Сохраняю...' : 'Сохранить правило'}
-        </Button>
+        <div className="flex flex-wrap gap-2">
+          <Button onClick={submit} disabled={busy} className="w-full sm:w-auto">
+            {busy ? 'Сохраняю...' : 'Сохранить правило'}
+          </Button>
+          {onCancel && (
+            <Button variant="outline" onClick={onCancel} className="w-full sm:w-auto">Отмена</Button>
+          )}
+        </div>
       </CardContent>
     </Card>
   );

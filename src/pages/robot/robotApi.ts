@@ -22,6 +22,9 @@ export interface Rule {
   kind: string;
   direction: string;
   timeframe: number;
+  asset_code?: string | null;
+  entry_conditions: Condition[];
+  exit_conditions: Condition[];
   entry_text: string[];
   exit_text: string[];
   stop_atr: string;
@@ -70,6 +73,7 @@ export interface RuleStats {
 }
 
 export interface RuleDraft {
+  id?: number;
   name: string;
   ticker: string;
   asset_name: string;
