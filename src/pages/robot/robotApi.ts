@@ -12,6 +12,7 @@ export interface Condition {
   period?: number;
   dir?: string;
   tf?: number;
+  mult?: number;
 }
 
 export interface Rule {
@@ -186,4 +187,20 @@ export async function runBacktest(params: Record<string, string>): Promise<Backt
   const qs = new URLSearchParams({ action: 'robot_backtest', ...params });
   const r = await fetch(`${API}?${qs}`, { headers: headers() });
   return r.json();
+}
+
+export interface TokenInfo {
+  expires: string | null;
+  source: string;
+  days_left: number | null;
+}
+
+export async function loadToken(): Promise<TokenInfo> {
+  const r = await fetch(`${API}?action=robot_token_get`, { headers: headers() });
+  return r.json();
+}
+
+export async function saveTokenDate(expires: string): Promise<boolean> {
+  const r = await fetch(`${API}?action=robot_token_set`, { method: 'POST', headers: headers(), body: JSON.stringify({ expires }) });
+  return r.ok;
 }

@@ -11,6 +11,20 @@ export const CONDITION_TYPES: { value: string; label: string; group: string }[] 
   { value: 'bollinger', label: 'Цена вышла за полосу Боллинджера', group: 'Индикаторы' },
   { value: 'divergence_rsi', label: 'Дивергенция по RSI', group: 'Индикаторы' },
   { value: 'divergence_macd', label: 'Дивергенция по MACD', group: 'Индикаторы' },
+  { value: 'volume_spike', label: 'Всплеск объёма', group: 'Объём' },
+  { value: 'obv', label: 'OBV пересёк свою среднюю', group: 'Объём' },
+  { value: 'mfi', label: 'MFI (денежный поток)', group: 'Объём' },
+  { value: 'vwap', label: 'Цена выше или ниже VWAP', group: 'Объём' },
+  { value: 'adx', label: 'ADX (сила тренда)', group: 'Трендовые' },
+  { value: 'psar', label: 'Parabolic SAR развернулся', group: 'Трендовые' },
+  { value: 'ichimoku', label: 'Ишимоку: Тэнкан и Киджун', group: 'Трендовые' },
+  { value: 'stochastic', label: 'Стохастик', group: 'Осцилляторы' },
+  { value: 'cci', label: 'CCI', group: 'Осцилляторы' },
+  { value: 'williams_r', label: 'Williams %R', group: 'Осцилляторы' },
+  { value: 'alligator', label: 'Аллигатор (пасть открыта)', group: 'Билл Вильямс' },
+  { value: 'ao', label: 'Awesome Oscillator пересёк ноль', group: 'Билл Вильямс' },
+  { value: 'ac', label: 'Accelerator Oscillator пересёк ноль', group: 'Билл Вильямс' },
+  { value: 'fractal', label: 'Пробой фрактала', group: 'Билл Вильямс' },
   { value: 'breakout', label: 'Пробой максимума или минимума', group: 'Уровни' },
   { value: 'range_breakout', label: 'Выход из узкого диапазона', group: 'Фигуры' },
   { value: 'double_bottom', label: 'Двойное дно', group: 'Фигуры' },
@@ -27,6 +41,20 @@ const DEFAULTS: Record<string, Condition> = {
   divergence_rsi: { type: 'divergence_rsi', dir: 'up' },
   divergence_macd: { type: 'divergence_macd', dir: 'up' },
   bollinger: { type: 'bollinger', op: 'below_lower' },
+  volume_spike: { type: 'volume_spike', mult: 2 },
+  obv: { type: 'obv', dir: 'up' },
+  mfi: { type: 'mfi', op: '<', value: 20 },
+  vwap: { type: 'vwap', op: 'above', period: 50 },
+  adx: { type: 'adx', dir: 'up', value: 25 },
+  psar: { type: 'psar', dir: 'up' },
+  ichimoku: { type: 'ichimoku', dir: 'up' },
+  stochastic: { type: 'stochastic', op: '<', value: 20 },
+  cci: { type: 'cci', op: '<', value: -100 },
+  williams_r: { type: 'williams_r', op: '<', value: -80 },
+  alligator: { type: 'alligator', dir: 'up' },
+  ao: { type: 'ao', dir: 'up' },
+  ac: { type: 'ac', dir: 'up' },
+  fractal: { type: 'fractal', dir: 'up' },
   breakout: { type: 'breakout', period: 20, dir: 'up' },
   range_breakout: { type: 'range_breakout', period: 20, dir: 'up' },
   double_bottom: { type: 'double_bottom' },
@@ -74,7 +102,7 @@ function ConditionRow({ cond, onChange, onRemove }: RowProps) {
         ))}
       </select>
 
-      {cond.type === 'rsi' && (
+      {['rsi', 'mfi', 'stochastic', 'cci', 'williams_r'].includes(cond.type) && (
         <>
           <select className={selectCls} value={cond.op} onChange={(e) => set({ op: e.target.value })}>
             <option value="<">ниже</option>
@@ -103,7 +131,34 @@ function ConditionRow({ cond, onChange, onRemove }: RowProps) {
           <span className="text-sm">ч</span>
         </>
       )}
-      {cond.type === 'macd' && dirSelect('вверх', 'вниз')}
+      {['macd', 'obv', 'psar', 'ichimoku', 'ao', 'ac'].includes(cond.type) && dirSelect('вверх', 'вниз')}
+      {cond.type === 'alligator' && dirSelect('вверх', 'вниз')}
+      {cond.type === 'fractal' && dirSelect('верхнего (вверх)', 'нижнего (вниз)')}
+      {cond.type === 'volume_spike' && (
+        <>
+          <span className="text-sm">объём больше среднего в</span>
+          <Num value={cond.mult} onChange={(v) => set({ mult: v })} />
+          <span className="text-sm">раз</span>
+        </>
+      )}
+      {cond.type === 'adx' && (
+        <>
+          <span className="text-sm">ADX выше</span>
+          <Num value={cond.value} onChange={(v) => set({ value: v })} />
+          {dirSelect('тренд вверх', 'тренд вниз')}
+        </>
+      )}
+      {cond.type === 'vwap' && (
+        <>
+          <select className={selectCls} value={cond.op} onChange={(e) => set({ op: e.target.value })}>
+            <option value="above">выше</option>
+            <option value="below">ниже</option>
+          </select>
+          <span className="text-sm">VWAP за</span>
+          <Num value={cond.period} onChange={(v) => set({ period: v })} />
+          <span className="text-sm">свечей</span>
+        </>
+      )}
       {(cond.type === 'divergence_rsi' || cond.type === 'divergence_macd') &&
         dirSelect('бычья (цена ниже, индикатор выше)', 'медвежья (цена выше, индикатор ниже)')}
       {cond.type === 'bollinger' && (

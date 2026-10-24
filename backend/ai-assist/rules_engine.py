@@ -9,6 +9,20 @@ LABELS = {
     "double_top": "Двойная вершина",
     "head_shoulders": "Голова и плечи",
     "inverse_head_shoulders": "Перевёрнутая голова и плечи",
+    "volume_spike": "Всплеск объёма",
+    "obv": "OBV (балансовый объём)",
+    "mfi": "MFI (денежный поток)",
+    "vwap": "Цена относительно VWAP",
+    "adx": "ADX (сила тренда)",
+    "psar": "Parabolic SAR",
+    "ichimoku": "Ишимоку",
+    "stochastic": "Стохастик",
+    "cci": "CCI",
+    "williams_r": "Williams %R",
+    "alligator": "Аллигатор Билла Вильямса",
+    "ao": "Awesome Oscillator",
+    "ac": "Accelerator Oscillator",
+    "fractal": "Фракталы Билла Вильямса",
     "range_breakout": "Выход из узкого диапазона",
     "divergence_rsi": "Дивергенция по RSI",
     "divergence_macd": "Дивергенция по MACD",
@@ -76,6 +90,22 @@ def _sanitize_one(c, out: list) -> None:
             out.append({"type": t, "dir": d})
         elif t == "range_breakout":
             out.append({"type": t, "period": int(_num(c.get("period"), 8, 60, 20)), "dir": d})
+        elif t == "volume_spike":
+            out.append({"type": t, "mult": round(_num(c.get("mult"), 1.2, 10, 2), 1)})
+        elif t == "mfi":
+            out.append({"type": t, "op": "<" if c.get("op") == "<" else ">", "value": _num(c.get("value"), 1, 99, 20)})
+        elif t == "stochastic":
+            out.append({"type": t, "op": "<" if c.get("op") == "<" else ">", "value": _num(c.get("value"), 1, 99, 20)})
+        elif t == "cci":
+            out.append({"type": t, "op": "<" if c.get("op") == "<" else ">", "value": _num(c.get("value"), -300, 300, -100)})
+        elif t == "williams_r":
+            out.append({"type": t, "op": "<" if c.get("op") == "<" else ">", "value": _num(c.get("value"), -99, -1, -80)})
+        elif t == "vwap":
+            out.append({"type": t, "op": "below" if c.get("op") == "below" else "above", "period": int(_num(c.get("period"), 10, 200, 50))})
+        elif t == "adx":
+            out.append({"type": t, "dir": d, "value": _num(c.get("value"), 10, 60, 25)})
+        elif t in ("obv", "psar", "ichimoku", "alligator", "ao", "ac", "fractal"):
+            out.append({"type": t, "dir": d})
 
 
 def describe(c: dict) -> str:
@@ -108,9 +138,41 @@ def _describe(c: dict) -> str:
     if t in ("divergence_rsi", "divergence_macd"):
         name = "RSI" if t == "divergence_rsi" else "MACD"
         return f"{'бычья' if c['dir'] == 'up' else 'медвежья'} дивергенция по {name}"
+    up = c.get("dir") == "up"
+    if t == "volume_spike":
+        return f"объём выше среднего в {c['mult']:g} раз"
+    if t == "obv":
+        return f"OBV пересёк свою среднюю {'вверх' if up else 'вниз'}"
+    if t == "mfi":
+        return f"MFI {'<' if c['op'] == '<' else '>'} {c['value']:.0f}"
+    if t == "vwap":
+        return f"цена {'выше' if c['op'] == 'above' else 'ниже'} VWAP за {c['period']} свечей"
+    if t == "adx":
+        return f"ADX выше {c['value']:.0f}, тренд {'вверх' if up else 'вниз'}"
+    if t == "psar":
+        return f"Parabolic SAR развернулся {'вверх' if up else 'вниз'}"
+    if t == "ichimoku":
+        return f"Ишимоку: Тэнкан пересёк Киджун {'вверх' if up else 'вниз'}"
+    if t == "stochastic":
+        return f"Стохастик {'<' if c['op'] == '<' else '>'} {c['value']:.0f}"
+    if t == "cci":
+        return f"CCI {'<' if c['op'] == '<' else '>'} {c['value']:.0f}"
+    if t == "williams_r":
+        return f"Williams %R {'<' if c['op'] == '<' else '>'} {c['value']:.0f}"
+    if t == "alligator":
+        return f"Аллигатор: пасть открыта {'вверх' if up else 'вниз'}"
+    if t == "ao":
+        return f"Awesome Oscillator пересёк ноль {'вверх' if up else 'вниз'}"
+    if t == "ac":
+        return f"Accelerator Oscillator пересёк ноль {'вверх' if up else 'вниз'}"
+    if t == "fractal":
+        return f"пробой {'верхнего' if up else 'нижнего'} фрактала"
     if t == "range_breakout":
         return f"выход {'вверх' if c['dir'] == 'up' else 'вниз'} из узкого диапазона {c['period']} ч"
     return t
+
+
+import indicators
 
 
 def _sma(vals, n, shift=0):
@@ -312,6 +374,35 @@ def check(c: dict, candles: list) -> bool:
         return _hs_pattern(candles, False)
     if t == "inverse_head_shoulders":
         return _hs_pattern(candles, True)
+    up = c.get("dir") == "up"
+    if t == "volume_spike":
+        return indicators.volume_spike(candles, c["mult"])
+    if t == "obv":
+        return indicators.obv_cross(candles, up)
+    if t in ("mfi", "stochastic", "cci", "williams_r"):
+        fn = {"mfi": indicators.mfi, "stochastic": indicators.stochastic, "cci": indicators.cci, "williams_r": indicators.williams_r}[t]
+        v = fn(candles)
+        return v is not None and (v < c["value"] if c["op"] == "<" else v > c["value"])
+    if t == "vwap":
+        v = indicators.vwap(candles, c["period"])
+        return v is not None and (closes[-1] > v if c["op"] == "above" else closes[-1] < v)
+    if t == "adx":
+        r = indicators.adx(candles)
+        if not r:
+            return False
+        return r[0] > c["value"] and (r[1] > r[2] if up else r[2] > r[1])
+    if t == "psar":
+        return indicators.psar_flip(candles, up)
+    if t == "ichimoku":
+        return indicators.ichimoku_cross(candles, up)
+    if t == "alligator":
+        return indicators.alligator(candles, up)
+    if t == "ao":
+        return indicators.ao_cross(candles, up)
+    if t == "ac":
+        return indicators.ac_cross(candles, up)
+    if t == "fractal":
+        return indicators.fractal_break(candles, up)
     if t == "range_breakout":
         prev = candles[-c["period"] - 1:-1]
         if len(prev) < c["period"]:
@@ -386,9 +477,19 @@ def mirror(conds: list) -> list:
     for c in conds:
         m = dict(c)
         t = c["type"]
-        if t == "rsi":
+        if t in ("rsi", "mfi", "stochastic"):
             m["op"] = ">" if c["op"] == "<" else "<"
             m["value"] = round(100 - c["value"], 1)
+        elif t == "cci":
+            m["op"] = ">" if c["op"] == "<" else "<"
+            m["value"] = round(-c["value"], 1)
+        elif t == "williams_r":
+            m["op"] = ">" if c["op"] == "<" else "<"
+            m["value"] = round(-100 - c["value"], 1)
+        elif t == "vwap":
+            m["op"] = "below" if c["op"] == "above" else "above"
+        elif t == "volume_spike":
+            pass
         elif t == "price_vs_sma":
             m["op"] = "below" if c["op"] == "above" else "above"
         elif t == "bollinger":

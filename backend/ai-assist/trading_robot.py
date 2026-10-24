@@ -67,7 +67,7 @@ def _clean(block: dict) -> list:
     for c in rows(block):
         if None in (c.get("close"), c.get("high"), c.get("low")):
             continue
-        out.append({"begin": c["begin"], "high": float(c["high"]), "low": float(c["low"]), "close": float(c["close"])})
+        out.append({"begin": c["begin"], "high": float(c["high"]), "low": float(c["low"]), "close": float(c["close"]), "volume": float(c.get("volume") or 0)})
     return out
 
 
@@ -116,7 +116,7 @@ def _bcs_chunk(ticker: str, kind: str, frame: str, start: datetime, end: datetim
         if t.tzinfo is None:
             t = t.replace(tzinfo=timezone.utc)
         begin = t.astimezone(MSK).strftime("%Y-%m-%d %H:%M:%S")
-        out.append({"begin": begin, "high": float(b["high"]), "low": float(b["low"]), "close": float(b["close"])})
+        out.append({"begin": begin, "high": float(b["high"]), "low": float(b["low"]), "close": float(b["close"]), "volume": float(b.get("volume") or 0)})
     return out
 
 
@@ -148,8 +148,9 @@ def bcs_candles(ticker: str, kind: str, tf: int) -> list:
                 out[-1]["high"] = max(out[-1]["high"], c["high"])
                 out[-1]["low"] = min(out[-1]["low"], c["low"])
                 out[-1]["close"] = c["close"]
+                out[-1]["volume"] += c["volume"]
             else:
-                out.append({"begin": key, "high": c["high"], "low": c["low"], "close": c["close"]})
+                out.append({"begin": key, "high": c["high"], "low": c["low"], "close": c["close"], "volume": c["volume"]})
     else:
         out = _bcs_bars(ticker, kind, BCS_TF[tf], 3 if tf == 5 else 14)
     if out:
@@ -158,6 +159,51 @@ def bcs_candles(ticker: str, kind: str, tf: int) -> list:
         if begun + timedelta(minutes=tf) > now:
             out = out[:-1]
     return out
+
+
+def token_expiry(conn):
+    import base64
+    cur = conn.cursor()
+    cur.execute(f"SELECT value FROM {SCHEMA}.robot_settings WHERE key='bcs_token_expires'")
+    row = cur.fetchone()
+    if row:
+        try:
+            return datetime.strptime(row["value"], "%Y-%m-%d").date(), "manual"
+        except ValueError:
+            pass
+    tok = os.environ.get("BCS_REFRESH_TOKEN", "")
+    try:
+        part = tok.split(".")[1]
+        payload = json.loads(base64.urlsafe_b64decode(part + "=" * (-len(part) % 4)))
+        if payload.get("exp"):
+            return datetime.fromtimestamp(int(payload["exp"]), MSK).date(), "token"
+    except Exception:
+        pass
+    return None, ""
+
+
+def check_token_expiry(conn, now: datetime) -> None:
+    exp, _ = token_expiry(conn)
+    if not exp:
+        return
+    left = (exp - now.date()).days
+    if left > 3:
+        return
+    cur = conn.cursor()
+    cur.execute(f"SELECT 1 FROM {SCHEMA}.robot_alerts WHERE kind='bcs_expiry' AND last_sent_at > NOW() - INTERVAL '20 hours'")
+    if cur.fetchone():
+        return
+    if left < 0:
+        text = "Робот ЕРТТП: срок токена БКС истёк. Выпустите новый токен «Только для чтения», обновите секрет BCS_REFRESH_TOKEN и дату в разделе робота."
+    elif left == 0:
+        text = "Робот ЕРТТП: токен БКС истекает сегодня. Выпустите новый токен «Только для чтения» и обновите секрет BCS_REFRESH_TOKEN."
+    else:
+        text = f"Робот ЕРТТП: токен БКС истекает через {left} дн. ({exp.strftime('%d.%m.%Y')}). Выпустите новый токен «Только для чтения» и обновите секрет BCS_REFRESH_TOKEN."
+    if send_whatsapp(text):
+        cur.execute(
+            f"INSERT INTO {SCHEMA}.robot_alerts (kind, last_sent_at) VALUES ('bcs_expiry', NOW()) "
+            f"ON CONFLICT (kind) DO UPDATE SET last_sent_at = NOW()")
+        conn.commit()
 
 
 def alert_bcs_failure(err: Exception) -> None:
@@ -215,8 +261,9 @@ def moex_candles(ticker: str, kind: str, tf: int) -> list:
                 out[-1]["high"] = max(out[-1]["high"], c["high"])
                 out[-1]["low"] = min(out[-1]["low"], c["low"])
                 out[-1]["close"] = c["close"]
+                out[-1]["volume"] += c["volume"]
             else:
-                out.append({"begin": key, "high": c["high"], "low": c["low"], "close": c["close"]})
+                out.append({"begin": key, "high": c["high"], "low": c["low"], "close": c["close"], "volume": c["volume"]})
     else:
         days = 14 if tf == 60 else 4
         since = (now - timedelta(days=days)).strftime("%Y-%m-%d")
@@ -540,6 +587,22 @@ def manage(action: str, q: dict, event: dict) -> dict:
             conn.commit()
             return resp(200, {"id": new_id})
         rid = int(body.get("id") or 0)
+        if action == "robot_token_get":
+            exp, src = token_expiry(conn)
+            return resp(200, {"expires": exp.isoformat() if exp else None, "source": src,
+                              "days_left": (exp - datetime.now(MSK).date()).days if exp else None})
+        if action == "robot_token_set":
+            val = str(body.get("expires") or "")
+            try:
+                datetime.strptime(val, "%Y-%m-%d")
+            except ValueError:
+                return resp(400, {"error": "Укажите дату"})
+            cur.execute(
+                f"INSERT INTO {SCHEMA}.robot_settings (key, value) VALUES ('bcs_token_expires', %s) "
+                f"ON CONFLICT (key) DO UPDATE SET value=EXCLUDED.value, updated_at=NOW()", (val,))
+            cur.execute(f"DELETE FROM {SCHEMA}.robot_alerts WHERE kind='bcs_expiry'")
+            conn.commit()
+            return resp(200, {"ok": True})
         if action == "robot_signal_update":
             cur.execute(f"SELECT * FROM {SCHEMA}.robot_signals WHERE id=%s", (rid,))
             sg = cur.fetchone()
@@ -592,6 +655,10 @@ def manage(action: str, q: dict, event: dict) -> dict:
 def run(force: bool) -> dict:
     now = datetime.now(MSK)
     conn = db()
+    try:
+        check_token_expiry(conn, now)
+    except Exception as e:
+        print(f"expiry check error: {e}")
     exits = track_exits(conn, now, force)
     cur = conn.cursor()
     cur.execute(f"SELECT ticker, asset_name, kind, asset_code FROM {SCHEMA}.robot_watchlist WHERE enabled")
@@ -697,14 +764,15 @@ def bcs_history(ticker: str, kind: str, tf: int, days: int) -> list:
                 out[-1]["high"] = max(out[-1]["high"], c["high"])
                 out[-1]["low"] = min(out[-1]["low"], c["low"])
                 out[-1]["close"] = c["close"]
+                out[-1]["volume"] += c["volume"]
             else:
-                out.append({"begin": key, "high": c["high"], "low": c["low"], "close": c["close"]})
+                out.append({"begin": key, "high": c["high"], "low": c["low"], "close": c["close"], "volume": c["volume"]})
         return out
     return _bcs_bars(ticker, kind, BCS_TF[tf], days)
 
 
 def handle_action(action: str, q: dict, event: dict = None) -> dict:
-    if action in ("robot_rules", "robot_rule_save", "robot_rule_toggle", "robot_rule_delete", "robot_signal_update", "robot_signal_delete"):
+    if action in ("robot_rules", "robot_rule_save", "robot_rule_toggle", "robot_rule_delete", "robot_signal_update", "robot_signal_delete", "robot_token_get", "robot_token_set"):
         return manage(action, q, event or {})
     if action == "robot_signals":
         return resp(200, list_signals())

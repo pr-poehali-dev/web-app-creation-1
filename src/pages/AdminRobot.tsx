@@ -10,6 +10,7 @@ import Icon from '@/components/ui/icon';
 import RuleForm from './robot/RuleForm';
 import RulesList from './robot/RulesList';
 import RuleEfficiency from './robot/RuleEfficiency';
+import TokenExpiry from './robot/TokenExpiry';
 import BacktestPanel from './robot/BacktestPanel';
 import SignalsList from './robot/SignalsList';
 import { loadRules, loadSignals, loadDataSource, runRobotNow, type Rule, type Signal, type Stats, type RuleStats } from './robot/robotApi';
@@ -83,6 +84,8 @@ export default function AdminRobot({ isAuthenticated, onLogout }: Props) {
             {source === 'bcs' ? 'Источник котировок: БКС' : source === 'moex' ? 'Источник котировок: MOEX (БКС недоступен)' : 'Источник котировок не определён'}
           </div>
         )}
+
+        {!denied && <TokenExpiry />}
 
         {denied ? (
           <p className="text-sm text-muted-foreground">Раздел доступен только ООО «Дойдум-Инвест».</p>
