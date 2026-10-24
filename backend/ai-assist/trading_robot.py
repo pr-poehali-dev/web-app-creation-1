@@ -70,7 +70,97 @@ def _clean(block: dict) -> list:
     return out
 
 
+BCS = "https://be.broker.ru"
+BCS_TF = {5: "M5", 60: "H1"}
+_BCS_TOKEN = {"value": "", "exp": 0.0}
+LAST_SOURCE = {"value": ""}
+
+
+def bcs_token() -> str:
+    import time
+    if _BCS_TOKEN["value"] and _BCS_TOKEN["exp"] > time.time() + 30:
+        return _BCS_TOKEN["value"]
+    r = requests.post(
+        f"{BCS}/trade-api-keycloak/realms/tradeapi/protocol/openid-connect/token",
+        data={"client_id": "trade-api-read", "grant_type": "refresh_token",
+              "refresh_token": os.environ["BCS_REFRESH_TOKEN"]},
+        timeout=8,
+    )
+    r.raise_for_status()
+    j = r.json()
+    _BCS_TOKEN["value"] = j["access_token"]
+    _BCS_TOKEN["exp"] = time.time() + int(j.get("expires_in", 300))
+    return _BCS_TOKEN["value"]
+
+
+def _bcs_bars(ticker: str, kind: str, frame: str, days: int) -> list:
+    now = datetime.now(timezone.utc)
+    r = requests.get(
+        f"{BCS}/trade-api-market-data-connector/api/v1/candles-chart",
+        params={
+            "classCode": "SPBFUT" if kind == "future" else "TQBR",
+            "ticker": ticker,
+            "startDate": (now - timedelta(days=days)).strftime("%Y-%m-%dT%H:%M:%SZ"),
+            "endDate": now.strftime("%Y-%m-%dT%H:%M:%SZ"),
+            "timeFrame": frame,
+        },
+        headers={"Authorization": f"Bearer {bcs_token()}"},
+        timeout=10,
+    )
+    r.raise_for_status()
+    data = r.json()
+    bars = data.get("bars") if isinstance(data, dict) else data
+    out = []
+    for b in bars or []:
+        t = datetime.fromisoformat(str(b["time"]).replace("Z", "+00:00"))
+        if t.tzinfo is None:
+            t = t.replace(tzinfo=timezone.utc)
+        begin = t.astimezone(MSK).strftime("%Y-%m-%d %H:%M:%S")
+        out.append({"begin": begin, "high": float(b["high"]), "low": float(b["low"]), "close": float(b["close"])})
+    out.sort(key=lambda c: c["begin"])
+    return out
+
+
+def bcs_candles(ticker: str, kind: str, tf: int) -> list:
+    if not os.environ.get("BCS_REFRESH_TOKEN"):
+        return []
+    if tf == 10:
+        five = _bcs_bars(ticker, kind, "M5", 3)
+        out = []
+        for c in five:
+            b = c["begin"]
+            m = int(b[14:16])
+            key = f"{b[:14]}{m - m % 10:02d}:00"
+            if out and out[-1]["begin"] == key:
+                out[-1]["high"] = max(out[-1]["high"], c["high"])
+                out[-1]["low"] = min(out[-1]["low"], c["low"])
+                out[-1]["close"] = c["close"]
+            else:
+                out.append({"begin": key, "high": c["high"], "low": c["low"], "close": c["close"]})
+    else:
+        out = _bcs_bars(ticker, kind, BCS_TF[tf], 3 if tf == 5 else 14)
+    if out:
+        now = datetime.now(MSK).replace(tzinfo=None)
+        begun = datetime.strptime(out[-1]["begin"], "%Y-%m-%d %H:%M:%S")
+        if begun + timedelta(minutes=tf) > now:
+            out = out[:-1]
+    return out
+
+
 def get_candles(ticker: str, kind: str, tf: int) -> list:
+    try:
+        out = bcs_candles(ticker, kind, tf)
+        if len(out) >= 20:
+            LAST_SOURCE["value"] = "bcs"
+            return out
+        print(f"BCS candles short/empty for {ticker}: {len(out)}, fallback MOEX")
+    except Exception as e:
+        print(f"BCS candles error for {ticker}: {e}, fallback MOEX")
+    LAST_SOURCE["value"] = "moex"
+    return moex_candles(ticker, kind, tf)
+
+
+def moex_candles(ticker: str, kind: str, tf: int) -> list:
     path = _candles_path(ticker, kind)
     now = datetime.now(MSK).replace(tzinfo=None)
     if tf == 5:
@@ -483,6 +573,9 @@ def handle_action(action: str, q: dict, event: dict = None) -> dict:
         return manage(action, q, event or {})
     if action == "robot_signals":
         return resp(200, list_signals())
+    if action == "robot_source":
+        c = get_candles("SBER", "stock", 60)
+        return resp(200, {"source": LAST_SOURCE["value"], "candles": len(c), "last": c[-1] if c else None})
     if action == "robot_test":
         return resp(200, {"sent": send_whatsapp("Тест: робот ЕРТТП подключён к WhatsApp. Сигналы будут приходить сюда.")})
     return resp(200, run(force=q.get("force") == "1"))
