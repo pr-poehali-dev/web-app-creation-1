@@ -121,7 +121,7 @@ export async function shareContent({ title, text, url, imageUrl }: ShareOptions)
   const botFriendlyShort = isDynamic && shortBase && shortCode ? `${shortBase}?code=${shortCode}` : null;
   const shareUrl = botFriendlyShort ?? shortUrl ?? ogUrl ?? prodUrl;
   const shareMessage = botFriendlyShort && shortUrl
-    ? `${botFriendlyShort}\n\nОткрыть на ЕРТТП: ${shortUrl}`
+    ? `${text}\n\n${shortUrl}`
     : shareUrl;
 
   if (navigator.share) {
