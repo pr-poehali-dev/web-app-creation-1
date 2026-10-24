@@ -531,6 +531,42 @@ def manage(action: str, q: dict, event: dict) -> dict:
             conn.commit()
             return resp(200, {"id": new_id})
         rid = int(body.get("id") or 0)
+        if action == "robot_signal_update":
+            cur.execute(f"SELECT * FROM {SCHEMA}.robot_signals WHERE id=%s", (rid,))
+            sg = cur.fetchone()
+            if not sg:
+                return resp(404, {"error": "Сигнал не найден"})
+            try:
+                entry, stop = float(body["entry"]), float(body["stop_loss"])
+                t1, t2 = float(body["target1"]), float(body["target2"])
+            except (KeyError, TypeError, ValueError):
+                return resp(400, {"error": "Проверьте числа"})
+            reason = str(body.get("reason") or "")[:1000]
+            cur.execute(
+                f"UPDATE {SCHEMA}.robot_signals SET entry=%s, stop_loss=%s, target1=%s, target2=%s, reason=%s WHERE id=%s",
+                (entry, stop, t1, t2, reason, rid))
+            if sg["status"] == "closed" and sg["exit_price"] is not None:
+                pct = pnl(sg["direction"], entry, float(sg["exit_price"]))
+                if sg["t1_hit"]:
+                    pct = 0.5 * pnl(sg["direction"], entry, t1) + 0.5 * pct
+                cur.execute(f"UPDATE {SCHEMA}.robot_signals SET result_pct=%s WHERE id=%s", (round(pct, 2), rid))
+            if body.get("close_price") not in (None, "") and sg["status"] == "open":
+                try:
+                    cp = float(body["close_price"])
+                except (TypeError, ValueError):
+                    return resp(400, {"error": "Проверьте цену закрытия"})
+                pct = pnl(sg["direction"], entry, cp)
+                if sg["t1_hit"]:
+                    pct = 0.5 * pnl(sg["direction"], entry, t1) + 0.5 * pct
+                cur.execute(
+                    f"UPDATE {SCHEMA}.robot_signals SET status='closed', exit_price=%s, exit_reason='Закрыто вручную', "
+                    f"result_pct=%s, closed_at=NOW() WHERE id=%s", (cp, round(pct, 2), rid))
+            conn.commit()
+            return resp(200, {"ok": True})
+        if action == "robot_signal_delete":
+            cur.execute(f"DELETE FROM {SCHEMA}.robot_signals WHERE id=%s", (rid,))
+            conn.commit()
+            return resp(200, {"ok": True})
         if action == "robot_rule_toggle":
             cur.execute(f"UPDATE {SCHEMA}.robot_rules SET enabled = NOT enabled WHERE id=%s", (rid,))
             conn.commit()
@@ -659,7 +695,7 @@ def bcs_history(ticker: str, kind: str, tf: int, days: int) -> list:
 
 
 def handle_action(action: str, q: dict, event: dict = None) -> dict:
-    if action in ("robot_rules", "robot_rule_save", "robot_rule_toggle", "robot_rule_delete"):
+    if action in ("robot_rules", "robot_rule_save", "robot_rule_toggle", "robot_rule_delete", "robot_signal_update", "robot_signal_delete"):
         return manage(action, q, event or {})
     if action == "robot_signals":
         return resp(200, list_signals())

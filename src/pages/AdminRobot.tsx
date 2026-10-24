@@ -10,6 +10,7 @@ import Icon from '@/components/ui/icon';
 import RuleForm from './robot/RuleForm';
 import RulesList from './robot/RulesList';
 import RuleEfficiency from './robot/RuleEfficiency';
+import BacktestPanel from './robot/BacktestPanel';
 import SignalsList from './robot/SignalsList';
 import { loadRules, loadSignals, loadDataSource, runRobotNow, type Rule, type Signal, type Stats, type RuleStats } from './robot/robotApi';
 
@@ -91,16 +92,20 @@ export default function AdminRobot({ isAuthenticated, onLogout }: Props) {
               <TabsTrigger value="signals">Сигналы</TabsTrigger>
               <TabsTrigger value="rules">Мои правила</TabsTrigger>
               <TabsTrigger value="eff">Эффективность</TabsTrigger>
+              <TabsTrigger value="test">Тест на истории</TabsTrigger>
               <TabsTrigger value="new">Новое правило</TabsTrigger>
             </TabsList>
             <TabsContent value="signals">
-              <SignalsList items={signals} stats={stats} />
+              <SignalsList items={signals} stats={stats} onChanged={refresh} />
             </TabsContent>
             <TabsContent value="eff">
               <RuleEfficiency items={ruleStats} />
             </TabsContent>
             <TabsContent value="rules">
               <RulesList rules={rules} onChanged={refresh} />
+            </TabsContent>
+            <TabsContent value="test">
+              <BacktestPanel rules={rules} />
             </TabsContent>
             <TabsContent value="new">
               <RuleForm onSaved={refresh} />

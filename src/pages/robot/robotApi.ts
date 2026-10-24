@@ -123,3 +123,63 @@ export async function loadDataSource(): Promise<{ source: string; candles: numbe
   const r = await fetch(`${API}?action=robot_source`);
   return r.json();
 }
+
+export interface SignalEdit {
+  id: number;
+  entry: number;
+  stop_loss: number;
+  target1: number;
+  target2: number;
+  reason: string;
+  close_price?: number | null;
+}
+
+export async function updateSignal(data: SignalEdit): Promise<{ ok: boolean; error?: string }> {
+  const r = await fetch(`${API}?action=robot_signal_update`, { method: 'POST', headers: headers(), body: JSON.stringify(data) });
+  const d = await r.json();
+  return r.ok ? { ok: true } : { ok: false, error: d.error };
+}
+
+export async function deleteSignal(id: number): Promise<void> {
+  await fetch(`${API}?action=robot_signal_delete`, { method: 'POST', headers: headers(), body: JSON.stringify({ id }) });
+}
+
+export interface BacktestTrade {
+  date: string;
+  direction: string;
+  entry: number;
+  stop: number;
+  target1: number;
+  target2: number;
+  exit_date: string | null;
+  exit_price: number;
+  reason: string;
+  t1_hit: boolean;
+  result_pct: number;
+  closed: boolean;
+}
+
+export interface BacktestResult {
+  title: string;
+  from: string | null;
+  to: string | null;
+  summary: {
+    signals: number;
+    closed: number;
+    open: number;
+    wins: number;
+    win_rate: number;
+    total_pct: number;
+    avg_pct: number;
+    profit_factor: number | null;
+    max_drawdown_pct: number;
+  };
+  trades: BacktestTrade[];
+  error?: string;
+}
+
+export async function runBacktest(params: Record<string, string>): Promise<BacktestResult> {
+  const qs = new URLSearchParams({ action: 'robot_backtest', ...params });
+  const r = await fetch(`${API}?${qs}`, { headers: headers() });
+  return r.json();
+}

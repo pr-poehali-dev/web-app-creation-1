@@ -1,3 +1,7 @@
+import { useState } from 'react';
+import { Button } from '@/components/ui/button';
+import Icon from '@/components/ui/icon';
+import SignalEditDialog from './SignalEditDialog';
 import { Badge } from '@/components/ui/badge';
 import { Card, CardContent } from '@/components/ui/card';
 import type { Signal, Stats } from './robotApi';
@@ -13,7 +17,8 @@ function StatBox({ label, value }: { label: string; value: string }) {
   );
 }
 
-export default function SignalsList({ items, stats }: { items: Signal[]; stats: Stats | null }) {
+export default function SignalsList({ items, stats, onChanged }: { items: Signal[]; stats: Stats | null; onChanged: () => void }) {
+  const [editing, setEditing] = useState<Signal | null>(null);
   const winRate = stats && stats.closed > 0 ? Math.round((stats.wins / stats.closed) * 100) : 0;
 
   return (
@@ -47,6 +52,9 @@ export default function SignalsList({ items, stats }: { items: Signal[]; stats: 
                 <span className="ml-auto text-xs text-muted-foreground">
                   {new Date(s.created_at + 'Z').toLocaleString('ru-RU')}
                 </span>
+                <Button variant="ghost" size="sm" className="h-7 p-1" onClick={() => setEditing(s)}>
+                  <Icon name="Pencil" className="h-4 w-4" />
+                </Button>
               </div>
               <div>
                 Вход {fmt(s.entry)} · стоп {fmt(s.stop_loss)} · цели {fmt(s.target1)} / {fmt(s.target2)}
@@ -57,6 +65,7 @@ export default function SignalsList({ items, stats }: { items: Signal[]; stats: 
           </Card>
         );
       })}
+      {editing && <SignalEditDialog signal={editing} onClose={() => setEditing(null)} onSaved={onChanged} />}
     </div>
   );
 }
