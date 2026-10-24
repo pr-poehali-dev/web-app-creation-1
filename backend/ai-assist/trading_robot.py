@@ -461,8 +461,21 @@ def list_signals() -> dict:
         f"COALESCE(ROUND(AVG(result_pct), 2), 0) AS avg_pct, COALESCE(SUM(result_pct), 0) AS total_pct "
         f"FROM {SCHEMA}.robot_signals WHERE status='closed'")
     stats = cur.fetchone()
+    cur.execute(
+        f"SELECT s.rule_id, COALESCE(r.name, 'Базовая стратегия') AS name, "
+        f"COUNT(*) FILTER (WHERE s.status='closed') AS closed, COUNT(*) FILTER (WHERE s.status='open') AS open_count, "
+        f"COUNT(*) FILTER (WHERE s.status='closed' AND s.result_pct > 0) AS wins, "
+        f"COALESCE(ROUND(AVG(s.result_pct) FILTER (WHERE s.status='closed'), 2), 0) AS avg_pct, "
+        f"COALESCE(SUM(s.result_pct) FILTER (WHERE s.status='closed'), 0) AS total_pct, "
+        f"COALESCE(ROUND(AVG(s.result_pct) FILTER (WHERE s.result_pct > 0), 2), 0) AS avg_win, "
+        f"COALESCE(ROUND(AVG(s.result_pct) FILTER (WHERE s.result_pct <= 0), 2), 0) AS avg_loss, "
+        f"COALESCE(SUM(s.result_pct) FILTER (WHERE s.result_pct > 0), 0) AS gross_win, "
+        f"COALESCE(-SUM(s.result_pct) FILTER (WHERE s.result_pct < 0), 0) AS gross_loss "
+        f"FROM {SCHEMA}.robot_signals s LEFT JOIN {SCHEMA}.robot_rules r ON r.id = s.rule_id "
+        f"GROUP BY s.rule_id, r.name ORDER BY SUM(s.result_pct) DESC NULLS LAST")
+    rule_stats = cur.fetchall()
     conn.close()
-    return {"items": data, "stats": stats}
+    return {"items": data, "stats": stats, "rule_stats": rule_stats}
 
 
 def handle_action(action: str, q: dict, event: dict = None) -> dict:

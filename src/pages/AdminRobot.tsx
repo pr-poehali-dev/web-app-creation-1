@@ -9,8 +9,9 @@ import Footer from '@/components/Footer';
 import Icon from '@/components/ui/icon';
 import RuleForm from './robot/RuleForm';
 import RulesList from './robot/RulesList';
+import RuleEfficiency from './robot/RuleEfficiency';
 import SignalsList from './robot/SignalsList';
-import { loadRules, loadSignals, runRobotNow, type Rule, type Signal, type Stats } from './robot/robotApi';
+import { loadRules, loadSignals, runRobotNow, type Rule, type Signal, type Stats, type RuleStats } from './robot/robotApi';
 
 interface Props {
   isAuthenticated: boolean;
@@ -24,6 +25,7 @@ export default function AdminRobot({ isAuthenticated, onLogout }: Props) {
   const [rules, setRules] = useState<Rule[]>([]);
   const [signals, setSignals] = useState<Signal[]>([]);
   const [stats, setStats] = useState<Stats | null>(null);
+  const [ruleStats, setRuleStats] = useState<RuleStats[]>([]);
   const [denied, setDenied] = useState(false);
   const [running, setRunning] = useState(false);
 
@@ -36,6 +38,7 @@ export default function AdminRobot({ isAuthenticated, onLogout }: Props) {
     const s = await loadSignals();
     setSignals(s.items || []);
     setStats(s.stats || null);
+    setRuleStats(s.rule_stats || []);
   }, []);
 
   useEffect(() => {
@@ -78,10 +81,14 @@ export default function AdminRobot({ isAuthenticated, onLogout }: Props) {
             <TabsList className="mb-4">
               <TabsTrigger value="signals">Сигналы</TabsTrigger>
               <TabsTrigger value="rules">Мои правила</TabsTrigger>
+              <TabsTrigger value="eff">Эффективность</TabsTrigger>
               <TabsTrigger value="new">Новое правило</TabsTrigger>
             </TabsList>
             <TabsContent value="signals">
               <SignalsList items={signals} stats={stats} />
+            </TabsContent>
+            <TabsContent value="eff">
+              <RuleEfficiency items={ruleStats} />
             </TabsContent>
             <TabsContent value="rules">
               <RulesList rules={rules} onChanged={refresh} />

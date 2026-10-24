@@ -55,6 +55,20 @@ export interface Stats {
   total_pct: string;
 }
 
+export interface RuleStats {
+  rule_id: number | null;
+  name: string;
+  closed: number;
+  open_count: number;
+  wins: number;
+  avg_pct: string;
+  total_pct: string;
+  avg_win: string;
+  avg_loss: string;
+  gross_win: string;
+  gross_loss: string;
+}
+
 export interface RuleDraft {
   name: string;
   ticker: string;
@@ -74,7 +88,7 @@ const headers = () => ({
   'X-User-Id': String(getSession()?.id ?? ''),
 });
 
-export async function loadSignals(): Promise<{ items: Signal[]; stats: Stats }> {
+export async function loadSignals(): Promise<{ items: Signal[]; stats: Stats; rule_stats: RuleStats[] }> {
   const r = await fetch(`${API}?action=robot_signals`);
   return r.json();
 }
