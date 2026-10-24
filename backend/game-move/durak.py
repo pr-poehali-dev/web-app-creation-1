@@ -39,7 +39,7 @@ def next_active(s: Dict[str, Any], uid: str) -> Optional[str]:
     return None
 
 
-def new_game(order: List[str], prev_loser: Optional[str] = None) -> Dict[str, Any]:
+def new_game(order: List[str]) -> Dict[str, Any]:
     deck = [r + sd for r in RANKS for sd in SUITS]
     random.shuffle(deck)
     hands = {u: [] for u in order}
@@ -53,10 +53,7 @@ def new_game(order: List[str], prev_loser: Optional[str] = None) -> Dict[str, An
         tr = [rank(c) for c in hands[u] if suit(c) == trump]
         if tr and (best is None or min(tr) < best[0]):
             best = (min(tr), u)
-    if prev_loser in order:
-        attacker = order[(order.index(prev_loser) - 1) % len(order)]
-    else:
-        attacker = best[1] if best else random.choice(order)
+    attacker = best[1] if best else random.choice(order)
     s = {
         'phase': 'playing', 'order': list(order), 'hands': hands, 'deck': deck,
         'trump': trump, 'trump_card': trump_card, 'attacker': attacker, 'defender': None,
@@ -254,8 +251,6 @@ def apply_action(s, uid: str, action: str, body: Dict[str, Any]) -> Optional[str
             return 'Перевести может только отбивающийся'
         if s['taking']:
             return 'Вы уже решили взять карты'
-        if not s['deck']:
-            return 'Когда колода закончилась, переводить нельзя'
         t = s['table']
         if not t or any(p['d'] for p in t):
             return 'Перевести можно, пока не побита ни одна карта'
@@ -307,24 +302,8 @@ def apply_action(s, uid: str, action: str, body: Dict[str, Any]) -> Optional[str
     else:
         return 'Неизвестное действие'
 
-    if action in ('attack', 'transfer'):
-        _early_win(s, uid)
-
     resolve(s)
     return None
-
-
-def _early_win(s, uid: str):
-    if s['deck'] or s['hands'][uid] or uid in s['out'] or s['phase'] != 'playing':
-        return
-    opp = s['defender'] if s['defender'] != uid else None
-    if opp is None or len(s['hands'][opp]) <= 2:
-        return
-    s['out'].append(uid)
-    _log(s, t='out', by=uid)
-    remaining = [u for u in s['order'] if u not in s['out']]
-    if len(remaining) <= 1:
-        _finish(s, remaining)
 
 
 def auto_move(s, uid: str):

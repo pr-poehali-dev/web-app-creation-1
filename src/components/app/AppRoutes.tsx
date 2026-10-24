@@ -92,7 +92,6 @@ export default function AppRoutes({ isAuthenticated, onLogin, onRegister, onLogo
             <Route path="/admin/support" element={<P.AdminSupport {...auth} />} />
             <Route path="/admin/subscriptions" element={<P.AdminSubscriptions {...auth} />} />
             <Route path="/admin/market-reviews" element={<P.AdminMarketReviews {...auth} />} />
-            <Route path="/admin/robot" element={<P.AdminRobot {...auth} />} />
             <Route path="/set-admin-password" element={<P.SetAdminPassword />} />
             <Route path="/contract/:id" element={<P.ContractDetail {...auth} />} />
             <Route path="/create-contract" element={<P.CreateContract {...auth} />} />

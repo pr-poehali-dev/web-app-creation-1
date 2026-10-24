@@ -38,10 +38,6 @@ export default function BaarysGame() {
   const [demand, setDemand] = useState(false);
   const [isActing, setIsActing] = useState(false);
   const [isNotifying, setIsNotifying] = useState(false);
-  const [fresh, setFresh] = useState<string[]>([]);
-  const prevHandRef = useRef<string[] | null>(null);
-  const [oppFresh, setOppFresh] = useState(0);
-  const prevOppRef = useRef<number | null>(null);
   const [soundOn, setSoundState] = useState(isSoundOn());
   const prevRef = useRef<{ sig: string; turn: boolean; phase: string } | null>(null);
 
@@ -113,31 +109,6 @@ export default function BaarysGame() {
     prevRef.current = { sig, turn: myTurnNow, phase: state.phase };
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [room]);
-
-  useEffect(() => {
-    const prev = prevHandRef.current;
-    prevHandRef.current = myHand;
-    if (!prev) return;
-    const added = myHand.filter((c) => !prev.includes(c));
-    if (!added.length) return;
-    setFresh(added);
-    if (isSoundOn() && state?.log?.[state.log.length - 1]?.t !== 'deal') sounds.draw(added.length);
-    const t = setTimeout(() => setFresh([]), 450 + added.length * 220);
-    return () => clearTimeout(t);
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [myHand.join(',')]);
-
-  const oppCount = state?.counts?.[String(room?.players?.find((p) => p.user_id !== user?.id)?.user_id ?? '')] ?? 0;
-  useEffect(() => {
-    const prev = prevOppRef.current;
-    prevOppRef.current = oppCount;
-    if (prev === null || oppCount <= prev) return;
-    const n = oppCount - prev;
-    setOppFresh(n);
-    if (isSoundOn() && state?.log?.[state.log.length - 1]?.t !== 'deal') sounds.draw(n);
-    const t = setTimeout(() => setOppFresh(0), 450 + n * 220);
-    return () => clearTimeout(t);
-  }, [oppCount]);
 
   useEffect(() => {
     setSelected((cur) => cur.filter((c) => myHand.includes(c)));
@@ -376,24 +347,14 @@ export default function BaarysGame() {
                   <div className={`rounded-xl p-2 min-w-[120px] text-center border-2 ${
                     playing && room.current_turn_user_id === opponent.user_id ? 'border-amber-400 bg-amber-500/10' : 'border-slate-700/60 bg-slate-900/50'
                   }`}>
-                    <div className="flex justify-center"><PlayerAvatar emoji={opponent.avatar_emoji} url={opponent.avatar_url} size={28} online={opponent.online} /></div>
+                    <div className="flex justify-center"><PlayerAvatar emoji={opponent.avatar_emoji} url={opponent.avatar_url} size={28} /></div>
                     <p className="text-xs font-semibold text-slate-100 truncate max-w-[104px] mx-auto">{opponent.nickname}</p>
                     {hasGame && (
                       <div className="mt-1 flex items-center justify-center">
                         <div className="flex -space-x-5">
-                          {Array.from({ length: Math.min(state!.counts?.[oppUid] ?? 0, 6) }).map((_, i, arr) => {
-                            const k = i - (arr.length - oppFresh);
-                            const isNew = oppFresh > 0 && k >= 0;
-                            return (
-                              <div
-                                key={i}
-                                className={isNew ? 'baarys-deal' : ''}
-                                style={isNew ? { animationDelay: `${k * 220}ms` } : undefined}
-                              >
-                                <DurakCard hidden size="xs" />
-                              </div>
-                            );
-                          })}
+                          {Array.from({ length: Math.min(state!.counts?.[oppUid] ?? 0, 6) }).map((_, i) => (
+                            <DurakCard key={i} hidden size="xs" />
+                          ))}
                         </div>
                         <span className="ml-1.5 text-xs font-bold text-slate-200">{state!.counts?.[oppUid] ?? 0}</span>
                       </div>
@@ -536,19 +497,14 @@ export default function BaarysGame() {
                     <p className="self-center text-sm text-slate-500">Карт нет</p>
                   ) : (
                     myHand.map((card) => (
-                      <div
+                      <DurakCard
                         key={card}
-                        className={fresh.includes(card) ? 'baarys-deal' : ''}
-                        style={fresh.includes(card) ? { animationDelay: `${fresh.indexOf(card) * 220}ms` } : undefined}
-                      >
-                        <DurakCard
-                          card={card}
-                          trump={card[1] === state!.trump}
-                          selected={selected.includes(card)}
-                          dimmed={playing && !isMyTurn}
-                          onClick={playing && isMyTurn ? () => toggleCard(card) : undefined}
-                        />
-                      </div>
+                        card={card}
+                        trump={card[1] === state!.trump}
+                        selected={selected.includes(card)}
+                        dimmed={playing && !isMyTurn}
+                        onClick={playing && isMyTurn ? () => toggleCard(card) : undefined}
+                      />
                     ))
                   )}
                 </div>

@@ -197,20 +197,13 @@ def handler(event: Dict[str, Any], context: Any) -> Dict[str, Any]:
                         return error_response(404, 'Комната не найдена')
 
                     cur.execute(
-                        f"""SELECT p.*, u.nickname, u.avatar_emoji, u.avatar_url,
-                                  COALESCE(p.last_seen_at > NOW() - INTERVAL '10 seconds', FALSE) AS online
+                        f"""SELECT p.*, u.nickname, u.avatar_emoji, u.avatar_url
                            FROM {DB_SCHEMA}.game_room_players p
                            JOIN {DB_SCHEMA}.game_users u ON u.id = p.user_id
                            WHERE p.room_id = %s ORDER BY p.seat_index""",
                         (params['room_id'],)
                     )
                     players = cur.fetchall()
-
-                    cur.execute(
-                        f"UPDATE {DB_SCHEMA}.game_room_players SET last_seen_at = NOW() WHERE room_id = %s AND user_id = %s",
-                        (params['room_id'], user['id'])
-                    )
-                    conn.commit()
 
                     room_data = dict(room)
                     room_data['players'] = [dict(p) for p in players]

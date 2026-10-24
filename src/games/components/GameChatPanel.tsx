@@ -5,7 +5,6 @@ import { Input } from '@/components/ui/input';
 import { useToast } from '@/hooks/use-toast';
 import { ChatMessage, sendChatMessage, deleteChatMessage, fileToDataUrl, imageToDataUrl } from '../utils/gameChat';
 import PlayerAvatar from './PlayerAvatar';
-import ImageViewer from './ImageViewer';
 
 interface GameChatPanelProps {
   roomId: number;
@@ -25,7 +24,6 @@ export default function GameChatPanel({ roomId, userId, messages, onSent }: Game
   const [sending, setSending] = useState(false);
   const [recording, setRecording] = useState(false);
   const [seconds, setSeconds] = useState(0);
-  const [viewer, setViewer] = useState<string | null>(null);
   const containerRef = useRef<HTMLDivElement>(null);
   const fileRef = useRef<HTMLInputElement>(null);
   const recorderRef = useRef<MediaRecorder | null>(null);
@@ -134,7 +132,6 @@ export default function GameChatPanel({ roomId, userId, messages, onSent }: Game
 
   return (
     <div className="bg-slate-900/60 border border-slate-800 rounded-xl flex flex-col h-[500px]">
-      {viewer && <ImageViewer src={viewer} onClose={() => setViewer(null)} />}
       <div className="p-3 border-b border-slate-800 font-semibold text-slate-200 flex items-center gap-2">
         <Icon name="MessageCircle" size={18} />
         Чат комнаты
@@ -162,9 +159,9 @@ export default function GameChatPanel({ roomId, userId, messages, onSent }: Game
                     }`}
                   >
                     {msg.media_type === 'image' && msg.media_url ? (
-                      <button type="button" onClick={() => setViewer(msg.media_url ?? null)} className="block">
+                      <a href={msg.media_url} target="_blank" rel="noreferrer">
                         <img src={msg.media_url} alt="Фото" loading="lazy" className="max-h-52 rounded-md" />
-                      </button>
+                      </a>
                     ) : msg.media_type === 'audio' && msg.media_url ? (
                       <audio controls preload="none" src={msg.media_url} className="h-9 w-48 max-w-full" />
                     ) : (

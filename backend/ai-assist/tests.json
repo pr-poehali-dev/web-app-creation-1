@@ -94,18 +94,6 @@
         "success": true
       },
       "bodyMatcher": "partial"
-    },
-    {
-      "name": "Robot signals list",
-      "method": "GET",
-      "path": "/?action=robot_signals",
-      "expectedStatus": 200
-    },
-    {
-      "name": "Robot rules without admin",
-      "method": "GET",
-      "path": "/?action=robot_rules",
-      "expectedStatus": 403
     }
   ]
 }

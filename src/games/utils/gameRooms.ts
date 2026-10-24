@@ -43,7 +43,6 @@ export interface GameRoomPlayer {
   nickname: string;
   avatar_emoji: string;
   avatar_url?: string | null;
-  online?: boolean;
 }
 
 export interface GameRoomDetail {

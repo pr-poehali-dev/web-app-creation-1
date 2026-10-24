@@ -123,12 +123,6 @@ export default function HeaderUserMenu({
           <Icon name="Brain" className="mr-2 h-4 w-4 text-purple-500" />
           Нейро-звук для мозга
         </DropdownMenuItem>
-        {currentUser?.inn === '1400022716' && (
-          <DropdownMenuItem onClick={() => navigate('/admin/robot')} className="border-2 border-border rounded-md mb-1">
-            <Icon name="Bot" className="mr-2 h-4 w-4 text-primary" />
-            Торговый робот
-          </DropdownMenuItem>
-        )}
         {currentUser?.role === 'admin' && (
           <>
             <DropdownMenuSeparator />

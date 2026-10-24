@@ -18,7 +18,7 @@ const SHORT_PAGES: Record<string, string> = {
   nardy: 'n',
 };
 
-export const makeShareUrl = (rawUrl: string, _senderNickname?: string, gameType?: string): string => {
+export const makeShareUrl = async (rawUrl: string, _senderNickname?: string, gameType?: string): Promise<string> => {
   const origin = getGamesOrigin();
   const invite = rawUrl.match(/\/games\/invite\/([A-Za-z0-9]+)/);
   if (invite && gameType && SHORT_PAGES[gameType]) {
@@ -26,21 +26,4 @@ export const makeShareUrl = (rawUrl: string, _senderNickname?: string, gameType?
   }
   if (rawUrl === buildClubUrl()) return `${origin}/g.html`;
   return rawUrl;
-};
-
-export const shareLink = async (url: string, text: string): Promise<'shared' | 'copied' | 'failed'> => {
-  if (navigator.share) {
-    try {
-      await navigator.share({ title: 'Игровой клуб ЕРТТП', text: `${text} ${url}` });
-      return 'shared';
-    } catch (e) {
-      if (e instanceof DOMException && e.name === 'AbortError') return 'shared';
-    }
-  }
-  try {
-    await navigator.clipboard.writeText(url);
-    return 'copied';
-  } catch {
-    return 'failed';
-  }
 };

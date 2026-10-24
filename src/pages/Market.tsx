@@ -1,4 +1,4 @@
-import { useNavigate, useSearchParams } from 'react-router-dom';
+import { useNavigate } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { useScrollToTop } from '@/hooks/useScrollToTop';
@@ -15,14 +15,6 @@ interface MarketProps {
 export default function Market({ isAuthenticated, onLogout }: MarketProps) {
   useScrollToTop();
   const navigate = useNavigate();
-  const [searchParams] = useSearchParams();
-  const retTicker = searchParams.get('ticker');
-  const retPurchase = parseInt(searchParams.get('purchaseId') || '', 10);
-  const retMarket = searchParams.get('market') === 'futures' ? 'futures' : 'shares';
-  const returned = searchParams.get('payment') === 'success' && retTicker
-    ? { ticker: retTicker, name: searchParams.get('name') || retTicker }
-    : null;
-  const purchaseId = isNaN(retPurchase) ? null : retPurchase;
 
   return (
     <div className="min-h-screen flex flex-col bg-background">
@@ -43,7 +35,7 @@ export default function Market({ isAuthenticated, onLogout }: MarketProps) {
           Котировки, графики и новости по фондовому и фьючерсному рынку
         </p>
 
-        <Tabs defaultValue={returned ? retMarket : 'shares'}>
+        <Tabs defaultValue="shares">
           <TabsList className="mb-4">
             <TabsTrigger value="shares" className="gap-1.5">
               <Icon name="Building2" size={14} />
@@ -58,8 +50,6 @@ export default function Market({ isAuthenticated, onLogout }: MarketProps) {
           <TabsContent value="shares">
             <MarketAssetPanel
               marketHint="shares"
-              initialAsset={returned && retMarket === 'shares' ? returned : null}
-              initialPurchaseId={returned && retMarket === 'shares' ? purchaseId : null}
               placeholder="Введите тикер или название акции, например SBER или Газпром"
               emptyHint="Найдите акцию или индекс, чтобы увидеть котировку, график и новости"
             />
@@ -68,8 +58,6 @@ export default function Market({ isAuthenticated, onLogout }: MarketProps) {
           <TabsContent value="futures">
             <MarketAssetPanel
               marketHint="futures"
-              initialAsset={returned && retMarket === 'futures' ? returned : null}
-              initialPurchaseId={returned && retMarket === 'futures' ? purchaseId : null}
               placeholder="Введите тикер фьючерса, например BRU6 (нефть Brent)"
               emptyHint="Найдите фьючерс, чтобы увидеть котировку, график и новости"
             />

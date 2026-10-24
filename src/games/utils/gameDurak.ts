@@ -87,7 +87,6 @@ export const nextActive = (s: DurakState, uid: string): string | null => {
 };
 
 export const canTransferCard = (s: DurakState, card: string): boolean => {
-  if (s.deck_count <= 0) return false;
   if (s.taking || s.table.length === 0 || s.table.some((p) => p.d)) return false;
   if (card[0] !== s.table[0].a[0]) return false;
   const nd = nextActive(s, s.defender);
