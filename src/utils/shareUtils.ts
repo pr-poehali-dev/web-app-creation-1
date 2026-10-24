@@ -120,9 +120,7 @@ export async function shareContent({ title, text, url, imageUrl }: ShareOptions)
   const shortCode = shortUrl ? shortUrl.split('/s/')[1] : null;
   const botFriendlyShort = isDynamic && shortBase && shortCode ? `${shortBase}?code=${shortCode}` : null;
   const shareUrl = botFriendlyShort ?? shortUrl ?? ogUrl ?? prodUrl;
-  const shareMessage = botFriendlyShort && shortUrl
-    ? `${text}\n\n${shortUrl}`
-    : shareUrl;
+  const shareMessage = shareUrl;
 
   if (navigator.share) {
     try {
@@ -136,7 +134,7 @@ export async function shareContent({ title, text, url, imageUrl }: ShareOptions)
         }
       }
       // Fallback: без файла — только url (text убран чтобы не дублировать описание из og:description)
-      await navigator.share(botFriendlyShort && shortUrl ? { title, text: shareMessage } : { title, url: shareUrl });
+      await navigator.share({ title, url: shareUrl });
       toast.success('Ссылка отправлена!');
       return;
     } catch (e) {
