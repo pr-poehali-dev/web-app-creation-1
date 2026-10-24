@@ -29,65 +29,16 @@ def gen_code(length=7):
 def escape_html(s: str) -> str:
     return s.replace('&', '&amp;').replace('<', '&lt;').replace('>', '&gt;').replace('"', '&quot;')
 
-def _extract(url: str, kind: str) -> str | None:
+def extract_offer_id(url: str) -> str | None:
+    """Извлекаем UUID оффера из URL вида /offer/{uuid}"""
     import re
-    m = re.search(rf'/{kind}/([0-9a-f-]{{36}})', url) or re.search(rf'type={kind}&id=([0-9a-f-]{{36}})', url)
+    m = re.search(r'/offer/([0-9a-f-]{36})', url)
     return m.group(1) if m else None
 
-def extract_offer_id(url: str) -> str | None:
-    return _extract(url, 'offer')
-
 def extract_request_id(url: str) -> str | None:
-    return _extract(url, 'request')
-
-def extract_auction_id(url: str) -> str | None:
-    return _extract(url, 'auction')
-
-def get_request_og(request_id: str, conn) -> dict:
-    cur = conn.cursor()
-    safe_id = request_id.replace("'", "''")
-    cur.execute(f"""
-        SELECT r.title, r.description, r.price_per_unit, r.unit, r.category,
-               (SELECT oi.url FROM {SCHEMA}.offer_images oi
-                JOIN {SCHEMA}.request_image_relations rir ON oi.id = rir.image_id
-                WHERE rir.request_id = r.id LIMIT 1) as image_url
-        FROM {SCHEMA}.requests r WHERE r.id = '{safe_id}' LIMIT 1
-    """)
-    row = cur.fetchone()
-    cur.close()
-    if not row:
-        return {}
-    title, desc, price, unit, req_cat, img = row
-    p = float(price or 0)
-    price_str = f"Бюджет: {int(p):,} ₽/{unit}".replace(',', '\u00a0') if p > 0 else ''
-    return {
-        'title': title,
-        'description': ' • '.join(filter(None, [price_str, desc[:200] if desc else ''])),
-        'image': img or f"{SITE_URL}/og-request.png",
-        'url': f"{SITE_URL}/request/{request_id}",
-    }
-
-def get_auction_og(auction_id: str, conn) -> dict:
-    cur = conn.cursor()
-    safe_id = auction_id.replace("'", "''")
-    cur.execute(f"""
-        SELECT a.title, a.description, a.current_bid,
-               (SELECT ai.url FROM {SCHEMA}.auction_images ai WHERE ai.auction_id = a.id ORDER BY ai.sort_order LIMIT 1) as image_url
-        FROM {SCHEMA}.auctions a WHERE a.id = '{safe_id}' LIMIT 1
-    """)
-    row = cur.fetchone()
-    cur.close()
-    if not row:
-        return {}
-    title, desc, bid, img = row
-    b = float(bid or 0)
-    bid_str = f"Текущая ставка: {int(b):,} ₽".replace(',', '\u00a0') if b > 0 else ''
-    return {
-        'title': title,
-        'description': ' • '.join(filter(None, [bid_str, desc[:200] if desc else ''])),
-        'image': img or '',
-        'url': f"{SITE_URL}/auction/{auction_id}",
-    }
+    import re
+    m = re.search(r'/request/([0-9a-f-]{36})', url)
+    return m.group(1) if m else None
 
 def get_offer_og(offer_id: str, conn) -> dict:
     cur = conn.cursor()
@@ -311,13 +262,10 @@ def handler(event: dict, context) -> dict:
             if not og:
                 offer_id = extract_offer_id(original_url)
                 request_id = extract_request_id(original_url)
-                auction_id = extract_auction_id(original_url)
                 if offer_id:
                     og = get_offer_og(offer_id, conn)
                 elif request_id:
-                    og = get_request_og(request_id, conn)
-                elif auction_id:
-                    og = get_auction_og(auction_id, conn)
+                    og = {}  # можно расширить при необходимости
             cur.close()
             conn.close()
             if not og:

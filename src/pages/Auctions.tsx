@@ -56,7 +56,7 @@ export default function Auctions({ isAuthenticated, onLogout }: AuctionsProps) {
           onCreateClick={handleCreateAuctionClick}
         />
 
-        <h1 className="md:hidden text-lg font-bold text-foreground mb-2">Аукционы</h1>
+        <h1 className="text-lg md:text-xl font-bold text-foreground mb-2 md:mb-3">Аукционы</h1>
 
         <AuctionSearchBlock
           filters={filters}

@@ -40,7 +40,7 @@ export function useRequestGallery(request: Request | null, showVideo: boolean) {
 
     await shareContent({
       title: request.title,
-      text: `Запрос\n\n📋 ${request.title}${quantityPrice ? `\n\n📦 ${quantityPrice}` : ''}${request.description ? `\n\n📝 ${request.description}` : ''}`,
+      text: `📋 ${request.title}${quantityPrice ? `\n\n📦 ${quantityPrice}` : ''}${request.description ? `\n\n📝 ${request.description}` : ''}`,
       url: window.location.href,
       imageUrl: request.images?.[0]?.url,
     });
