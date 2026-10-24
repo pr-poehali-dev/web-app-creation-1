@@ -8,6 +8,8 @@ import { CATEGORIES } from '@/data/categories';
 import { useDistrict } from '@/contexts/DistrictContext';
 import { getSession } from '@/utils/auth';
 import { useAuctionData } from '@/hooks/useAuctionData';
+import ReadableTextButton from '@/components/ReadableTextButton';
+import { useReadableText } from '@/hooks/useReadableText';
 import SEO from '@/components/SEO';
 import AuctionImageGallery from '@/components/auction/AuctionImageGallery';
 import AuctionInfoPanel from '@/components/auction/AuctionInfoPanel';
@@ -23,6 +25,7 @@ interface AuctionDetailProps {
 export default function AuctionDetail({ isAuthenticated, onLogout }: AuctionDetailProps) {
   useScrollToTop();
   const { id } = useParams();
+  const { level: readableLevel } = useReadableText();
   const { districts } = useDistrict();
   const currentUser = getSession();
 
@@ -91,10 +94,11 @@ export default function AuctionDetail({ isAuthenticated, onLogout }: AuctionDeta
         </div>
 
         <Card className="mb-2 md:mb-3">
-          <CardHeader className="py-2 md:py-3">
+          <CardHeader className="flex-row items-center justify-between py-2 md:py-3">
             <CardTitle className="text-sm md:text-base">Описание</CardTitle>
+            <ReadableTextButton />
           </CardHeader>
-          <CardContent className="py-2 md:py-3">
+          <CardContent className="py-2 md:py-3" data-readable={readableLevel}>
             <p className="text-xs md:text-sm text-muted-foreground whitespace-pre-line line-clamp-2">
               {auction.description}
             </p>

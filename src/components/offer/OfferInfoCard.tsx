@@ -1,5 +1,7 @@
 import { Card, CardContent } from '@/components/ui/card';
 import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from '@/components/ui/accordion';
+import ReadableTextButton from '@/components/ReadableTextButton';
+import { useReadableText } from '@/hooks/useReadableText';
 import { CATEGORIES } from '@/data/categories';
 import { DISTRICTS } from '@/data/districts';
 import { NASLEGS } from '@/data/naslegs';
@@ -113,6 +115,7 @@ export default function OfferInfoCard({
   autoPtsRecords,
   autoDescription,
 }: OfferInfoCardProps) {
+  const { level } = useReadableText();
   // Найти название категории
   const categoryData = CATEGORIES.find(c => c.id === category);
   const categoryName = categoryData?.name || category;
@@ -183,7 +186,7 @@ export default function OfferInfoCard({
 
   return (
     <Card className="mb-1">
-      <CardContent className="pt-2 pb-2 space-y-2 md:pt-2.5 md:pb-2.5 md:space-y-2.5">
+      <CardContent className="pt-2 pb-2 space-y-2 md:pt-2.5 md:pb-2.5 md:space-y-2.5" data-readable={level}>
         <OfferInfoHeader
           title={title}
           categoryName={categoryName}
@@ -218,10 +221,11 @@ export default function OfferInfoCard({
 
         {/* Дополнительная информация в аккордеоне (мобильные) */}
         <Accordion type="single" collapsible defaultValue="" className="w-full md:!hidden">
-          <AccordionItem value="details" className="border-0">
-            <AccordionTrigger className="py-2 text-sm font-medium">
+          <AccordionItem value="details" className="relative border-0">
+            <AccordionTrigger className="py-2 pr-24 text-sm font-medium">
               Подробная информация
             </AccordionTrigger>
+            <ReadableTextButton className="absolute right-8 top-0" />
             <AccordionContent className="space-y-3 pt-2">
               <OfferInfoDetails {...detailsProps} />
             </AccordionContent>

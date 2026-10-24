@@ -2,6 +2,8 @@ import { Card, CardContent, CardHeader } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Separator } from '@/components/ui/separator';
 import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from '@/components/ui/accordion';
+import ReadableTextButton from '@/components/ReadableTextButton';
+import { useReadableText } from '@/hooks/useReadableText';
 import Icon from '@/components/ui/icon';
 import { safeToLocaleDateString } from '@/utils/dateUtils';
 import type { Request as RequestType } from '@/pages/RequestDetail/useRequestData';
@@ -47,6 +49,7 @@ export default function RequestInfoCard({ request }: RequestInfoCardProps) {
     acceptedQty
   } = request;
   
+  const { level } = useReadableText();
   const isTransport = category === 'transport';
   const isService = category === 'utilities';
 
@@ -94,7 +97,7 @@ export default function RequestInfoCard({ request }: RequestInfoCardProps) {
         </div>
       </CardHeader>
 
-      <CardContent className="space-y-3">
+      <CardContent className="space-y-3" data-readable={level}>
         {/* Основная информация - всегда видна */}
         {isTransport ? (
           <div className="space-y-3">
@@ -239,10 +242,11 @@ export default function RequestInfoCard({ request }: RequestInfoCardProps) {
 
         {/* Дополнительная информация в аккордеоне */}
         <Accordion type="single" collapsible defaultValue="details" className="w-full">
-          <AccordionItem value="details" className="border-0">
-            <AccordionTrigger className="py-2 text-sm font-medium">
+          <AccordionItem value="details" className="relative border-0">
+            <AccordionTrigger className="py-2 pr-24 text-sm font-medium">
               Подробная информация
             </AccordionTrigger>
+            <ReadableTextButton className="absolute right-8 top-0" />
             <AccordionContent className="space-y-3 pt-2">
               <div>
                 <p className="text-xs text-muted-foreground">Откликов</p>
@@ -254,7 +258,7 @@ export default function RequestInfoCard({ request }: RequestInfoCardProps) {
               {!isTransport && (
                 <div>
                   <p className="text-sm font-medium mb-1">Описание запроса</p>
-                  <p className="text-xs text-muted-foreground whitespace-pre-line">{description}</p>
+                  <p className="text-sm text-muted-foreground whitespace-pre-line">{description}</p>
                 </div>
               )}
 

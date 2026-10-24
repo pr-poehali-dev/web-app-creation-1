@@ -510,3 +510,10 @@ button {
   opacity: 0;
   animation: baarys-deal 0.45s ease-out forwards;
 }
+
+[data-readable="1"] .text-xs,
+[data-readable="1"] .text-sm { font-size: 1.0625rem; line-height: 1.55; }
+[data-readable="1"] .line-clamp-2 { -webkit-line-clamp: unset; display: block; }
+[data-readable="2"] .text-xs,
+[data-readable="2"] .text-sm { font-size: 1.3125rem; line-height: 1.6; }
+[data-readable="2"] .line-clamp-2 { -webkit-line-clamp: unset; display: block; }
