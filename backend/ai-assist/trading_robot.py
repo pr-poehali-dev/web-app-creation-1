@@ -122,7 +122,7 @@ def _bcs_chunk(ticker: str, kind: str, frame: str, start: datetime, end: datetim
 
 def _bcs_bars(ticker: str, kind: str, frame: str, days: int) -> list:
     now = datetime.now(timezone.utc)
-    step = 4 if frame == "M5" else days
+    step = 4 if frame == "M5" else 30
     begin = now - timedelta(days=days)
     seen = {}
     cur = begin
