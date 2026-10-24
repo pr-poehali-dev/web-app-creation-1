@@ -47,9 +47,15 @@ def notify_next_turn(room_id: int, next_turn_user_id: Optional[int], game_type: 
             with conn.cursor() as cur:
                 cur.execute(f"SELECT notify_turn FROM {DB_SCHEMA}.game_users WHERE id = %s", (next_turn_user_id,))
                 row = cur.fetchone()
+                cur.execute(
+                    f"SELECT 1 FROM {DB_SCHEMA}.game_room_players WHERE room_id = %s AND user_id = %s "
+                    f"AND last_seen_at > NOW() - INTERVAL '10 seconds'",
+                    (room_id, next_turn_user_id)
+                )
+                online = cur.fetchone() is not None
         finally:
             conn.close()
-        if row and not row['notify_turn']:
+        if online or (row and not row['notify_turn']):
             return
         requests.post(
             PUSH_SEND_URL,
@@ -1004,7 +1010,8 @@ def handle_durak_action(cur, conn, room, user, body):
             return error_response(400, 'Игра уже идёт')
         if not 2 <= len(order) <= 6:
             return error_response(400, 'Для игры нужно от 2 до 6 игроков')
-        state = durak.new_game(order)
+        prev = room['state'] or {}
+        state = durak.new_game(order, prev.get('loser') if room['status'] == 'finished' else None)
         state['skips'] = {}
         state['deadline'] = time.time() + durak.TURN_SECONDS
         turn = durak.current_turn(state)

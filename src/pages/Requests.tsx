@@ -155,8 +155,6 @@ export default function Requests({ isAuthenticated, onLogout }: RequestsProps) {
       <main className="container mx-auto px-4 py-4 md:py-8 flex-1">
         <RequestsToolbar isAuthenticated={isAuthenticated} />
 
-        <h1 className="text-xl md:text-2xl font-bold text-foreground mb-4">Запросы</h1>
-
         <AuctionSearchBlock
           filters={filters}
           onFiltersChange={handleFiltersChange}

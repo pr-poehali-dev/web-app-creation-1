@@ -28,7 +28,8 @@ export default function AuctionsToolbar({
 }: AuctionsToolbarProps) {
   return (
     <div className="flex items-center justify-between gap-2 mb-2 md:mb-3">
-      <BackButton />
+      <BackButton className="!mb-0" />
+      <h1 className="hidden md:block flex-1 text-center text-xl font-bold text-foreground px-2">Аукционы</h1>
       <AuctionStatusFilters
         statusFilter={statusFilter}
         onFilterChange={onFilterChange}

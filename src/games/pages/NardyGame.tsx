@@ -241,7 +241,7 @@ export default function NardyGame() {
           <div>
             <div className="flex items-center justify-between gap-2 flex-wrap mb-4 bg-slate-900/60 border border-slate-800 rounded-xl p-4">
               <div className="flex items-center gap-2">
-                <PlayerAvatar emoji={opponent?.avatar_emoji} url={opponent?.avatar_url} size={36} />
+                <PlayerAvatar emoji={opponent?.avatar_emoji} url={opponent?.avatar_url} size={36} online={opponent?.online} />
                 <div>
                   <p className="font-semibold text-slate-100">{opponent?.nickname || 'Ожидание соперника...'}</p>
                   <p className="text-xs text-slate-500">{opponent ? `${sideName(opponent.side)} · выведено ${oppOff} из 15` : ''}</p>

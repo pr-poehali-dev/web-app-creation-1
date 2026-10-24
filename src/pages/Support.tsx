@@ -21,8 +21,8 @@ export default function Support({ isAuthenticated, onLogout }: SupportProps) {
 
   const supportEmail = 'doydum-invest@mail.ru';
   const supportPhone = '+7 (984) 101-73-55';
-  const telegramLink = 'https://t.me/erttp_ru';
-  const [phoneContactMethod, setPhoneContactMethod] = useState<'telegram' | 'call'>('call');
+  const whatsappLink = `https://wa.me/${supportPhone.replace(/[^0-9]/g, '')}`;
+  const [phoneContactMethod, setPhoneContactMethod] = useState<'whatsapp' | 'call'>('call');
   const [chatOpen, setChatOpen] = useState(false);
   const [unreadCount, setUnreadCount] = useState(0);
 
@@ -37,9 +37,12 @@ export default function Support({ isAuthenticated, onLogout }: SupportProps) {
       <Header isAuthenticated={isAuthenticated} onLogout={onLogout} />
 
       <main className="container mx-auto px-4 py-4 md:py-6 flex-1">
-        <BackButton />
+        <div className="grid grid-cols-[1fr_auto_1fr] items-center gap-2 mb-3">
+          <div className="justify-self-start"><BackButton className="!mb-0" /></div>
+          <h1 className="text-lg md:text-2xl font-bold text-foreground text-center">Поддержка</h1>
+          <div />
+        </div>
         <div className="max-w-4xl mx-auto">
-          <h1 className="text-2xl md:text-3xl font-bold text-foreground mb-4 md:mb-6">Поддержка</h1>
 
           {/* Чат с поддержкой — только для авторизованных */}
           {isAuthenticated && userId && (
@@ -94,7 +97,7 @@ export default function Support({ isAuthenticated, onLogout }: SupportProps) {
             <div className="bg-card border rounded-lg p-4 md:p-5">
               <div className="flex items-start gap-3 md:gap-4">
                 <div className="bg-primary/10 p-2 md:p-2.5 rounded-lg">
-                  <Icon name={phoneContactMethod === 'telegram' ? 'MessageCircle' : 'Phone'}
+                  <Icon name={phoneContactMethod === 'whatsapp' ? 'MessageCircle' : 'Phone'}
                     className="h-5 w-5 md:h-6 md:w-6 text-primary" />
                 </div>
                 <div className="flex-1">
@@ -110,13 +113,13 @@ export default function Support({ isAuthenticated, onLogout }: SupportProps) {
                       <span className="text-sm font-medium">Позвонить</span>
                     </a>
                     <a
-                      href={telegramLink}
+                      href={whatsappLink}
                       target="_blank"
                       rel="noopener noreferrer"
-                      onClick={() => setPhoneContactMethod('telegram')}
-                      className={`flex items-center gap-2 px-4 py-2 rounded-lg border transition-colors ${phoneContactMethod === 'telegram' ? 'bg-primary text-primary-foreground border-primary' : 'bg-background hover:bg-accent border-border'}`}>
+                      onClick={() => setPhoneContactMethod('whatsapp')}
+                      className={`flex items-center gap-2 px-4 py-2 rounded-lg border transition-colors ${phoneContactMethod === 'whatsapp' ? 'bg-primary text-primary-foreground border-primary' : 'bg-background hover:bg-accent border-border'}`}>
                       <Icon name="MessageCircle" className="h-4 w-4" />
-                      <span className="text-sm font-medium">Telegram</span>
+                      <span className="text-sm font-medium">WhatsApp</span>
                     </a>
                   </div>
                 </div>

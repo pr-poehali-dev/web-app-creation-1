@@ -106,6 +106,7 @@ export const ContractDetail = lazyWithRetry(() => import("./pages/ContractDetail
 export const EditContract = lazyWithRetry(() => import("./pages/EditContract"));
 export const Market = lazyWithRetry(() => import("./pages/Market"));
 export const AdminMarketReviews = lazyWithRetry(() => import("./pages/AdminMarketReviews"));
+export const AdminRobot = lazyWithRetry(() => import("./pages/AdminRobot"));
 
 export const GameAuth = lazyWithRetry(() => import("./games/pages/GameAuth"));
 export const GameLobby = lazyWithRetry(() => import("./games/pages/GameLobby"));

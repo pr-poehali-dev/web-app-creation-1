@@ -28,7 +28,7 @@ import {
   canTransferCard,
 } from '../utils/gameDurak';
 
-const cardName = (c?: string) => (c ? `${c[0] === 'T' ? '10' : c[0]}${{ S: '♠', H: '♥', D: '♦', C: '♣' }[c[1]]}` : '');
+const cardName = (c?: string) => (c ? `${c[0] === 'T' ? '10' : c[0]}${{ S: '♠', H: '♥', D: '♦', C: '♧' }[c[1]]}` : '');
 
 export default function DurakGame() {
   const { roomId } = useParams<{ roomId: string }>();
@@ -149,6 +149,48 @@ export default function DurakGame() {
     if (selected && !myHand.includes(selected)) setSelected(null);
   }, [myHand, selected]);
 
+  const [fresh, setFresh] = useState<string[]>([]);
+  const prevHandRef = useRef<string[] | null>(null);
+  const [oppFresh, setOppFresh] = useState<Record<string, number>>({});
+  const prevCountsRef = useRef<Record<string, number> | null>(null);
+
+  useEffect(() => {
+    const prev = prevHandRef.current;
+    prevHandRef.current = myHand;
+    if (!prev) return;
+    const added = myHand.filter((c) => !prev.includes(c));
+    if (!added.length) return;
+    setFresh(added);
+    if (isSoundOn() && state?.log?.[state.log.length - 1]?.t !== 'deal') sounds.draw(added.length);
+    const t = setTimeout(() => setFresh([]), 450 + added.length * 220);
+    return () => clearTimeout(t);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [myHand.join(',')]);
+
+  const countsKey = JSON.stringify(state?.counts ?? {});
+  useEffect(() => {
+    const counts = (state?.counts ?? {}) as Record<string, number>;
+    const prev = prevCountsRef.current;
+    prevCountsRef.current = counts;
+    if (!prev) return;
+    const added: Record<string, number> = {};
+    let max = 0;
+    Object.keys(counts).forEach((uid) => {
+      if (uid === myUid) return;
+      const d = counts[uid] - (prev[uid] ?? counts[uid]);
+      if (d > 0) {
+        added[uid] = d;
+        max = Math.max(max, d);
+      }
+    });
+    if (!max) return;
+    setOppFresh(added);
+    if (isSoundOn() && state?.log?.[state.log.length - 1]?.t !== 'deal') sounds.draw(max);
+    const t = setTimeout(() => setOppFresh({}), 450 + max * 220);
+    return () => clearTimeout(t);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [countsKey]);
+
   if (!user) return null;
 
   const players = room?.players || [];
@@ -157,7 +199,7 @@ export default function DurakGame() {
   const playing = room?.status === 'playing' && hasGame && state!.phase === 'playing';
   const finished = room?.status === 'finished' && hasGame;
   const iAmDefender = playing && state!.defender === myUid;
-  const iAmOut = !!state?.out?.includes(myUid);
+  const iAmOut = !!state?.out?.includes(myUid) || (hasGame && !!state?.order?.includes(myUid) && state?.phase === 'playing' && state?.deck_count === 0 && myHand.length === 0);
   const unbeaten = hasGame ? state!.table.filter((p) => !p.d) : [];
   const turnPlayer = players.find((p) => p.user_id === room?.current_turn_user_id);
   const isMyTurn = room?.current_turn_user_id === user.id;
@@ -237,7 +279,7 @@ export default function DurakGame() {
 
   const hint = (() => {
     if (!playing) return '';
-    if (iAmOut) return 'Вы вышли из игры — остальные доигрывают';
+    if (iAmOut) return 'Вы вышли из игры с победой — остальные доигрывают';
     const s = state!;
     if (iAmDefender) {
       if (s.taking) return 'Вы берёте карты — ждём, пока доподкинут';
@@ -374,7 +416,7 @@ export default function DurakGame() {
                         isTurn ? 'border-amber-400 bg-amber-500/10' : 'border-slate-700/60 bg-slate-900/50'
                       } ${out ? 'opacity-50' : ''}`}
                     >
-                      <div className="flex justify-center"><PlayerAvatar emoji={p.avatar_emoji} url={p.avatar_url} size={28} /></div>
+                      <div className="flex justify-center"><PlayerAvatar emoji={p.avatar_emoji} url={p.avatar_url} size={28} online={p.online} /></div>
                       <p className="text-xs font-semibold text-slate-100 truncate max-w-[92px] mx-auto">{p.nickname}</p>
                       {hasGame && (
                         out ? (
@@ -382,9 +424,20 @@ export default function DurakGame() {
                         ) : (
                           <div className="mt-1 flex items-center justify-center">
                             <div className="flex -space-x-5">
-                              {Array.from({ length: Math.min(count, 6) }).map((_, i) => (
-                                <DurakCard key={i} hidden size="xs" />
-                              ))}
+                              {Array.from({ length: Math.min(count, 6) }).map((_, i, arr) => {
+                                const nf = oppFresh[uid] ?? 0;
+                                const k = i - (arr.length - nf);
+                                const isNew = nf > 0 && k >= 0;
+                                return (
+                                  <div
+                                    key={i}
+                                    className={isNew ? 'baarys-deal' : ''}
+                                    style={isNew ? { animationDelay: `${k * 220}ms` } : undefined}
+                                  >
+                                    <DurakCard hidden size="xs" />
+                                  </div>
+                                );
+                              })}
                             </div>
                             <span className="ml-1.5 text-xs font-bold text-slate-200">{count}</span>
                           </div>
@@ -467,6 +520,11 @@ export default function DurakGame() {
                   {state!.loser !== myUid && state!.loser && (
                     <p className="text-sm text-emerald-300">Вы выиграли партию</p>
                   )}
+                  {state!.loser && (
+                    <p className="text-sm text-slate-300">
+                      {state!.loser === myUid ? 'В следующей партии вы отбиваетесь первым' : `В следующей партии первым отбивается ${nick(state!.loser)}`}
+                    </p>
+                  )}
                   {isOwner && (
                     <Button
                       onClick={() => act('start')}
@@ -490,7 +548,7 @@ export default function DurakGame() {
                         <span className={`mr-2 rounded-full px-2 py-0.5 text-xs font-semibold ${
                           iAmDefender ? 'bg-sky-500/20 text-sky-300' : myUid === state!.attacker ? 'bg-red-500/20 text-red-300' : 'bg-slate-700 text-slate-300'
                         }`}>
-                          {iAmOut ? 'Вышли' : iAmDefender ? 'Отбиваетесь' : myUid === state!.attacker ? 'Атакуете' : 'Подкидываете'}
+                          {iAmOut ? 'Победа' : iAmDefender ? 'Отбиваетесь' : myUid === state!.attacker ? 'Атакуете' : 'Подкидываете'}
                         </span>
                         {hint}
                       </>
@@ -533,19 +591,24 @@ export default function DurakGame() {
 
                 <div className="flex flex-wrap justify-center gap-1.5 sm:gap-2 pt-3 min-h-[7rem]">
                   {myHand.length === 0 ? (
-                    <p className="self-center text-sm text-slate-500">{iAmOut ? 'У вас не осталось карт' : 'Карт нет'}</p>
+                    <p className="self-center text-sm text-slate-500">{iAmOut ? 'Вы вышли из игры с победой! Остальные доигрывают' : 'Карт нет'}</p>
                   ) : (
                     myHand.map((card) => {
                       const usable = playing && !iAmOut && (iAmDefender || canAddCard(state!, myUid, card));
                       return (
-                        <DurakCard
+                        <div
                           key={card}
-                          card={card}
-                          trump={card[1] === state!.trump}
-                          selected={selected === card}
-                          dimmed={playing && !usable}
-                          onClick={playing ? () => handleHandCard(card) : undefined}
-                        />
+                          className={fresh.includes(card) ? 'baarys-deal' : ''}
+                          style={fresh.includes(card) ? { animationDelay: `${fresh.indexOf(card) * 220}ms` } : undefined}
+                        >
+                          <DurakCard
+                            card={card}
+                            trump={card[1] === state!.trump}
+                            selected={selected === card}
+                            dimmed={playing && !usable}
+                            onClick={playing ? () => handleHandCard(card) : undefined}
+                          />
+                        </div>
                       );
                     })
                   )}

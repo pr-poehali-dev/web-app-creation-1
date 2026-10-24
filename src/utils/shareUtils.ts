@@ -115,7 +115,14 @@ export async function shareContent({ title, text, url, imageUrl }: ShareOptions)
     ? ogUrl
     : prodUrl;
   const shortUrl = await createShortUrl(urlToShorten);
-  const shareUrl = shortUrl ?? ogUrl ?? prodUrl;
+  const isDynamic = prodUrl.includes('/offer/') || prodUrl.includes('/request/') || prodUrl.includes('/auction/');
+  const shortBase = (func2url as Record<string, string>)['short-url'];
+  const shortCode = shortUrl ? shortUrl.split('/s/')[1] : null;
+  const botFriendlyShort = isDynamic && shortBase && shortCode ? `${shortBase}?code=${shortCode}` : null;
+  const shareUrl = botFriendlyShort ?? shortUrl ?? ogUrl ?? prodUrl;
+  const shareMessage = shortUrl && isDynamic
+    ? `${text}\n\n${shortUrl}`
+    : shareUrl;
 
   if (navigator.share) {
     try {
@@ -129,7 +136,7 @@ export async function shareContent({ title, text, url, imageUrl }: ShareOptions)
         }
       }
       // Fallback: без файла — только url (text убран чтобы не дублировать описание из og:description)
-      await navigator.share({ title, url: shareUrl });
+      await navigator.share(shortUrl && isDynamic ? { title, text: shareMessage } : { title, url: shareUrl });
       toast.success('Ссылка отправлена!');
       return;
     } catch (e) {
@@ -137,7 +144,7 @@ export async function shareContent({ title, text, url, imageUrl }: ShareOptions)
     }
   }
 
-  await copyToClipboard(shareUrl);
+  await copyToClipboard(shareMessage);
   toast.success('Ссылка скопирована', {
     description: 'Вставьте в мессенджер — получатель увидит превью с фото',
   });

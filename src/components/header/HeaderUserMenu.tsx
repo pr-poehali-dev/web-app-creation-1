@@ -64,12 +64,12 @@ export default function HeaderUserMenu({
           {currentUser?.role === 'admin' ? (
             <>
               <Icon name="ShieldCheck" className="h-3 w-3 md:h-4 md:w-4 text-primary" />
-              <span className="max-w-[100px] lg:max-w-[160px] truncate text-[10px] md:text-sm font-semibold text-primary">Администратор</span>
+              <span className="max-w-[100px] xl:max-w-[160px] truncate text-[10px] md:text-sm font-semibold text-primary">Администратор</span>
             </>
           ) : (
             <>
               <Icon name="User" className="h-3 w-3 md:h-4 md:w-4" />
-              <span className={`hidden md:inline truncate text-sm ${currentUser?.userType === 'legal-entity' ? 'max-w-[220px]' : 'max-w-[140px]'}`}>{getUserDisplayName()}</span>
+              <span className={`hidden md:inline truncate text-sm ${currentUser?.userType === 'legal-entity' ? 'max-w-[110px] 2xl:max-w-[220px]' : 'max-w-[100px] 2xl:max-w-[140px]'}`}>{getUserDisplayName()}</span>
             </>
           )}
           <Icon name="ChevronDown" className="h-3 w-3 md:h-4 md:w-4" />
@@ -123,6 +123,12 @@ export default function HeaderUserMenu({
           <Icon name="Brain" className="mr-2 h-4 w-4 text-purple-500" />
           Нейро-звук для мозга
         </DropdownMenuItem>
+        {currentUser?.inn === '1400022716' && (
+          <DropdownMenuItem onClick={() => navigate('/admin/robot')} className="border-2 border-border rounded-md mb-1">
+            <Icon name="Bot" className="mr-2 h-4 w-4 text-primary" />
+            Торговый робот
+          </DropdownMenuItem>
+        )}
         {currentUser?.role === 'admin' && (
           <>
             <DropdownMenuSeparator />

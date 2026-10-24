@@ -151,7 +151,7 @@ def handler(event: dict, context) -> dict:
 
         elif item_type == 'request':
             cur.execute(f"""
-                SELECT r.title, r.description, r.price_per_unit, r.unit,
+                SELECT r.title, r.description, r.price_per_unit, r.unit, r.category,
                        (SELECT oi.url FROM {schema}.offer_images oi
                         JOIN {schema}.request_image_relations rir ON oi.id = rir.image_id
                         WHERE rir.request_id = r.id LIMIT 1) as image_url
@@ -163,7 +163,7 @@ def handler(event: dict, context) -> dict:
             price = f"Бюджет: {float(row['price_per_unit']):,.0f} ₽/{row['unit']}".replace(',', ' ') if row.get('price_per_unit') else ''
             title = row['title']
             desc = f"{price}. {row['description'][:200] if row.get('description') else ''}".strip('. ')
-            image = row.get('image_url') or default_image
+            image = row.get('image_url') or f'{frontend_url}/og-request.png'
             redirect = f'{frontend_url}/request/{item_id}'
 
         else:  # auction

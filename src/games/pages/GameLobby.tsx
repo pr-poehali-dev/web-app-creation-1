@@ -9,7 +9,7 @@ import GameLayout from '../components/GameLayout';
 import RoomNotifyHint from '../components/RoomNotifyHint';
 import InstallHint from '../components/InstallHint';
 import { getGameSession, refreshGameSession, GameUser } from '../utils/gameAuth';
-import { buildInviteUrl, buildClubUrl, makeShareUrl } from '../utils/gameLinks';
+import { buildInviteUrl, buildClubUrl, makeShareUrl, shareLink } from '../utils/gameLinks';
 import {
   listGameRooms,
   createGameRoom,
@@ -111,28 +111,19 @@ export default function GameLobby() {
 
   const handleShareRoom = async (room: GameRoomListItem) => {
     if (!room.invite_code) return;
-    const inviteUrl = await makeShareUrl(buildInviteUrl(room.invite_code), user?.nickname, room.game_type);
-
-    if (navigator.share) {
-      try {
-        await navigator.share({ url: inviteUrl });
-        return;
-      } catch {
-        return;
-      }
-    }
-    try {
-      await navigator.clipboard.writeText(inviteUrl);
+    const inviteUrl = makeShareUrl(buildInviteUrl(room.invite_code), user?.nickname, room.game_type);
+    const result = await shareLink(inviteUrl, `${user?.nickname || 'Друг'} приглашает тебя сыграть. Заходи:`);
+    if (result === 'copied') {
       setCopiedRoomId(room.id);
-      toast({ title: 'Ссылка скопирована' });
+      toast({ title: 'Ссылка скопирована', description: 'Отправьте её в любой мессенджер' });
       setTimeout(() => setCopiedRoomId(null), 2000);
-    } catch {
-      toast({ variant: 'destructive', title: 'Ошибка', description: 'Не удалось скопировать ссылку' });
+    } else if (result === 'failed') {
+      toast({ variant: 'destructive', title: 'Ошибка', description: 'Не удалось поделиться ссылкой' });
     }
   };
 
   const handleShareClub = async () => {
-    const clubUrl = await makeShareUrl(buildClubUrl());
+    const clubUrl = makeShareUrl(buildClubUrl());
 
     // Передаём только url (без text) — иначе мессенджеры (Telegram и т.д.) показывают
     // ДВЕ ссылки: саму url и вложенный в text домен-подобный текст, распознанный как ссылка,
