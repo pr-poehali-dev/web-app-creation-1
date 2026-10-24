@@ -5,6 +5,7 @@ from urllib.parse import urlencode
 
 import psycopg2
 import requests
+import backtest
 import rules_engine
 from psycopg2.extras import RealDictCursor
 
@@ -93,15 +94,14 @@ def bcs_token() -> str:
     return _BCS_TOKEN["value"]
 
 
-def _bcs_bars(ticker: str, kind: str, frame: str, days: int) -> list:
-    now = datetime.now(timezone.utc)
+def _bcs_chunk(ticker: str, kind: str, frame: str, start: datetime, end: datetime) -> list:
     r = requests.get(
         f"{BCS}/trade-api-market-data-connector/api/v1/candles-chart",
         params={
             "classCode": "SPBFUT" if kind == "future" else "TQBR",
             "ticker": ticker,
-            "startDate": (now - timedelta(days=days)).strftime("%Y-%m-%dT%H:%M:%SZ"),
-            "endDate": now.strftime("%Y-%m-%dT%H:%M:%SZ"),
+            "startDate": start.strftime("%Y-%m-%dT%H:%M:%SZ"),
+            "endDate": end.strftime("%Y-%m-%dT%H:%M:%SZ"),
             "timeFrame": frame,
         },
         headers={"Authorization": f"Bearer {bcs_token()}"},
@@ -117,8 +117,21 @@ def _bcs_bars(ticker: str, kind: str, frame: str, days: int) -> list:
             t = t.replace(tzinfo=timezone.utc)
         begin = t.astimezone(MSK).strftime("%Y-%m-%d %H:%M:%S")
         out.append({"begin": begin, "high": float(b["high"]), "low": float(b["low"]), "close": float(b["close"])})
-    out.sort(key=lambda c: c["begin"])
     return out
+
+
+def _bcs_bars(ticker: str, kind: str, frame: str, days: int) -> list:
+    now = datetime.now(timezone.utc)
+    step = 4 if frame == "M5" else days
+    begin = now - timedelta(days=days)
+    seen = {}
+    cur = begin
+    while cur < now:
+        nxt = min(cur + timedelta(days=step), now)
+        for c in _bcs_chunk(ticker, kind, frame, cur, nxt):
+            seen[c["begin"]] = c
+        cur = nxt
+    return [seen[k] for k in sorted(seen)]
 
 
 def bcs_candles(ticker: str, kind: str, tf: int) -> list:
@@ -591,11 +604,67 @@ def list_signals() -> dict:
     return {"items": data, "stats": stats, "rule_stats": rule_stats}
 
 
+def run_backtest(q: dict, event: dict) -> dict:
+    conn = db()
+    if not is_admin(conn, (event.get("headers") or {}).get("X-User-Id") or (event.get("headers") or {}).get("x-user-id")):
+        conn.close()
+        return resp(403, {"error": "Доступ запрещён"})
+    cur = conn.cursor()
+    days = max(3, min(int(q.get("days", "30")), 120))
+    if q.get("rule_id"):
+        cur.execute(f"SELECT * FROM {SCHEMA}.robot_rules WHERE id=%s", (int(q["rule_id"]),))
+        rule = cur.fetchone()
+        conn.close()
+        if not rule:
+            return resp(404, {"error": "Правило не найдено"})
+        kind = rule["kind"]
+        ticker = rule["ticker"]
+        if kind == "future":
+            ticker = resolve_future(rule["asset_code"] or rule["ticker"])
+        by_tf = {}
+        for t in rules_engine.needed_tfs(rule) | {rules_engine.rule_tf(rule)}:
+            by_tf[t] = bcs_history(ticker, kind, t, days)
+        res = backtest.run_rule(rule, by_tf)
+        title = f"{rule['ticker']} · {rule['name']}"
+    else:
+        conn.close()
+        kind = q.get("kind", "stock")
+        ticker = q.get("ticker", "SBER")
+        if kind == "future":
+            ticker = resolve_future(ticker) or ticker
+        res = backtest.run_base(bcs_history(ticker, kind, 60, days), kind == "future", analyze)
+        title = f"{ticker} · базовая стратегия"
+    res["title"] = title
+    res["ticker"] = ticker
+    res["summary"] = backtest.summarize(res["trades"])
+    return resp(200, res)
+
+
+def bcs_history(ticker: str, kind: str, tf: int, days: int) -> list:
+    if tf == 10:
+        five = _bcs_bars(ticker, kind, "M5", days)
+        out = []
+        for c in five:
+            b = c["begin"]
+            m = int(b[14:16])
+            key = f"{b[:14]}{m - m % 10:02d}:00"
+            if out and out[-1]["begin"] == key:
+                out[-1]["high"] = max(out[-1]["high"], c["high"])
+                out[-1]["low"] = min(out[-1]["low"], c["low"])
+                out[-1]["close"] = c["close"]
+            else:
+                out.append({"begin": key, "high": c["high"], "low": c["low"], "close": c["close"]})
+        return out
+    return _bcs_bars(ticker, kind, BCS_TF[tf], days)
+
+
 def handle_action(action: str, q: dict, event: dict = None) -> dict:
     if action in ("robot_rules", "robot_rule_save", "robot_rule_toggle", "robot_rule_delete"):
         return manage(action, q, event or {})
     if action == "robot_signals":
         return resp(200, list_signals())
+    if action == "robot_backtest":
+        return run_backtest(q, event or {})
     if action == "robot_source":
         t = q.get("ticker", "SBER")
         k = q.get("kind", "stock")
