@@ -7,6 +7,8 @@ LABELS = {
     "breakout": "Пробой уровня",
     "double_bottom": "Двойное дно",
     "double_top": "Двойная вершина",
+    "head_shoulders": "Голова и плечи",
+    "inverse_head_shoulders": "Перевёрнутая голова и плечи",
     "range_breakout": "Выход из узкого диапазона",
     "divergence_rsi": "Дивергенция по RSI",
     "divergence_macd": "Дивергенция по MACD",
@@ -68,7 +70,7 @@ def _sanitize_one(c, out: list) -> None:
             out.append({"type": t, "op": "above_upper" if c.get("op") == "above_upper" else "below_lower"})
         elif t == "breakout":
             out.append({"type": t, "period": int(_num(c.get("period"), 5, 100, 20)), "dir": d})
-        elif t in ("double_bottom", "double_top"):
+        elif t in ("double_bottom", "double_top", "head_shoulders", "inverse_head_shoulders"):
             out.append({"type": t})
         elif t in ("divergence_rsi", "divergence_macd"):
             out.append({"type": t, "dir": d})
@@ -99,6 +101,10 @@ def _describe(c: dict) -> str:
         return "двойное дно с пробоем линии шеи"
     if t == "double_top":
         return "двойная вершина с пробоем линии шеи"
+    if t == "head_shoulders":
+        return "«голова и плечи» с пробоем линии шеи вниз"
+    if t == "inverse_head_shoulders":
+        return "перевёрнутая «голова и плечи» с пробоем линии шеи вверх"
     if t in ("divergence_rsi", "divergence_macd"):
         name = "RSI" if t == "divergence_rsi" else "MACD"
         return f"{'бычья' if c['dir'] == 'up' else 'медвежья'} дивергенция по {name}"
@@ -167,6 +173,54 @@ def _double_pattern(candles, bottom: bool) -> bool:
         if bottom and last > neck and prev <= neck:
             return True
         if not bottom and last < neck and prev >= neck:
+            return True
+    return False
+
+
+def _hs_pattern(candles, inverse: bool) -> bool:
+    w = candles[-90:]
+    n = len(w)
+    if n < 40:
+        return False
+    key = "low" if inverse else "high"
+    vals = [c[key] for c in w]
+    piv = [i for i in _pivots(vals, key) if i <= n - 3]
+    if len(piv) < 3:
+        return False
+    for k in range(len(piv) - 1, 1, -1):
+        l, h, r = piv[k - 2], piv[k - 1], piv[k]
+        if r < n - 30:
+            break
+        if h - l < 4 or r - h < 4:
+            continue
+        if inverse:
+            if not (vals[h] < vals[l] and vals[h] < vals[r]):
+                continue
+            prom = min(vals[l], vals[r]) - vals[h]
+        else:
+            if not (vals[h] > vals[l] and vals[h] > vals[r]):
+                continue
+            prom = vals[h] - max(vals[l], vals[r])
+        if prom / vals[h] < 0.004 or abs(vals[l] - vals[r]) > 0.6 * prom:
+            continue
+        if inverse:
+            i1 = max(range(l, h + 1), key=lambda x: w[x]["high"])
+            i2 = max(range(h, r + 1), key=lambda x: w[x]["high"])
+            v1, v2 = w[i1]["high"], w[i2]["high"]
+        else:
+            i1 = min(range(l, h + 1), key=lambda x: w[x]["low"])
+            i2 = min(range(h, r + 1), key=lambda x: w[x]["low"])
+            v1, v2 = w[i1]["low"], w[i2]["low"]
+        if i2 == i1:
+            continue
+
+        def neck(x):
+            return v1 + (v2 - v1) * (x - i1) / (i2 - i1)
+
+        last, prev = w[-1]["close"], w[-2]["close"]
+        if inverse and last > neck(n - 1) and prev <= neck(n - 2):
+            return True
+        if not inverse and last < neck(n - 1) and prev >= neck(n - 2):
             return True
     return False
 
@@ -254,6 +308,10 @@ def check(c: dict, candles: list) -> bool:
         return _double_pattern(candles, True)
     if t == "double_top":
         return _double_pattern(candles, False)
+    if t == "head_shoulders":
+        return _hs_pattern(candles, False)
+    if t == "inverse_head_shoulders":
+        return _hs_pattern(candles, True)
     if t == "range_breakout":
         prev = candles[-c["period"] - 1:-1]
         if len(prev) < c["period"]:
@@ -339,6 +397,10 @@ def mirror(conds: list) -> list:
             m["type"] = "double_top"
         elif t == "double_top":
             m["type"] = "double_bottom"
+        elif t == "head_shoulders":
+            m["type"] = "inverse_head_shoulders"
+        elif t == "inverse_head_shoulders":
+            m["type"] = "head_shoulders"
         elif "dir" in c:
             m["dir"] = flip[c["dir"]]
         out.append(m)

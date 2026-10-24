@@ -15,6 +15,8 @@ export const CONDITION_TYPES: { value: string; label: string; group: string }[] 
   { value: 'range_breakout', label: 'Выход из узкого диапазона', group: 'Фигуры' },
   { value: 'double_bottom', label: 'Двойное дно', group: 'Фигуры' },
   { value: 'double_top', label: 'Двойная вершина', group: 'Фигуры' },
+  { value: 'head_shoulders', label: 'Голова и плечи (вниз)', group: 'Фигуры' },
+  { value: 'inverse_head_shoulders', label: 'Перевёрнутая голова и плечи (вверх)', group: 'Фигуры' },
 ];
 
 const DEFAULTS: Record<string, Condition> = {
@@ -29,6 +31,8 @@ const DEFAULTS: Record<string, Condition> = {
   range_breakout: { type: 'range_breakout', period: 20, dir: 'up' },
   double_bottom: { type: 'double_bottom' },
   double_top: { type: 'double_top' },
+  head_shoulders: { type: 'head_shoulders' },
+  inverse_head_shoulders: { type: 'inverse_head_shoulders' },
 };
 
 export const TF_OPTIONS = [
