@@ -47,7 +47,7 @@ def get_request_og(request_id: str, conn) -> dict:
     cur = conn.cursor()
     safe_id = request_id.replace("'", "''")
     cur.execute(f"""
-        SELECT r.title, r.description, r.price_per_unit, r.unit,
+        SELECT r.title, r.description, r.price_per_unit, r.unit, r.category,
                (SELECT oi.url FROM {SCHEMA}.offer_images oi
                 JOIN {SCHEMA}.request_image_relations rir ON oi.id = rir.image_id
                 WHERE rir.request_id = r.id LIMIT 1) as image_url
@@ -57,13 +57,13 @@ def get_request_og(request_id: str, conn) -> dict:
     cur.close()
     if not row:
         return {}
-    title, desc, price, unit, img = row
+    title, desc, price, unit, req_cat, img = row
     p = float(price or 0)
     price_str = f"Бюджет: {int(p):,} ₽/{unit}".replace(',', '\u00a0') if p > 0 else ''
     return {
         'title': title,
         'description': ' • '.join(filter(None, [price_str, desc[:200] if desc else ''])),
-        'image': img or f"{SITE_URL}/og-request.png",
+        'image': img or f"{SITE_URL}/og-request-{req_cat}.png" if req_cat else f"{SITE_URL}/og-request.png",
         'url': f"{SITE_URL}/request/{request_id}",
     }
 
