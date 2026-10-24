@@ -251,11 +251,11 @@ export default function Header({ isAuthenticated, onLogout }: HeaderProps) {
           <Link 
             to="/home" 
             onClick={() => window.scrollTo({ top: 0, behavior: 'smooth' })}
-            className={`flex items-center space-x-1 md:space-x-2.5 px-1 md:px-3 py-1 rounded-md md:rounded-lg hover:border-primary/40 hover:bg-primary/5 transition-all shrink-0 ${
+            className={`flex items-center space-x-1 md:space-x-2.5 px-1 md:px-2 py-1 rounded-md md:rounded-lg hover:border-primary/40 hover:bg-primary/5 transition-all shrink-0 ${
               location.pathname === '/home' || location.pathname === '/' ? 'border-[3px] border-primary' : 'border-2 border-primary/20'
             }`}
           >
-            <div className="h-8 w-8 md:h-12 md:w-12 overflow-hidden rounded-md md:rounded-lg flex items-center justify-center shrink-0">
+            <div className="h-8 w-8 md:h-10 md:w-10 overflow-hidden rounded-md md:rounded-lg flex items-center justify-center shrink-0">
               <img 
                 src="https://cdn.poehali.dev/projects/1a60f89a-b726-4c33-8dad-d42db554ed3e/bucket/4bbf8889-8425-4a91-bebb-1e4aaa060042.png" 
                 alt="ЕРТТП" 
@@ -264,8 +264,8 @@ export default function Header({ isAuthenticated, onLogout }: HeaderProps) {
               />
             </div>
             <div className="flex flex-col items-start">
-              <span className="text-[10px] md:text-base font-bold text-primary whitespace-nowrap leading-tight">ЕРТТП</span>
-              <span className="text-[9px] md:text-[15px] text-primary/70 whitespace-nowrap leading-tight font-bold">О нас</span>
+              <span className="text-[10px] md:text-sm 2xl:text-base font-bold text-primary whitespace-nowrap leading-tight">ЕРТТП</span>
+              <span className="text-[9px] md:text-sm text-primary/70 whitespace-nowrap leading-tight font-bold">О нас</span>
             </div>
           </Link>
 
@@ -305,49 +305,49 @@ export default function Header({ isAuthenticated, onLogout }: HeaderProps) {
             )}
           </div>
 
-          <nav className="hidden md:flex items-center space-x-0.5 lg:space-x-1 mr-1 lg:mr-2">
+          <nav className="hidden md:flex items-center space-x-0.5 2xl:space-x-1 mr-1 2xl:mr-2">
             <Link
               to="/predlozheniya"
-              className={`text-[11px] lg:text-sm font-medium transition-colors px-1.5 lg:px-2 py-1.5 rounded-md border-2 whitespace-nowrap ${location.pathname === '/predlozheniya' || location.pathname === '/' ? 'bg-primary/10 text-primary border-primary/40' : 'text-foreground hover:text-primary hover:bg-primary/5 border-primary/20 hover:border-primary/40'}`}
+              className={`text-[11px] xl:text-xs 2xl:text-sm font-medium transition-colors px-1 2xl:px-2 py-1.5 rounded-md border-2 whitespace-nowrap ${location.pathname === '/predlozheniya' || location.pathname === '/' ? 'bg-primary/10 text-primary border-primary/40' : 'text-foreground hover:text-primary hover:bg-primary/5 border-primary/20 hover:border-primary/40'}`}
             >
               Предложения
             </Link>
             <Link
               to="/zaprosy"
-              className={`text-[11px] lg:text-sm font-medium transition-colors px-1.5 lg:px-2 py-1.5 rounded-md border-2 whitespace-nowrap ${location.pathname === '/zaprosy' ? 'bg-primary/10 text-primary border-primary/40' : 'text-foreground hover:text-primary hover:bg-primary/5 border-primary/20 hover:border-primary/40'}`}
+              className={`text-[11px] xl:text-xs 2xl:text-sm font-medium transition-colors px-1 2xl:px-2 py-1.5 rounded-md border-2 whitespace-nowrap ${location.pathname === '/zaprosy' ? 'bg-primary/10 text-primary border-primary/40' : 'text-foreground hover:text-primary hover:bg-primary/5 border-primary/20 hover:border-primary/40'}`}
             >
               Запросы
             </Link>
             <Link
               to="/auction"
-              className={`text-[11px] lg:text-sm font-medium transition-colors px-1.5 lg:px-2 py-1.5 rounded-md border-2 whitespace-nowrap ${location.pathname === '/auction' ? 'bg-primary/10 text-primary border-primary/40' : 'text-foreground hover:text-primary hover:bg-primary/5 border-primary/20 hover:border-primary/40'}`}
+              className={`text-[11px] xl:text-xs 2xl:text-sm font-medium transition-colors px-1 2xl:px-2 py-1.5 rounded-md border-2 whitespace-nowrap ${location.pathname === '/auction' ? 'bg-primary/10 text-primary border-primary/40' : 'text-foreground hover:text-primary hover:bg-primary/5 border-primary/20 hover:border-primary/40'}`}
             >
               Аукционы
             </Link>
             <Link
               to="/trading"
-              className={`text-[11px] lg:text-sm font-medium transition-colors px-1.5 lg:px-2 py-1.5 rounded-md border-2 whitespace-nowrap ${location.pathname === '/trading' ? 'bg-primary/10 text-primary border-primary/40' : 'text-foreground hover:text-primary hover:bg-primary/5 border-primary/20 hover:border-primary/40'}`}
+              className={`text-[11px] xl:text-xs 2xl:text-sm font-medium transition-colors px-1 2xl:px-2 py-1.5 rounded-md border-2 whitespace-nowrap ${location.pathname === '/trading' ? 'bg-primary/10 text-primary border-primary/40' : 'text-foreground hover:text-primary hover:bg-primary/5 border-primary/20 hover:border-primary/40'}`}
             >
               <span className="flex items-center gap-1">
                 Контракты
-                <Badge variant="secondary" className="text-[9px] lg:text-xs px-1 lg:px-1.5 py-0.5">Новое</Badge>
+                <Badge variant="secondary" className="text-[9px] lg:text-xs px-1 lg:px-1 py-0.5">Новое</Badge>
               </span>
             </Link>
             <Link
               to="/market"
-              className={`text-[11px] lg:text-sm font-medium transition-colors px-1.5 lg:px-2 py-1.5 rounded-md border-2 whitespace-nowrap ${location.pathname === '/market' ? 'bg-primary/10 text-primary border-primary/40' : 'text-foreground hover:text-primary hover:bg-primary/5 border-primary/20 hover:border-primary/40'}`}
+              className={`text-[11px] xl:text-xs 2xl:text-sm font-medium transition-colors px-1 2xl:px-2 py-1.5 rounded-md border-2 whitespace-nowrap ${location.pathname === '/market' ? 'bg-primary/10 text-primary border-primary/40' : 'text-foreground hover:text-primary hover:bg-primary/5 border-primary/20 hover:border-primary/40'}`}
             >
               Рынок
             </Link>
             <Link
               to="/support"
-              className={`text-[11px] lg:text-sm font-medium transition-colors px-1.5 lg:px-2 py-1.5 rounded-md border-2 whitespace-nowrap ${location.pathname === '/support' ? 'bg-primary/10 text-primary border-primary/40' : 'text-foreground hover:text-primary hover:bg-primary/5 border-primary/20 hover:border-primary/40'}`}
+              className={`text-[11px] xl:text-xs 2xl:text-sm font-medium transition-colors px-1 2xl:px-2 py-1.5 rounded-md border-2 whitespace-nowrap ${location.pathname === '/support' ? 'bg-primary/10 text-primary border-primary/40' : 'text-foreground hover:text-primary hover:bg-primary/5 border-primary/20 hover:border-primary/40'}`}
             >
               Поддержка
             </Link>
             <Link
               to="/games"
-              className={`text-[11px] lg:text-sm font-medium transition-colors px-1.5 lg:px-2 py-1.5 rounded-md border-2 whitespace-nowrap ${location.pathname.startsWith('/games') ? 'bg-primary/10 text-primary border-primary/40' : 'text-foreground hover:text-primary hover:bg-primary/5 border-primary/20 hover:border-primary/40'}`}
+              className={`text-[11px] xl:text-xs 2xl:text-sm font-medium transition-colors px-1 2xl:px-2 py-1.5 rounded-md border-2 whitespace-nowrap ${location.pathname.startsWith('/games') ? 'bg-primary/10 text-primary border-primary/40' : 'text-foreground hover:text-primary hover:bg-primary/5 border-primary/20 hover:border-primary/40'}`}
             >
               <span className="flex items-center gap-1">
                 <Icon name="Spade" className="h-3.5 w-3.5" />
@@ -356,7 +356,7 @@ export default function Header({ isAuthenticated, onLogout }: HeaderProps) {
             </Link>
             <Link
               to="/assistant"
-              className={`text-[11px] lg:text-sm font-medium transition-colors px-1.5 lg:px-2 py-1.5 rounded-md border-2 whitespace-nowrap ${location.pathname.startsWith('/assistant') ? 'bg-primary/10 text-primary border-primary/40' : 'text-foreground hover:text-primary hover:bg-primary/5 border-primary/20 hover:border-primary/40'}`}
+              className={`text-[11px] xl:text-xs 2xl:text-sm font-medium transition-colors px-1 2xl:px-2 py-1.5 rounded-md border-2 whitespace-nowrap ${location.pathname.startsWith('/assistant') ? 'bg-primary/10 text-primary border-primary/40' : 'text-foreground hover:text-primary hover:bg-primary/5 border-primary/20 hover:border-primary/40'}`}
             >
               <span className="flex items-center gap-1">
                 <Icon name="Sparkles" className="h-3.5 w-3.5" />
@@ -366,7 +366,7 @@ export default function Header({ isAuthenticated, onLogout }: HeaderProps) {
           </nav>
 
           <div className="flex items-center space-x-1 md:space-x-1.5">
-            <div className="hidden md:block w-44 lg:w-60">
+            <div className="hidden md:block w-32 xl:w-40 2xl:w-52 shrink-0">
               <RegionDistrictSelector showBadges={false} />
             </div>
             
