@@ -37,9 +37,12 @@ export default function Support({ isAuthenticated, onLogout }: SupportProps) {
       <Header isAuthenticated={isAuthenticated} onLogout={onLogout} />
 
       <main className="container mx-auto px-4 py-4 md:py-6 flex-1">
-        <BackButton />
+        <div className="grid grid-cols-[1fr_auto_1fr] items-center gap-2 mb-3">
+          <div className="justify-self-start"><BackButton className="!mb-0" /></div>
+          <h1 className="text-lg md:text-2xl font-bold text-foreground text-center">Поддержка</h1>
+          <div />
+        </div>
         <div className="max-w-4xl mx-auto">
-          <h1 className="text-2xl md:text-3xl font-bold text-foreground mb-4 md:mb-6">Поддержка</h1>
 
           {/* Чат с поддержкой — только для авторизованных */}
           {isAuthenticated && userId && (
