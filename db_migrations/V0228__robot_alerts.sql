@@ -1,0 +1,4 @@
+CREATE TABLE IF NOT EXISTS robot_alerts (
+    kind VARCHAR(50) PRIMARY KEY,
+    last_sent_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
+);

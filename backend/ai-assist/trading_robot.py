@@ -147,6 +147,28 @@ def bcs_candles(ticker: str, kind: str, tf: int) -> list:
     return out
 
 
+def alert_bcs_failure(err: Exception) -> None:
+    try:
+        code = getattr(getattr(err, "response", None), "status_code", None)
+        url = str(getattr(getattr(err, "response", None), "url", ""))
+        if code in (400, 401) and "openid-connect/token" in url:
+            text = "Робот ЕРТТП: токен БКС перестал работать (возможно, закончился срок 90 дней). Выпустите новый токен «Только для чтения» и обновите секрет BCS_REFRESH_TOKEN. Пока котировки берутся с биржи MOEX."
+        else:
+            text = "Робот ЕРТТП: БКС не отвечает, котировки временно берутся с биржи MOEX. Сигналы продолжают работать."
+        conn = db()
+        cur = conn.cursor()
+        cur.execute(f"SELECT 1 FROM {SCHEMA}.robot_alerts WHERE kind='bcs_failure' AND last_sent_at > NOW() - INTERVAL '12 hours'")
+        if not cur.fetchone():
+            if send_whatsapp(text):
+                cur.execute(
+                    f"INSERT INTO {SCHEMA}.robot_alerts (kind, last_sent_at) VALUES ('bcs_failure', NOW()) "
+                    f"ON CONFLICT (kind) DO UPDATE SET last_sent_at = NOW()")
+                conn.commit()
+        conn.close()
+    except Exception as e:
+        print(f"alert error: {e}")
+
+
 def get_candles(ticker: str, kind: str, tf: int) -> list:
     try:
         out = bcs_candles(ticker, kind, tf)
@@ -156,6 +178,7 @@ def get_candles(ticker: str, kind: str, tf: int) -> list:
         print(f"BCS candles short/empty for {ticker}: {len(out)}, fallback MOEX")
     except Exception as e:
         print(f"BCS candles error for {ticker}: {e}, fallback MOEX")
+        alert_bcs_failure(e)
     LAST_SOURCE["value"] = "moex"
     return moex_candles(ticker, kind, tf)
 
