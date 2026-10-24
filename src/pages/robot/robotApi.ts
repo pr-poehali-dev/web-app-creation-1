@@ -118,3 +118,8 @@ export async function runRobotNow(): Promise<unknown> {
   const r = await fetch(`${API}?action=robot_run&force=1`);
   return r.json();
 }
+
+export async function loadDataSource(): Promise<{ source: string; candles: number }> {
+  const r = await fetch(`${API}?action=robot_source`);
+  return r.json();
+}

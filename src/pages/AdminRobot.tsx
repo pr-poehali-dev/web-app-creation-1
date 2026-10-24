@@ -11,7 +11,7 @@ import RuleForm from './robot/RuleForm';
 import RulesList from './robot/RulesList';
 import RuleEfficiency from './robot/RuleEfficiency';
 import SignalsList from './robot/SignalsList';
-import { loadRules, loadSignals, runRobotNow, type Rule, type Signal, type Stats, type RuleStats } from './robot/robotApi';
+import { loadRules, loadSignals, loadDataSource, runRobotNow, type Rule, type Signal, type Stats, type RuleStats } from './robot/robotApi';
 
 interface Props {
   isAuthenticated: boolean;
@@ -28,6 +28,7 @@ export default function AdminRobot({ isAuthenticated, onLogout }: Props) {
   const [ruleStats, setRuleStats] = useState<RuleStats[]>([]);
   const [denied, setDenied] = useState(false);
   const [running, setRunning] = useState(false);
+  const [source, setSource] = useState<string>('');
 
   const refresh = useCallback(async () => {
     try {
@@ -43,6 +44,7 @@ export default function AdminRobot({ isAuthenticated, onLogout }: Props) {
 
   useEffect(() => {
     refresh();
+    loadDataSource().then(d => setSource(d.source)).catch(() => setSource('error'));
   }, [refresh]);
 
   const runNow = async () => {
@@ -73,6 +75,13 @@ export default function AdminRobot({ isAuthenticated, onLogout }: Props) {
             </Button>
           )}
         </div>
+
+        {!denied && source && (
+          <div className={`mb-4 inline-flex items-center gap-2 rounded-lg border px-3 py-1.5 text-sm ${source === 'bcs' ? 'border-green-300 bg-green-50 text-green-800' : 'border-amber-300 bg-amber-50 text-amber-900'}`}>
+            <Icon name={source === 'bcs' ? 'CircleCheck' : 'TriangleAlert'} className="h-4 w-4" />
+            {source === 'bcs' ? 'Источник котировок: БКС' : source === 'moex' ? 'Источник котировок: MOEX (БКС недоступен)' : 'Источник котировок не определён'}
+          </div>
+        )}
 
         {denied ? (
           <p className="text-sm text-muted-foreground">Раздел доступен только ООО «Дойдум-Инвест».</p>
