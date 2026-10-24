@@ -305,7 +305,7 @@ export default function Header({ isAuthenticated, onLogout }: HeaderProps) {
             )}
           </div>
 
-          <nav className="hidden md:flex items-center space-x-0.5 2xl:space-x-1 mr-1 2xl:mr-2">
+          <nav className="hidden md:flex min-w-0 items-center space-x-0.5 2xl:space-x-1 mr-1 2xl:mr-2">
             <Link
               to="/predlozheniya"
               className={`text-[11px] xl:text-xs 2xl:text-sm font-medium transition-colors px-1 2xl:px-2 py-1.5 rounded-md border-2 whitespace-nowrap ${location.pathname === '/predlozheniya' || location.pathname === '/' ? 'bg-primary/10 text-primary border-primary/40' : 'text-foreground hover:text-primary hover:bg-primary/5 border-primary/20 hover:border-primary/40'}`}
@@ -365,7 +365,7 @@ export default function Header({ isAuthenticated, onLogout }: HeaderProps) {
             </Link>
           </nav>
 
-          <div className="flex items-center space-x-1 md:space-x-1.5">
+          <div className="flex min-w-0 shrink items-center space-x-1 md:space-x-1.5">
             <div className="hidden md:block w-32 xl:w-40 2xl:w-52 shrink-0">
               <RegionDistrictSelector showBadges={false} />
             </div>
