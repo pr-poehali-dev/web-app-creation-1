@@ -63,7 +63,7 @@ def get_request_og(request_id: str, conn) -> dict:
     return {
         'title': title,
         'description': ' • '.join(filter(None, [price_str, desc[:200] if desc else ''])),
-        'image': img or f"{SITE_URL}/og-request-{req_cat}.png" if req_cat else f"{SITE_URL}/og-request.png",
+        'image': img or f"{SITE_URL}/og-request.png",
         'url': f"{SITE_URL}/request/{request_id}",
     }
 

@@ -163,7 +163,7 @@ def handler(event: dict, context) -> dict:
             price = f"Бюджет: {float(row['price_per_unit']):,.0f} ₽/{row['unit']}".replace(',', ' ') if row.get('price_per_unit') else ''
             title = row['title']
             desc = f"{price}. {row['description'][:200] if row.get('description') else ''}".strip('. ')
-            image = row.get('image_url') or (f"{frontend_url}/og-request-{row['category']}.png" if row.get('category') else f'{frontend_url}/og-request.png')
+            image = row.get('image_url') or f'{frontend_url}/og-request.png'
             redirect = f'{frontend_url}/request/{item_id}'
 
         else:  # auction
