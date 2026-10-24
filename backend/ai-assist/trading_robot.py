@@ -182,7 +182,13 @@ def token_expiry(conn):
     return None, ""
 
 
+_EXPIRY_CHECKED = {"day": None}
+
+
 def check_token_expiry(conn, now: datetime) -> None:
+    if _EXPIRY_CHECKED["day"] == now.date():
+        return
+    _EXPIRY_CHECKED["day"] = now.date()
     exp, _ = token_expiry(conn)
     if not exp:
         return
@@ -601,6 +607,7 @@ def manage(action: str, q: dict, event: dict) -> dict:
                 f"INSERT INTO {SCHEMA}.robot_settings (key, value) VALUES ('bcs_token_expires', %s) "
                 f"ON CONFLICT (key) DO UPDATE SET value=EXCLUDED.value, updated_at=NOW()", (val,))
             cur.execute(f"DELETE FROM {SCHEMA}.robot_alerts WHERE kind='bcs_expiry'")
+            _EXPIRY_CHECKED["day"] = None
             conn.commit()
             return resp(200, {"ok": True})
         if action == "robot_signal_update":

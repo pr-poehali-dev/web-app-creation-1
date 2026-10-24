@@ -30,21 +30,21 @@ def _tp(c):
     return (c["high"] + c["low"] + c["close"]) / 3
 
 
-def volume_spike(candles, mult):
-    if len(candles) < 22:
+def volume_spike(candles, mult, period=20):
+    if len(candles) < period + 2:
         return False
-    avg = sum(_vol(c) for c in candles[-21:-1]) / 20
+    avg = sum(_vol(c) for c in candles[-period - 1:-1]) / period
     return avg > 0 and _vol(candles[-1]) > mult * avg
 
 
-def obv_cross(candles, up):
-    if len(candles) < 30 or not any(_vol(c) for c in candles):
+def obv_cross(candles, up, period=20):
+    if len(candles) < period + 10 or not any(_vol(c) for c in candles):
         return False
     obv = [0.0]
     for i in range(1, len(candles)):
         d = candles[i]["close"] - candles[i - 1]["close"]
         obv.append(obv[-1] + (_vol(candles[i]) if d > 0 else -_vol(candles[i]) if d < 0 else 0))
-    sma = _sma_list(obv, 20)
+    sma = _sma_list(obv, period)
     if sma[-1] is None or sma[-2] is None:
         return False
     return (obv[-1] > sma[-1] and obv[-2] <= sma[-2]) if up else (obv[-1] < sma[-1] and obv[-2] >= sma[-2])
@@ -91,29 +91,29 @@ def adx(candles, n=14):
     return (a[-1], pdi, mdi) if a and a[-1] is not None else None
 
 
-def psar_flip(candles, up):
+def psar_flip(candles, up, step=0.02, max_af=0.2):
     c = candles[-120:]
     if len(c) < 10:
         return False
     rising = c[1]["close"] >= c[0]["close"]
     sar = c[0]["low"] if rising else c[0]["high"]
     ep = c[0]["high"] if rising else c[0]["low"]
-    af = 0.02
+    af = step
     trend = [rising]
     for i in range(1, len(c)):
         sar = sar + af * (ep - sar)
         if rising:
             sar = min(sar, c[i - 1]["low"], c[max(i - 2, 0)]["low"])
             if c[i]["low"] < sar:
-                rising, sar, ep, af = False, ep, c[i]["low"], 0.02
+                rising, sar, ep, af = False, ep, c[i]["low"], step
             elif c[i]["high"] > ep:
-                ep, af = c[i]["high"], min(af + 0.02, 0.2)
+                ep, af = c[i]["high"], min(af + step, max_af)
         else:
             sar = max(sar, c[i - 1]["high"], c[max(i - 2, 0)]["high"])
             if c[i]["high"] > sar:
-                rising, sar, ep, af = True, ep, c[i]["high"], 0.02
+                rising, sar, ep, af = True, ep, c[i]["high"], step
             elif c[i]["low"] < ep:
-                ep, af = c[i]["low"], min(af + 0.02, 0.2)
+                ep, af = c[i]["low"], min(af + step, max_af)
         trend.append(rising)
     return (trend[-1] and not trend[-2]) if up else ((not trend[-1]) and trend[-2])
 
@@ -123,12 +123,12 @@ def _mid(c, a, b):
     return (max(x["high"] for x in part) + min(x["low"] for x in part)) / 2
 
 
-def ichimoku_cross(candles, up):
+def ichimoku_cross(candles, up, tenkan=9, kijun=26):
     n = len(candles)
-    if n < 30:
+    if n < kijun + 4:
         return False
-    t0, k0 = _mid(candles, n - 9, n), _mid(candles, n - 26, n)
-    t1, k1 = _mid(candles, n - 10, n - 1), _mid(candles, n - 27, n - 1)
+    t0, k0 = _mid(candles, n - tenkan, n), _mid(candles, n - kijun, n)
+    t1, k1 = _mid(candles, n - tenkan - 1, n - 1), _mid(candles, n - kijun - 1, n - 1)
     return (t0 > k0 and t1 <= k1) if up else (t0 < k0 and t1 >= k1)
 
 
@@ -160,38 +160,38 @@ def williams_r(candles, n=14):
     return -50.0 if hh == ll else (hh - candles[-1]["close"]) / (hh - ll) * -100
 
 
-def alligator(candles, up):
-    if len(candles) < 40:
+def alligator(candles, up, jaw_n=13, teeth_n=8, lips_n=5):
+    if len(candles) < jaw_n + 30:
         return False
     med = [(c["high"] + c["low"]) / 2 for c in candles]
     k = len(med) - 1
-    jaw = _smma_list(med, 13)[k - 8]
-    teeth = _smma_list(med, 8)[k - 5]
-    lips = _smma_list(med, 5)[k - 3]
+    jaw = _smma_list(med, jaw_n)[k - 8]
+    teeth = _smma_list(med, teeth_n)[k - 5]
+    lips = _smma_list(med, lips_n)[k - 3]
     if None in (jaw, teeth, lips):
         return False
     return lips > teeth > jaw if up else lips < teeth < jaw
 
 
-def _ao_series(candles):
+def _ao_series(candles, fast=5, slow=34):
     med = [(c["high"] + c["low"]) / 2 for c in candles]
-    f, s = _sma_list(med, 5), _sma_list(med, 34)
+    f, s = _sma_list(med, fast), _sma_list(med, slow)
     return [None if a is None or b is None else a - b for a, b in zip(f, s)]
 
 
-def ao_cross(candles, up):
-    if len(candles) < 38:
+def ao_cross(candles, up, fast=5, slow=34):
+    if len(candles) < slow + 4:
         return False
-    ao = _ao_series(candles)
+    ao = _ao_series(candles, fast, slow)
     if ao[-1] is None or ao[-2] is None:
         return False
     return (ao[-1] > 0 >= ao[-2]) if up else (ao[-1] < 0 <= ao[-2])
 
 
-def ac_cross(candles, up):
-    if len(candles) < 42:
+def ac_cross(candles, up, fast=5, slow=34):
+    if len(candles) < slow + 8:
         return False
-    ao = [x for x in _ao_series(candles) if x is not None]
+    ao = [x for x in _ao_series(candles, fast, slow) if x is not None]
     sm = _sma_list(ao, 5)
     ac = [None if m is None else a - m for a, m in zip(ao, sm)]
     if len(ac) < 2 or ac[-1] is None or ac[-2] is None:
@@ -199,21 +199,36 @@ def ac_cross(candles, up):
     return (ac[-1] > 0 >= ac[-2]) if up else (ac[-1] < 0 <= ac[-2])
 
 
-def fractal_break(candles, up):
+def fractal_break(candles, up, side=2):
     c = candles[-60:]
     n = len(c)
-    if n < 10:
+    if n < side * 4 + 2:
         return False
     key = "high" if up else "low"
     vals = [x[key] for x in c]
     level = None
-    for i in range(n - 3, 1, -1):
-        w = vals[i - 2:i + 3]
-        ok = vals[i] == max(w) and w.count(vals[i]) == 1 if up else vals[i] == min(w) and w.count(vals[i]) == 1
-        if ok:
+    for i in range(n - side - 1, side - 1, -1):
+        w = vals[i - side:i + side + 1]
+        best = max(w) if up else min(w)
+        if vals[i] == best and w.count(best) == 1:
             level = vals[i]
             break
     if level is None:
         return False
     last, prev = c[-1]["close"], c[-2]["close"]
     return (last > level and prev <= level) if up else (last < level and prev >= level)
+
+
+def ad_cross(candles, up, period=20):
+    if len(candles) < period + 10 or not any(_vol(c) for c in candles):
+        return False
+    line, acc = [], 0.0
+    for c in candles:
+        rng = c["high"] - c["low"]
+        mfm = 0.0 if rng == 0 else ((c["close"] - c["low"]) - (c["high"] - c["close"])) / rng
+        acc += mfm * _vol(c)
+        line.append(acc)
+    sma = _sma_list(line, period)
+    if sma[-1] is None or sma[-2] is None:
+        return False
+    return (line[-1] > sma[-1] and line[-2] <= sma[-2]) if up else (line[-1] < sma[-1] and line[-2] >= sma[-2])

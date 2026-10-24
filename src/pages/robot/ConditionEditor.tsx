@@ -25,6 +25,7 @@ export const CONDITION_TYPES: { value: string; label: string; group: string }[] 
   { value: 'ao', label: 'Awesome Oscillator пересёк ноль', group: 'Билл Вильямс' },
   { value: 'ac', label: 'Accelerator Oscillator пересёк ноль', group: 'Билл Вильямс' },
   { value: 'fractal', label: 'Пробой фрактала', group: 'Билл Вильямс' },
+  { value: 'ad', label: 'A/D (накопление/распределение)', group: 'Объём' },
   { value: 'breakout', label: 'Пробой максимума или минимума', group: 'Уровни' },
   { value: 'range_breakout', label: 'Выход из узкого диапазона', group: 'Фигуры' },
   { value: 'double_bottom', label: 'Двойное дно', group: 'Фигуры' },
@@ -43,6 +44,7 @@ const DEFAULTS: Record<string, Condition> = {
   bollinger: { type: 'bollinger', op: 'below_lower' },
   volume_spike: { type: 'volume_spike', mult: 2 },
   obv: { type: 'obv', dir: 'up' },
+  ad: { type: 'ad', dir: 'up' },
   mfi: { type: 'mfi', op: '<', value: 20 },
   vwap: { type: 'vwap', op: 'above', period: 50 },
   adx: { type: 'adx', dir: 'up', value: 25 },
@@ -68,6 +70,64 @@ export const TF_OPTIONS = [
   { value: 10, label: '10 мин' },
   { value: 60, label: '1 час' },
 ];
+
+type ParamDef = { key: string; label: string; def: number; step?: number };
+
+const PARAMS: Record<string, ParamDef[]> = {
+  rsi: [{ key: 'period', label: 'Период', def: 14 }],
+  macd: [
+    { key: 'fast', label: 'Быстрая', def: 12 },
+    { key: 'slow', label: 'Медленная', def: 26 },
+    { key: 'signal', label: 'Сигнальная', def: 9 },
+  ],
+  bollinger: [
+    { key: 'period', label: 'Период', def: 20 },
+    { key: 'mult', label: 'Отклонение', def: 2, step: 0.1 },
+  ],
+  divergence_rsi: [{ key: 'period', label: 'Период RSI', def: 14 }],
+  divergence_macd: [
+    { key: 'fast', label: 'Быстрая', def: 12 },
+    { key: 'slow', label: 'Медленная', def: 26 },
+  ],
+  double_bottom: [{ key: 'tol', label: 'Допуск разницы доньев, %', def: 1.2, step: 0.1 }],
+  double_top: [{ key: 'tol', label: 'Допуск разницы вершин, %', def: 1.2, step: 0.1 }],
+  head_shoulders: [{ key: 'depth', label: 'Мин. высота головы, %', def: 0.4, step: 0.1 }],
+  inverse_head_shoulders: [{ key: 'depth', label: 'Мин. глубина головы, %', def: 0.4, step: 0.1 }],
+  range_breakout: [{ key: 'max_range', label: 'Макс. размах диапазона, %', def: 5, step: 0.5 }],
+  volume_spike: [{ key: 'period', label: 'Период среднего объёма', def: 20 }],
+  obv: [{ key: 'period', label: 'Период средней', def: 20 }],
+  ad: [{ key: 'period', label: 'Период средней', def: 20 }],
+  mfi: [{ key: 'period', label: 'Период', def: 14 }],
+  adx: [{ key: 'period', label: 'Период', def: 14 }],
+  psar: [
+    { key: 'step', label: 'Шаг', def: 0.02, step: 0.005 },
+    { key: 'max_af', label: 'Максимум', def: 0.2, step: 0.05 },
+  ],
+  ichimoku: [
+    { key: 'tenkan', label: 'Тэнкан', def: 9 },
+    { key: 'kijun', label: 'Киджун', def: 26 },
+  ],
+  stochastic: [
+    { key: 'period', label: 'Период', def: 14 },
+    { key: 'smooth', label: 'Сглаживание', def: 3 },
+  ],
+  cci: [{ key: 'period', label: 'Период', def: 20 }],
+  williams_r: [{ key: 'period', label: 'Период', def: 14 }],
+  alligator: [
+    { key: 'jaw', label: 'Челюсть', def: 13 },
+    { key: 'teeth', label: 'Зубы', def: 8 },
+    { key: 'lips', label: 'Губы', def: 5 },
+  ],
+  ao: [
+    { key: 'fast', label: 'Быстрая', def: 5 },
+    { key: 'slow', label: 'Медленная', def: 34 },
+  ],
+  ac: [
+    { key: 'fast', label: 'Быстрая', def: 5 },
+    { key: 'slow', label: 'Медленная', def: 34 },
+  ],
+  fractal: [{ key: 'side', label: 'Баров с каждой стороны', def: 2 }],
+};
 
 const selectCls = 'h-9 rounded-md border border-input bg-background px-2 text-sm';
 
@@ -131,7 +191,7 @@ function ConditionRow({ cond, onChange, onRemove }: RowProps) {
           <span className="text-sm">ч</span>
         </>
       )}
-      {['macd', 'obv', 'psar', 'ichimoku', 'ao', 'ac'].includes(cond.type) && dirSelect('вверх', 'вниз')}
+      {['macd', 'obv', 'ad', 'psar', 'ichimoku', 'ao', 'ac'].includes(cond.type) && dirSelect('вверх', 'вниз')}
       {cond.type === 'alligator' && dirSelect('вверх', 'вниз')}
       {cond.type === 'fractal' && dirSelect('верхнего (вверх)', 'нижнего (вниз)')}
       {cond.type === 'volume_spike' && (
@@ -174,6 +234,24 @@ function ConditionRow({ cond, onChange, onRemove }: RowProps) {
           <Num value={cond.period} onChange={(v) => set({ period: v })} />
           <span className="text-sm">ч</span>
         </>
+      )}
+
+      {(PARAMS[cond.type] || []).length > 0 && (
+        <div className="flex w-full flex-wrap items-center gap-x-3 gap-y-1 border-t pt-2 text-xs text-muted-foreground">
+          <span>Параметры:</span>
+          {PARAMS[cond.type].map((p) => (
+            <label key={p.key} className="flex items-center gap-1">
+              {p.label}
+              <Input
+                type="number"
+                step={p.step ?? 1}
+                className="h-8 w-20"
+                value={(cond[p.key] as number | undefined) ?? p.def}
+                onChange={(e) => set({ [p.key]: Number(e.target.value) })}
+              />
+            </label>
+          ))}
+        </div>
       )}
 
       <select

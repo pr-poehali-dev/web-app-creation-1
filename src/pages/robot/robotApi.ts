@@ -13,6 +13,7 @@ export interface Condition {
   dir?: string;
   tf?: number;
   mult?: number;
+  [key: string]: string | number | undefined;
 }
 
 export interface Rule {

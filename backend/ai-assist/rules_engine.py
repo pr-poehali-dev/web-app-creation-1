@@ -23,10 +23,66 @@ LABELS = {
     "ao": "Awesome Oscillator",
     "ac": "Accelerator Oscillator",
     "fractal": "Фракталы Билла Вильямса",
+    "ad": "Accumulation/Distribution (A/D)",
     "range_breakout": "Выход из узкого диапазона",
     "divergence_rsi": "Дивергенция по RSI",
     "divergence_macd": "Дивергенция по MACD",
 }
+
+
+SPECS = {
+    "rsi": {"period": (2, 50, 14, True)},
+    "macd": {"fast": (2, 50, 12, True), "slow": (3, 100, 26, True), "signal": (2, 50, 9, True)},
+    "bollinger": {"period": (5, 100, 20, True), "mult": (0.5, 5, 2, False)},
+    "divergence_rsi": {"period": (2, 50, 14, True)},
+    "divergence_macd": {"fast": (2, 50, 12, True), "slow": (3, 100, 26, True)},
+    "double_bottom": {"tol": (0.2, 5, 1.2, False)},
+    "double_top": {"tol": (0.2, 5, 1.2, False)},
+    "head_shoulders": {"depth": (0.1, 5, 0.4, False)},
+    "inverse_head_shoulders": {"depth": (0.1, 5, 0.4, False)},
+    "range_breakout": {"max_range": (1, 20, 5, False)},
+    "volume_spike": {"period": (5, 100, 20, True)},
+    "obv": {"period": (5, 100, 20, True)},
+    "ad": {"period": (5, 100, 20, True)},
+    "mfi": {"period": (5, 50, 14, True)},
+    "adx": {"period": (5, 50, 14, True)},
+    "psar": {"step": (0.005, 0.1, 0.02, False), "max_af": (0.1, 0.5, 0.2, False)},
+    "ichimoku": {"tenkan": (3, 30, 9, True), "kijun": (10, 80, 26, True)},
+    "stochastic": {"period": (3, 50, 14, True), "smooth": (1, 10, 3, True)},
+    "cci": {"period": (5, 100, 20, True)},
+    "williams_r": {"period": (3, 50, 14, True)},
+    "alligator": {"jaw": (8, 40, 13, True), "teeth": (5, 25, 8, True), "lips": (3, 15, 5, True)},
+    "ao": {"fast": (2, 20, 5, True), "slow": (10, 100, 34, True)},
+    "ac": {"fast": (2, 20, 5, True), "slow": (10, 100, 34, True)},
+    "fractal": {"side": (1, 5, 2, True)},
+}
+
+PARAM_RU = {"period": "период", "fast": "быстрая", "slow": "медленная", "signal": "сигнал", "mult": "откл.",
+            "tol": "допуск %", "depth": "глубина %", "max_range": "размах %", "step": "шаг", "max_af": "макс. шаг",
+            "tenkan": "Тэнкан", "kijun": "Киджун", "smooth": "сглаживание", "jaw": "челюсть", "teeth": "зубы",
+            "lips": "губы", "side": "баров"}
+
+
+def P(c: dict, key: str):
+    spec = SPECS[c["type"]][key]
+    v = c.get(key)
+    return spec[2] if v is None else v
+
+
+def _apply_specs(item: dict, src: dict) -> None:
+    spec = SPECS.get(item["type"])
+    if not spec:
+        return
+    for k, (lo, hi, default, is_int) in spec.items():
+        v = _num(src.get(k), lo, hi, default)
+        item[k] = int(v) if is_int else round(v, 3)
+    t = item["type"]
+    if t in ("macd", "divergence_macd", "ao", "ac") and item["fast"] >= item["slow"]:
+        item["slow"] = item["fast"] + 1
+    if t == "ichimoku" and item["tenkan"] >= item["kijun"]:
+        item["kijun"] = item["tenkan"] + 1
+    if t == "alligator":
+        item["jaw"], item["teeth"], item["lips"] = sorted((item["jaw"], item["teeth"], item["lips"]), reverse=True)
 
 
 def _num(v, lo, hi, default):
@@ -53,6 +109,7 @@ def sanitize(conds) -> list:
         before = len(out)
         _sanitize_one(c, out)
         if len(out) > before:
+            _apply_specs(out[-1], c)
             try:
                 tf = int(c.get("tf"))
             except (TypeError, ValueError):
@@ -104,12 +161,16 @@ def _sanitize_one(c, out: list) -> None:
             out.append({"type": t, "op": "below" if c.get("op") == "below" else "above", "period": int(_num(c.get("period"), 10, 200, 50))})
         elif t == "adx":
             out.append({"type": t, "dir": d, "value": _num(c.get("value"), 10, 60, 25)})
-        elif t in ("obv", "psar", "ichimoku", "alligator", "ao", "ac", "fractal"):
+        elif t in ("obv", "ad", "psar", "ichimoku", "alligator", "ao", "ac", "fractal"):
             out.append({"type": t, "dir": d})
 
 
 def describe(c: dict) -> str:
     text = _describe(c)
+    extras = [f"{PARAM_RU.get(k, k)} {c[k]:g}" for k, spec in SPECS.get(c["type"], {}).items()
+              if c.get(k) is not None and c[k] != spec[2]]
+    if extras:
+        text += f" [{', '.join(extras)}]"
     return f"{text} ({tf_label(c['tf'])})" if c.get("tf") else text
 
 
@@ -141,6 +202,8 @@ def _describe(c: dict) -> str:
     up = c.get("dir") == "up"
     if t == "volume_spike":
         return f"объём выше среднего в {c['mult']:g} раз"
+    if t == "ad":
+        return f"A/D пересёк свою среднюю {'вверх' if up else 'вниз'}"
     if t == "obv":
         return f"OBV пересёк свою среднюю {'вверх' if up else 'вниз'}"
     if t == "mfi":
@@ -214,7 +277,7 @@ def _pivots(values, kind, side=2):
     return res
 
 
-def _double_pattern(candles, bottom: bool) -> bool:
+def _double_pattern(candles, bottom: bool, tol: float = 1.2) -> bool:
     w = candles[-45:]
     if len(w) < 25:
         return False
@@ -227,7 +290,7 @@ def _double_pattern(candles, bottom: bool) -> bool:
         b, a = piv[j], piv[j - 1]
         if b < len(w) - 20 or b - a < 5:
             continue
-        if abs(vals[a] - vals[b]) / vals[a] > 0.012:
+        if abs(vals[a] - vals[b]) / vals[a] > tol / 100:
             continue
         between = w[a:b + 1]
         neck = max(c["high"] for c in between) if bottom else min(c["low"] for c in between)
@@ -239,7 +302,7 @@ def _double_pattern(candles, bottom: bool) -> bool:
     return False
 
 
-def _hs_pattern(candles, inverse: bool) -> bool:
+def _hs_pattern(candles, inverse: bool, depth: float = 0.4) -> bool:
     w = candles[-90:]
     n = len(w)
     if n < 40:
@@ -263,7 +326,7 @@ def _hs_pattern(candles, inverse: bool) -> bool:
             if not (vals[h] > vals[l] and vals[h] > vals[r]):
                 continue
             prom = vals[h] - max(vals[l], vals[r])
-        if prom / vals[h] < 0.004 or abs(vals[l] - vals[r]) > 0.6 * prom:
+        if prom / vals[h] < depth / 100 or abs(vals[l] - vals[r]) > 0.6 * prom:
             continue
         if inverse:
             i1 = max(range(l, h + 1), key=lambda x: w[x]["high"])
@@ -301,9 +364,9 @@ def _rsi_series(closes, n=14):
     return out
 
 
-def _macd_series(closes):
-    macd = [a - b for a, b in zip(_ema(closes, 12), _ema(closes, 26))]
-    return [v if i >= 35 else None for i, v in enumerate(macd)]
+def _macd_series(closes, fast=12, slow=26):
+    macd = [a - b for a, b in zip(_ema(closes, fast), _ema(closes, slow))]
+    return [v if i >= slow + 9 else None for i, v in enumerate(macd)]
 
 
 def _divergence(candles, series, bullish: bool) -> bool:
@@ -329,7 +392,7 @@ def check(c: dict, candles: list) -> bool:
     if len(closes) < 30:
         return False
     if t == "rsi":
-        r = _rsi(closes)
+        r = _rsi(closes, P(c, "period"))
         return r is not None and (r < c["value"] if c["op"] == "<" else r > c["value"])
     if t == "sma_cross":
         f0, s0 = _sma(closes, c["fast"]), _sma(closes, c["slow"])
@@ -341,16 +404,20 @@ def check(c: dict, candles: list) -> bool:
         m = _sma(closes, c["period"])
         return m is not None and (closes[-1] > m if c["op"] == "above" else closes[-1] < m)
     if t == "macd":
-        if len(closes) < 35:
+        mf, ms, mg = P(c, "fast"), P(c, "slow"), P(c, "signal")
+        if len(closes) < ms + mg + 5:
             return False
-        macd = [a - b for a, b in zip(_ema(closes, 12), _ema(closes, 26))]
-        sig = _ema(macd, 9)
+        macd = [x - y for x, y in zip(_ema(closes, mf), _ema(closes, ms))]
+        sig = _ema(macd, mg)
         return (macd[-1] > sig[-1] and macd[-2] <= sig[-2]) if c["dir"] == "up" else (macd[-1] < sig[-1] and macd[-2] >= sig[-2])
     if t == "bollinger":
-        part = closes[-20:]
-        m = sum(part) / 20
-        sd = (sum((x - m) ** 2 for x in part) / 20) ** 0.5
-        return closes[-1] < m - 2 * sd if c["op"] == "below_lower" else closes[-1] > m + 2 * sd
+        n, k = P(c, "period"), P(c, "mult")
+        if len(closes) < n:
+            return False
+        part = closes[-n:]
+        m = sum(part) / n
+        sd = (sum((x - m) ** 2 for x in part) / n) ** 0.5
+        return closes[-1] < m - k * sd if c["op"] == "below_lower" else closes[-1] > m + k * sd
     if t == "breakout":
         prev = candles[-c["period"] - 1:-1]
         if len(prev) < c["period"]:
@@ -361,54 +428,56 @@ def check(c: dict, candles: list) -> bool:
     if t == "divergence_rsi":
         if len(closes) < 40:
             return False
-        return _divergence(candles, _rsi_series(closes), c["dir"] == "up")
+        return _divergence(candles, _rsi_series(closes, P(c, "period")), c["dir"] == "up")
     if t == "divergence_macd":
-        if len(closes) < 50:
+        if len(closes) < P(c, "slow") + 24:
             return False
-        return _divergence(candles, _macd_series(closes), c["dir"] == "up")
+        return _divergence(candles, _macd_series(closes, P(c, "fast"), P(c, "slow")), c["dir"] == "up")
     if t == "double_bottom":
-        return _double_pattern(candles, True)
+        return _double_pattern(candles, True, P(c, "tol"))
     if t == "double_top":
-        return _double_pattern(candles, False)
+        return _double_pattern(candles, False, P(c, "tol"))
     if t == "head_shoulders":
-        return _hs_pattern(candles, False)
+        return _hs_pattern(candles, False, P(c, "depth"))
     if t == "inverse_head_shoulders":
-        return _hs_pattern(candles, True)
+        return _hs_pattern(candles, True, P(c, "depth"))
     up = c.get("dir") == "up"
     if t == "volume_spike":
-        return indicators.volume_spike(candles, c["mult"])
+        return indicators.volume_spike(candles, c["mult"], P(c, "period"))
     if t == "obv":
-        return indicators.obv_cross(candles, up)
+        return indicators.obv_cross(candles, up, P(c, "period"))
+    if t == "ad":
+        return indicators.ad_cross(candles, up, P(c, "period"))
     if t in ("mfi", "stochastic", "cci", "williams_r"):
         fn = {"mfi": indicators.mfi, "stochastic": indicators.stochastic, "cci": indicators.cci, "williams_r": indicators.williams_r}[t]
-        v = fn(candles)
+        v = fn(candles, *(([P(c, "period"), P(c, "smooth")]) if t == "stochastic" else [P(c, "period")]))
         return v is not None and (v < c["value"] if c["op"] == "<" else v > c["value"])
     if t == "vwap":
         v = indicators.vwap(candles, c["period"])
         return v is not None and (closes[-1] > v if c["op"] == "above" else closes[-1] < v)
     if t == "adx":
-        r = indicators.adx(candles)
+        r = indicators.adx(candles, P(c, "period"))
         if not r:
             return False
         return r[0] > c["value"] and (r[1] > r[2] if up else r[2] > r[1])
     if t == "psar":
-        return indicators.psar_flip(candles, up)
+        return indicators.psar_flip(candles, up, P(c, "step"), P(c, "max_af"))
     if t == "ichimoku":
-        return indicators.ichimoku_cross(candles, up)
+        return indicators.ichimoku_cross(candles, up, P(c, "tenkan"), P(c, "kijun"))
     if t == "alligator":
-        return indicators.alligator(candles, up)
+        return indicators.alligator(candles, up, P(c, "jaw"), P(c, "teeth"), P(c, "lips"))
     if t == "ao":
-        return indicators.ao_cross(candles, up)
+        return indicators.ao_cross(candles, up, P(c, "fast"), P(c, "slow"))
     if t == "ac":
-        return indicators.ac_cross(candles, up)
+        return indicators.ac_cross(candles, up, P(c, "fast"), P(c, "slow"))
     if t == "fractal":
-        return indicators.fractal_break(candles, up)
+        return indicators.fractal_break(candles, up, P(c, "side"))
     if t == "range_breakout":
         prev = candles[-c["period"] - 1:-1]
         if len(prev) < c["period"]:
             return False
         hh, ll = max(x["high"] for x in prev), min(x["low"] for x in prev)
-        if (hh - ll) / ll > 0.05:
+        if (hh - ll) / ll > P(c, "max_range") / 100:
             return False
         return closes[-1] > hh if c["dir"] == "up" else closes[-1] < ll
     return False
