@@ -597,8 +597,13 @@ def handle_action(action: str, q: dict, event: dict = None) -> dict:
     if action == "robot_signals":
         return resp(200, list_signals())
     if action == "robot_source":
-        c = get_candles("SBER", "stock", 60)
-        return resp(200, {"source": LAST_SOURCE["value"], "candles": len(c), "last": c[-1] if c else None})
+        t = q.get("ticker", "SBER")
+        k = q.get("kind", "stock")
+        tf = int(q.get("tf", "60"))
+        if k == "future":
+            t = resolve_future(t) or t
+        c = get_candles(t, k, tf)
+        return resp(200, {"ticker": t, "source": LAST_SOURCE["value"], "candles": len(c), "last": c[-1] if c else None})
     if action == "robot_test":
         return resp(200, {"sent": send_whatsapp("Тест: робот ЕРТТП подключён к WhatsApp. Сигналы будут приходить сюда.")})
     return resp(200, run(force=q.get("force") == "1"))
