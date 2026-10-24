@@ -38,6 +38,8 @@ export default function BaarysGame() {
   const [demand, setDemand] = useState(false);
   const [isActing, setIsActing] = useState(false);
   const [isNotifying, setIsNotifying] = useState(false);
+  const [fresh, setFresh] = useState<string[]>([]);
+  const prevHandRef = useRef<string[] | null>(null);
   const [soundOn, setSoundState] = useState(isSoundOn());
   const prevRef = useRef<{ sig: string; turn: boolean; phase: string } | null>(null);
 
@@ -109,6 +111,18 @@ export default function BaarysGame() {
     prevRef.current = { sig, turn: myTurnNow, phase: state.phase };
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [room]);
+
+  useEffect(() => {
+    const prev = prevHandRef.current;
+    prevHandRef.current = myHand;
+    if (!prev) return;
+    const added = myHand.filter((c) => !prev.includes(c));
+    if (!added.length) return;
+    setFresh(added);
+    const t = setTimeout(() => setFresh([]), 450 + added.length * 220);
+    return () => clearTimeout(t);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [myHand.join(',')]);
 
   useEffect(() => {
     setSelected((cur) => cur.filter((c) => myHand.includes(c)));
@@ -497,14 +511,19 @@ export default function BaarysGame() {
                     <p className="self-center text-sm text-slate-500">Карт нет</p>
                   ) : (
                     myHand.map((card) => (
-                      <DurakCard
+                      <div
                         key={card}
-                        card={card}
-                        trump={card[1] === state!.trump}
-                        selected={selected.includes(card)}
-                        dimmed={playing && !isMyTurn}
-                        onClick={playing && isMyTurn ? () => toggleCard(card) : undefined}
-                      />
+                        className={fresh.includes(card) ? 'baarys-deal' : ''}
+                        style={fresh.includes(card) ? { animationDelay: `${fresh.indexOf(card) * 220}ms` } : undefined}
+                      >
+                        <DurakCard
+                          card={card}
+                          trump={card[1] === state!.trump}
+                          selected={selected.includes(card)}
+                          dimmed={playing && !isMyTurn}
+                          onClick={playing && isMyTurn ? () => toggleCard(card) : undefined}
+                        />
+                      </div>
                     ))
                   )}
                 </div>
