@@ -11,14 +11,15 @@ function OffersHeader({ isAuthenticated }: OffersHeaderProps) {
   const navigate = useNavigate();
 
   return (
-    <div className="flex items-center justify-between gap-2 mb-4">
-      <BackButton />
-      {isAuthenticated && (
-        <Button onClick={() => navigate('/create-offer')} className="flex items-center gap-2 whitespace-nowrap">
+    <div className="grid grid-cols-[1fr_auto_1fr] items-center gap-2 mb-3">
+      <div className="justify-self-start"><BackButton className="!mb-0" /></div>
+      <h1 className="text-lg md:text-2xl font-bold text-foreground text-center">Предложения</h1>
+      {isAuthenticated ? (
+        <Button onClick={() => navigate('/create-offer')} className="flex items-center gap-2 whitespace-nowrap justify-self-end">
           <Icon name="Plus" className="h-4 w-4" />
           <span>Создать предложение</span>
         </Button>
-      )}
+      ) : <div />}
     </div>
   );
 }
