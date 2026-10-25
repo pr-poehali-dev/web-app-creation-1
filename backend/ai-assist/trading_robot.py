@@ -70,7 +70,7 @@ def _clean(block: dict) -> list:
     for c in rows(block):
         if None in (c.get("close"), c.get("high"), c.get("low")):
             continue
-        out.append({"begin": c["begin"], "high": float(c["high"]), "low": float(c["low"]), "close": float(c["close"]), "volume": float(c.get("volume") or 0)})
+        out.append({"begin": c["begin"], "open": float(c.get("open") if c.get("open") is not None else c["close"]), "high": float(c["high"]), "low": float(c["low"]), "close": float(c["close"]), "volume": float(c.get("volume") or 0)})
     return out
 
 
@@ -119,7 +119,7 @@ def _bcs_chunk(ticker: str, kind: str, frame: str, start: datetime, end: datetim
         if t.tzinfo is None:
             t = t.replace(tzinfo=timezone.utc)
         begin = t.astimezone(MSK).strftime("%Y-%m-%d %H:%M:%S")
-        out.append({"begin": begin, "high": float(b["high"]), "low": float(b["low"]), "close": float(b["close"]), "volume": float(b.get("volume") or 0)})
+        out.append({"begin": begin, "open": float(b.get("open", b["close"])), "high": float(b["high"]), "low": float(b["low"]), "close": float(b["close"]), "volume": float(b.get("volume") or 0)})
     return out
 
 
@@ -374,7 +374,7 @@ def pnl(direction: str, entry: float, price: float) -> float:
 
 def track_exits(conn, now: datetime, force: bool) -> list:
     cur = conn.cursor()
-    cur.execute(f"SELECT * FROM {SCHEMA}.robot_signals WHERE status='open' ORDER BY created_at")
+    cur.execute(f"SELECT * FROM {SCHEMA}.robot_signals WHERE status='open' AND bot_id IS NULL ORDER BY created_at")
     open_items = cur.fetchall()
     if not open_items:
         return []
@@ -481,7 +481,7 @@ def publish(conn, cur, ticker: str, asset_name: str, sig, rule_id, result: list,
             f"AND (status='open' OR created_at > NOW() - INTERVAL '{hours} hours')", (rule_id, ticker, direction))
     else:
         cur.execute(
-            f"SELECT 1 FROM {SCHEMA}.robot_signals WHERE rule_id IS NULL AND ticker=%s AND direction=%s "
+            f"SELECT 1 FROM {SCHEMA}.robot_signals WHERE rule_id IS NULL AND bot_id IS NULL AND ticker=%s AND direction=%s "
             f"AND (status='open' OR created_at > NOW() - INTERVAL '{hours} hours')", (ticker, direction))
     if cur.fetchone():
         result.append({"ticker": ticker, "status": "сигнал уже отправлялся"})
@@ -622,7 +622,7 @@ def manage(action: str, q: dict, event: dict) -> dict:
                 f"COUNT(*) FILTER (WHERE status='closed') AS closed, "
                 f"COUNT(*) FILTER (WHERE status='closed' AND result_pct > 0) AS wins, "
                 f"COALESCE(SUM(result_pct) FILTER (WHERE status='closed'), 0) AS total_pct "
-                f"FROM {SCHEMA}.robot_signals WHERE rule_id IS NULL GROUP BY asset_name")
+                f"FROM {SCHEMA}.robot_signals WHERE rule_id IS NULL AND bot_id IS NULL GROUP BY asset_name")
             st = {r["asset_name"]: r for r in cur.fetchall()}
             out = []
             for it in items:
@@ -752,8 +752,15 @@ def run(force: bool) -> dict:
             continue
         publish(conn, cur, ticker, it["asset_name"], sig, None, result, robot=it["ticker"])
     run_rules(conn, cur, now, force, result)
+    bots = []
+    try:
+        import bots_engine
+        bots = bots_engine.run_all(conn, now, force)
+    except Exception as e:
+        print(f"bots error: {e}")
+        bots = [{"bot": "роботы", "status": f"ошибка: {e}"}]
     conn.close()
-    return {"checked": result, "exits": exits, "time": now.strftime("%Y-%m-%d %H:%M")}
+    return {"checked": result, "exits": exits, "bots": bots, "time": now.strftime("%Y-%m-%d %H:%M")}
 
 
 def list_signals() -> dict:
@@ -764,7 +771,7 @@ def list_signals() -> dict:
     cur.execute(
         f"SELECT COUNT(*) AS closed, COUNT(*) FILTER (WHERE result_pct > 0) AS wins, "
         f"COALESCE(ROUND(AVG(result_pct), 2), 0) AS avg_pct, COALESCE(SUM(result_pct), 0) AS total_pct "
-        f"FROM {SCHEMA}.robot_signals WHERE status='closed'")
+        f"FROM {SCHEMA}.robot_signals WHERE status='closed' AND bot_id IS NULL")
     stats = cur.fetchone()
     cur.execute(
         f"SELECT s.rule_id, COALESCE(r.name, 'Базовая стратегия') AS name, "
@@ -777,7 +784,7 @@ def list_signals() -> dict:
         f"COALESCE(SUM(s.result_pct) FILTER (WHERE s.result_pct > 0), 0) AS gross_win, "
         f"COALESCE(-SUM(s.result_pct) FILTER (WHERE s.result_pct < 0), 0) AS gross_loss "
         f"FROM {SCHEMA}.robot_signals s LEFT JOIN {SCHEMA}.robot_rules r ON r.id = s.rule_id "
-        f"GROUP BY s.rule_id, r.name ORDER BY SUM(s.result_pct) DESC NULLS LAST")
+        f"WHERE s.bot_id IS NULL GROUP BY s.rule_id, r.name ORDER BY SUM(s.result_pct) DESC NULLS LAST")
     rule_stats = cur.fetchall()
     conn.close()
     return {"items": data, "stats": stats, "rule_stats": rule_stats}
@@ -928,6 +935,10 @@ def bcs_history(ticker: str, kind: str, tf: int, days: int) -> list:
 
 
 def handle_action(action: str, q: dict, event: dict = None) -> dict:
+    if action.startswith("bots_"):
+        import bots_api
+        if action in bots_api.ACTIONS:
+            return bots_api.handle(action, q, event or {})
     if action in ("robot_rules", "robot_rule_save", "robot_rule_toggle", "robot_rule_delete", "robot_signal_update", "robot_signal_delete", "robot_token_get", "robot_token_set", "robot_strategy_get", "robot_strategy_set", "robot_list", "robot_toggle"):
         return manage(action, q, event or {})
     if action == "robot_signals":

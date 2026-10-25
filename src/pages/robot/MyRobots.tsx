@@ -7,6 +7,7 @@ import Icon from '@/components/ui/icon';
 import { useToast } from '@/hooks/use-toast';
 import { loadRobots, toggleRobot, type RobotItem } from './robotApi';
 import RobotSettingsDialog from './RobotSettingsDialog';
+import FuturesBots from './FuturesBots';
 
 const pct = (v: number) => `${v > 0 ? '+' : ''}${v.toFixed(2)}%`;
 
@@ -33,10 +34,12 @@ export default function MyRobots() {
   };
 
   if (!items) return <p className="text-sm text-muted-foreground">Загружаю роботов...</p>;
-  if (items.length === 0) return <p className="text-sm text-muted-foreground">Роботов пока нет.</p>;
 
   return (
+    <div className="space-y-6">
+      <FuturesBots />
     <div className="space-y-3">
+      <h2 className="font-semibold">Трендовые роботы по активам</h2>
       <p className="text-sm text-muted-foreground">
         Каждый робот торгует по своим настройкам. Включите или выключите его переключателем, а кнопкой «Настроить» измените индикаторы, стоп и цели.
       </p>
@@ -95,6 +98,7 @@ export default function MyRobots() {
         </Card>
       ))}
       <RobotSettingsDialog robot={edit} tab={tab} onTab={setTab} onClose={() => setEdit(null)} onSaved={refresh} />
+    </div>
     </div>
   );
 }

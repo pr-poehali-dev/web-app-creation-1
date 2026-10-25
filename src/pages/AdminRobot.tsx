@@ -12,6 +12,7 @@ import RulesList from './robot/RulesList';
 import RuleEfficiency from './robot/RuleEfficiency';
 import TokenExpiry from './robot/TokenExpiry';
 import MyRobots from './robot/MyRobots';
+import NewsCalendar from './robot/NewsCalendar';
 import SignalsList from './robot/SignalsList';
 import { loadRules, loadSignals, loadDataSource, runRobotNow, type Rule, type Signal, type Stats, type RuleStats } from './robot/robotApi';
 
@@ -96,6 +97,7 @@ export default function AdminRobot({ isAuthenticated, onLogout }: Props) {
               <TabsTrigger value="rules">Мои правила</TabsTrigger>
               <TabsTrigger value="eff">Эффективность</TabsTrigger>
               <TabsTrigger value="robots">Мои роботы</TabsTrigger>
+              <TabsTrigger value="calendar">Календарь</TabsTrigger>
               <TabsTrigger value="new">Новое правило</TabsTrigger>
             </TabsList>
             <TabsContent value="signals">
@@ -109,6 +111,9 @@ export default function AdminRobot({ isAuthenticated, onLogout }: Props) {
             </TabsContent>
             <TabsContent value="robots">
               <MyRobots />
+            </TabsContent>
+            <TabsContent value="calendar">
+              <NewsCalendar />
             </TabsContent>
             <TabsContent value="new">
               <RuleForm onSaved={refresh} />
