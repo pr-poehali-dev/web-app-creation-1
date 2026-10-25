@@ -1,0 +1,1 @@
+UPDATE t_p42562714_web_app_creation_1.robot_watchlist SET enabled = (ticker = 'BR');

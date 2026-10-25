@@ -291,7 +291,24 @@ def hourly_candles(ticker: str, kind: str) -> list:
 DEFAULT_CFG = {"short_adx": 25, "adx_min": 20, "skip_hours": [12, 13, 14]}
 
 
+def _scale(sig, cfg):
+    if not sig or not (cfg.get("sm") or cfg.get("t1m") or cfg.get("t2m")):
+        return sig
+    d, e, atr = sig[0], sig[1], sig[7]
+    k = 1 if d == "ЛОНГ" else -1
+    sm = cfg.get("sm") or 1.5
+    t1m = cfg.get("t1m") or 1.5
+    t2m = cfg.get("t2m") or 3
+    return (d, e, e - k * sm * atr, e + k * t1m * atr, e + k * t2m * atr) + tuple(sig[5:])
+
+
 def analyze(candles: list, allow_short: bool, cfg: dict = None):
+    if cfg is None:
+        cfg = DEFAULT_CFG if allow_short else {}
+    return _scale(_analyze_core(candles, allow_short, cfg), cfg)
+
+
+def _analyze_core(candles: list, allow_short: bool, cfg: dict = None):
     if cfg is None:
         cfg = DEFAULT_CFG if allow_short else {}
     closes = [c["close"] for c in candles]
