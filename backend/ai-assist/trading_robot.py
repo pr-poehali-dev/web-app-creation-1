@@ -288,7 +288,7 @@ def hourly_candles(ticker: str, kind: str) -> list:
     return get_candles(ticker, kind, 60)
 
 
-DEFAULT_CFG = {"short_adx": 25, "skip_hours": [12, 13, 14]}
+DEFAULT_CFG = {"short_adx": 25, "adx_min": 20, "skip_hours": [12, 13, 14]}
 
 
 def analyze(candles: list, allow_short: bool, cfg: dict = None):
@@ -846,10 +846,11 @@ def run_backtest_batch(q: dict, event: dict) -> dict:
     cache = {}
     out = []
     if body.get("base"):
-        candles = bcs_history(ticker, kind, 60, days)
+        tf = int(body.get("tf", 60))
+        candles = bcs_history(ticker, kind, tf, days)
         for v in body["base"][:40]:
             cfg = v.get("cfg") or {}
-            res = backtest.run_base(candles, kind == "future", lambda c, s, cfg=cfg: analyze_mode(c, s, cfg), window=450)
+            res = backtest.run_base(candles, kind == "future", lambda c, s, cfg=cfg: analyze_mode(c, s, cfg), window=450, tf=tf)
             tr = res["trades"]
             item = {"name": v.get("name", ""), "all": backtest.summarize(tr)}
             if body.get("trades"):
@@ -882,6 +883,18 @@ def run_backtest_batch(q: dict, event: dict) -> dict:
 
 
 def bcs_history(ticker: str, kind: str, tf: int, days: int) -> list:
+    if tf == 1440:
+        out = []
+        for c in _bcs_bars(ticker, kind, "H1", days):
+            key = f"{c['begin'][:10]} 00:00:00"
+            if out and out[-1]["begin"] == key:
+                out[-1]["high"] = max(out[-1]["high"], c["high"])
+                out[-1]["low"] = min(out[-1]["low"], c["low"])
+                out[-1]["close"] = c["close"]
+                out[-1]["volume"] += c["volume"]
+            else:
+                out.append({"begin": key, "high": c["high"], "low": c["low"], "close": c["close"], "volume": c["volume"]})
+        return out
     if tf == 10:
         five = _bcs_bars(ticker, kind, "M5", days)
         out = []

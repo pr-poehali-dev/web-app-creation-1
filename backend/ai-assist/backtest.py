@@ -23,7 +23,7 @@ def _simulate_exit(sig: tuple, candles: list, start: int, tf: int, exit_fn):
     direction, entry, stop, t1, t2 = sig[0], sig[1], sig[2], sig[3], sig[4]
     is_long = direction == "ЛОНГ"
     t1_hit = False
-    max_bars = (7 * 24 if tf == 60 else 24) * 60 // tf
+    max_bars = (7 * 24 * 60 // tf) if tf == 60 else (24 * 60 // tf if tf < 60 else 20)
     for j in range(start, len(candles)):
         c = candles[j]
         cur_stop = entry if t1_hit else stop
@@ -94,10 +94,10 @@ def run_rule(rule: dict, by_tf: dict) -> dict:
             "to": main[-1]["begin"] if main else None}
 
 
-def run_base(candles: list, allow_short: bool, analyze, window: int = WINDOW) -> dict:
+def run_base(candles: list, allow_short: bool, analyze, window: int = WINDOW, tf: int = 60) -> dict:
     trades = []
     busy_until = {}
-    cooldown = COOLDOWN_BARS_HOURS
+    cooldown = max(1, COOLDOWN_BARS_HOURS * 60 // tf)
     for i in range(55, len(candles) - 1):
         sub = candles[max(0, i + 1 - window):i + 1]
         sig = analyze(sub, allow_short)
@@ -120,7 +120,7 @@ def run_base(candles: list, allow_short: bool, analyze, window: int = WINDOW) ->
                 return "тренд развернулся"
             return ""
 
-        j, price, why, t1_hit = _simulate_exit(sig, candles, i + 1, 60, exit_fn)
+        j, price, why, t1_hit = _simulate_exit(sig, candles, i + 1, tf, exit_fn)
         closed = j is not None
         ax = indicators.adx(sub[-120:])
         cl = [c["close"] for c in sub]
