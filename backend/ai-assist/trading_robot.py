@@ -288,7 +288,7 @@ def hourly_candles(ticker: str, kind: str) -> list:
     return get_candles(ticker, kind, 60)
 
 
-DEFAULT_CFG = {"short_adx": 25, "adx_min": 20, "skip_hours": [12, 13, 14]}
+DEFAULT_CFG = {"short_adx": 25, "adx_min": 20, "skip_hours": [12, 13, 14], "sm": 2.0}
 
 
 def _scale(sig, cfg):
@@ -862,6 +862,21 @@ def run_backtest_batch(q: dict, event: dict) -> dict:
     split = body.get("split")
     cache = {}
     out = []
+    if body.get("spike"):
+        sp = body["spike"]
+        hourly = bcs_history(ticker, kind, 60, days)
+        c5 = bcs_history(ticker, kind, 5, days)
+        cfg = sp.get("cfg") or {}
+        res = backtest.run_base(hourly, kind == "future", lambda c, s: analyze_mode(c, s, cfg), window=450)
+        first5 = c5[0]["begin"] if c5 else ""
+        base_trades = [x for x in res["trades"] if x["date"] >= first5]
+        for v in sp.get("variants", []):
+            tr = backtest.resim_5m(base_trades, c5, v.get("k", 0), v.get("minp", 0.0))
+            item = {"name": v.get("name", ""), "all": backtest.summarize(tr), "from": first5, "reasons": {}}
+            for x in tr:
+                item["reasons"][x["reason"]] = item["reasons"].get(x["reason"], 0) + 1
+            out.append(item)
+        return resp(200, {"ticker": ticker, "variants": out})
     if body.get("base"):
         tf = int(body.get("tf", 60))
         candles = bcs_history(ticker, kind, tf, days)

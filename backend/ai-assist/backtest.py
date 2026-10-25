@@ -159,7 +159,7 @@ def run_base(candles: list, allow_short: bool, analyze, window: int = WINDOW, tf
         cl = [c["close"] for c in sub]
         gap = (sum(cl[-20:]) / 20 - sum(cl[-50:]) / 50) / sum(cl[-50:]) * 50 * 2
         trades.append({
-            "adx": round(ax[0], 1) if ax else None, "atr_pct": round(sig[7] / sig[1] * 100, 2),
+            "adx": round(ax[0], 1) if ax else None, "atr": sig[7], "atr_pct": round(sig[7] / sig[1] * 100, 2),
             "gap_pct": round(gap, 2), "date": candles[i]["begin"], "direction": d, "entry": round(sig[1], 4),
             "stop": round(sig[2], 4), "target1": round(sig[3], 4), "target2": round(sig[4], 4),
             "exit_date": candles[j]["begin"] if closed else None, "exit_price": round(price, 4),
@@ -189,3 +189,37 @@ def summarize(trades: list) -> dict:
         "profit_factor": round(gw / gl, 2) if gl else (None if not gw else 999),
         "max_drawdown_pct": round(dd, 2),
     }
+
+
+def resim_5m(trades: list, c5: list, k: float, spike_min_profit: float = 0.0) -> list:
+    idx = {c["begin"]: n for n, c in enumerate(c5)}
+    starts = [c["begin"] for c in c5]
+    out = []
+    import bisect
+    for t in trades:
+        if not t["closed"]:
+            continue
+        eb = (datetime.strptime(t["date"], "%Y-%m-%d %H:%M:%S") + timedelta(hours=1)).strftime("%Y-%m-%d %H:%M:%S")
+        s = bisect.bisect_left(starts, eb)
+        if s >= len(c5) - 1 or s < 1:
+            continue
+        sig = (t["direction"], t["entry"], t["stop"], t["target1"], t["target2"], "", t["entry"], t["atr"])
+        is_long = t["direction"] == "ЛОНГ"
+        atr = t["atr"]
+
+        def fn(j, is_long=is_long, atr=atr, entry=t["entry"]):
+            if not k:
+                return ""
+            move = c5[j]["close"] - c5[j - 1]["close"]
+            move = move if is_long else -move
+            gain = (c5[j]["close"] - entry) if is_long else (entry - c5[j]["close"])
+            if move >= k * atr and gain >= spike_min_profit * atr:
+                return "резкий прострел"
+            return ""
+
+        j, price, why, t1_hit = _simulate_exit(sig, c5, s, 5, fn)
+        if j is None:
+            continue
+        out.append({"date": t["date"], "direction": t["direction"], "reason": why, "t1_hit": t1_hit,
+                    "result_pct": _result(sig, price, t1_hit), "closed": True})
+    return out
