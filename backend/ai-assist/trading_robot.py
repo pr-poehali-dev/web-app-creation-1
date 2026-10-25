@@ -756,7 +756,7 @@ def run_backtest(q: dict, event: dict) -> dict:
         ticker = q.get("ticker", "SBER")
         if kind == "future":
             ticker = resolve_future(ticker) or ticker
-        scfg = load_cfg(force=True)
+        scfg = strategy.sanitize({}) if q.get("proven") == "1" else load_cfg(force=True)
         res = backtest.run_base(bcs_history(ticker, kind, 60, days), kind == "future",
                                 lambda c, s: strategy.analyze(c, s, scfg), window=450, scfg=scfg)
         title = f"{ticker} · базовая стратегия"

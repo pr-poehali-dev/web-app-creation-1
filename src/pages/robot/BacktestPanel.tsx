@@ -18,11 +18,51 @@ function Cell({ label, value, tone }: { label: string; value: string; tone?: 'go
   );
 }
 
+function Compare({ mine, proven }: { mine: BacktestResult; proven: BacktestResult }) {
+  const a = mine.summary;
+  const p = proven.summary;
+  if (!a || !p) return <p className="text-sm text-red-600">{mine.error || proven.error || 'Нет данных для сравнения'}</p>;
+  const diff = a.total_pct - p.total_pct;
+  const same = Math.abs(diff) < 0.005 && a.signals === p.signals;
+  const verdict = same
+    ? 'Ваши настройки совпадают с проверенными.'
+    : diff > 0
+      ? `Ваши настройки лучше проверенных на ${diff.toFixed(2)}%.`
+      : `Ваши настройки хуже проверенных на ${Math.abs(diff).toFixed(2)}%.`;
+  const rows: { label: string; mine: string; proven: string }[] = [
+    { label: 'Сигналов', mine: String(a.signals), proven: String(p.signals) },
+    { label: 'Прибыльных', mine: `${a.win_rate}%`, proven: `${p.win_rate}%` },
+    { label: 'Итог', mine: pct(a.total_pct), proven: pct(p.total_pct) },
+    { label: 'Фактор прибыли', mine: a.profit_factor === null ? '—' : String(a.profit_factor), proven: p.profit_factor === null ? '—' : String(p.profit_factor) },
+    { label: 'Макс. просадка', mine: `-${a.max_drawdown_pct}%`, proven: `-${p.max_drawdown_pct}%` },
+  ];
+  return (
+    <Card>
+      <CardContent className="space-y-3 p-4">
+        <div className={`font-semibold ${same ? '' : diff > 0 ? 'text-green-600' : 'text-red-600'}`}>{verdict}</div>
+        <div className="grid grid-cols-3 gap-2 text-sm">
+          <div />
+          <div className="text-center font-semibold">Ваши</div>
+          <div className="text-center font-semibold">Проверенные</div>
+          {rows.map((r) => (
+            <div key={r.label} className="contents">
+              <div className="text-muted-foreground">{r.label}</div>
+              <div className="text-center">{r.mine}</div>
+              <div className="text-center">{r.proven}</div>
+            </div>
+          ))}
+        </div>
+      </CardContent>
+    </Card>
+  );
+}
+
 export default function BacktestPanel({ rules }: { rules: Rule[] }) {
   const [target, setTarget] = useState('base:BR:future');
   const [days, setDays] = useState('30');
   const [loading, setLoading] = useState(false);
   const [res, setRes] = useState<BacktestResult | null>(null);
+  const [cmp, setCmp] = useState<{ mine: BacktestResult; proven: BacktestResult } | null>(null);
 
   const run = async () => {
     setLoading(true);
@@ -37,6 +77,19 @@ export default function BacktestPanel({ rules }: { rules: Rule[] }) {
       setRes(await runBacktest(params));
     } catch {
       setRes({ error: 'Не удалось выполнить тест' } as BacktestResult);
+    }
+    setLoading(false);
+  };
+
+  const compare = async () => {
+    setLoading(true);
+    setCmp(null);
+    try {
+      const base = { days, ticker: 'BR', kind: 'future' };
+      const [mine, proven] = await Promise.all([runBacktest(base), runBacktest({ ...base, proven: '1' })]);
+      setCmp({ mine, proven });
+    } catch {
+      setRes({ error: 'Не удалось выполнить сравнение' } as BacktestResult);
     }
     setLoading(false);
   };
@@ -75,10 +128,18 @@ export default function BacktestPanel({ rules }: { rules: Rule[] }) {
           </Select>
         </div>
       </div>
-      <Button onClick={run} disabled={loading}>
-        <Icon name="History" className="mr-1 h-4 w-4" />
-        {loading ? 'Считаю...' : 'Запустить тест'}
-      </Button>
+      <div className="flex flex-wrap gap-2">
+        <Button onClick={run} disabled={loading}>
+          <Icon name="History" className="mr-1 h-4 w-4" />
+          {loading ? 'Считаю...' : 'Запустить тест'}
+        </Button>
+        <Button variant="outline" onClick={compare} disabled={loading}>
+          <Icon name="GitCompare" className="mr-1 h-4 w-4" />
+          Сравнить с проверенными
+        </Button>
+      </div>
+
+      {cmp && <Compare mine={cmp.mine} proven={cmp.proven} />}
 
       {res?.error && <p className="text-sm text-red-600">{res.error}</p>}
 
