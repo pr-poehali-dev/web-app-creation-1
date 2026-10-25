@@ -759,6 +759,44 @@ def run_backtest(q: dict, event: dict) -> dict:
     return resp(200, res)
 
 
+def run_backtest_batch(q: dict, event: dict) -> dict:
+    h = event.get("headers") or {}
+    conn = db()
+    if not is_admin(conn, h.get("X-User-Id") or h.get("x-user-id")):
+        conn.close()
+        return resp(403, {"error": "Доступ запрещён"})
+    conn.close()
+    body = json.loads(event.get("body") or "{}")
+    days = max(3, min(int(body.get("days", 90)), 120))
+    kind = body.get("kind", "future")
+    ticker = body.get("ticker", "BR")
+    if kind == "future":
+        ticker = resolve_future(ticker) or ticker
+    split = body.get("split")
+    cache = {}
+    out = []
+    for v in (body.get("variants") or [])[:40]:
+        rule = {
+            "name": v.get("name", ""), "direction": v.get("direction", "ЛОНГ"), "timeframe": int(v.get("timeframe", 60)), "kind": kind,
+            "entry_conditions": rules_engine.sanitize(v.get("entry_conditions")),
+            "exit_conditions": rules_engine.sanitize(v.get("exit_conditions")),
+            "stop_atr": v.get("stop_atr", 1.5), "target1_atr": v.get("target1_atr", 1.5), "target2_atr": v.get("target2_atr", 3),
+        }
+        by_tf = {}
+        for t in rules_engine.needed_tfs(rule) | {rules_engine.rule_tf(rule)}:
+            if t not in cache:
+                cache[t] = bcs_history(ticker, kind, t, days)
+            by_tf[t] = cache[t]
+        res = backtest.run_rule(rule, by_tf)
+        trades = res["trades"]
+        item = {"name": v.get("name", ""), "all": backtest.summarize(trades)}
+        if split:
+            item["train"] = backtest.summarize([t for t in trades if t["date"] < split])
+            item["test"] = backtest.summarize([t for t in trades if t["date"] >= split])
+        out.append(item)
+    return resp(200, {"ticker": ticker, "variants": out})
+
+
 def bcs_history(ticker: str, kind: str, tf: int, days: int) -> list:
     if tf == 10:
         five = _bcs_bars(ticker, kind, "M5", days)
@@ -783,6 +821,8 @@ def handle_action(action: str, q: dict, event: dict = None) -> dict:
         return manage(action, q, event or {})
     if action == "robot_signals":
         return resp(200, list_signals())
+    if action == "robot_backtest_batch":
+        return run_backtest_batch(q, event or {})
     if action == "robot_backtest":
         return run_backtest(q, event or {})
     if action == "robot_source":
