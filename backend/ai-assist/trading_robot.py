@@ -850,7 +850,7 @@ def run_backtest_batch(q: dict, event: dict) -> dict:
         candles = bcs_history(ticker, kind, tf, days)
         for v in body["base"][:40]:
             cfg = v.get("cfg") or {}
-            res = backtest.run_base(candles, kind == "future", lambda c, s, cfg=cfg: analyze_mode(c, s, cfg), window=450, tf=tf)
+            res = backtest.run_base(candles, kind == "future", lambda c, s, cfg=cfg: analyze_mode(c, s, cfg), window=450, tf=tf, ex=v.get("exit"))
             tr = res["trades"]
             item = {"name": v.get("name", ""), "all": backtest.summarize(tr)}
             if body.get("trades"):

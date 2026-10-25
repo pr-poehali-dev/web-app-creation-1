@@ -41,10 +41,39 @@ def _simulate_exit(sig: tuple, candles: list, start: int, tf: int, exit_fn):
     return None, candles[-1]["close"], "открыта", t1_hit
 
 
-def _result(sig, exit_price, t1_hit):
+def _simulate_trail(sig, candles, start, tf, exit_fn, trail, t2_mult, max_bars):
+    direction, entry, stop, t1 = sig[0], sig[1], sig[2], sig[3]
+    atr = sig[7]
+    is_long = direction == "ЛОНГ"
+    t1_hit = False
+    t2 = entry + t2_mult * atr if is_long else entry - t2_mult * atr
+    ext = entry
+    for j in range(start, len(candles)):
+        c = candles[j]
+        if t1_hit:
+            lvl = ext - trail * atr if is_long else ext + trail * atr
+            cur_stop = max(entry, lvl) if is_long else min(entry, lvl)
+        else:
+            cur_stop = stop
+        if (c["low"] <= cur_stop) if is_long else (c["high"] >= cur_stop):
+            return j, cur_stop, "стоп вслед за ценой" if t1_hit else "стоп", t1_hit
+        if t2_mult and ((c["high"] >= t2) if is_long else (c["low"] <= t2)):
+            return j, t2, "цель 2", t1_hit
+        if not t1_hit and ((c["high"] >= t1) if is_long else (c["low"] <= t1)):
+            t1_hit = True
+        ext = max(ext, c["high"]) if is_long else min(ext, c["low"])
+        why = exit_fn(j) if exit_fn else ""
+        if why:
+            return j, c["close"], why, t1_hit
+        if j - start >= max_bars:
+            return j, c["close"], "устарел по времени", t1_hit
+    return None, candles[-1]["close"], "открыта", t1_hit
+
+
+def _result(sig, exit_price, t1_hit, frac=0.5):
     pct = _pnl(sig[0], sig[1], exit_price)
     if t1_hit:
-        pct = 0.5 * _pnl(sig[0], sig[1], sig[3]) + 0.5 * pct
+        pct = frac * _pnl(sig[0], sig[1], sig[3]) + (1 - frac) * pct
     return round(pct, 2)
 
 
@@ -94,7 +123,7 @@ def run_rule(rule: dict, by_tf: dict) -> dict:
             "to": main[-1]["begin"] if main else None}
 
 
-def run_base(candles: list, allow_short: bool, analyze, window: int = WINDOW, tf: int = 60) -> dict:
+def run_base(candles: list, allow_short: bool, analyze, window: int = WINDOW, tf: int = 60, ex: dict = None) -> dict:
     trades = []
     busy_until = {}
     cooldown = max(1, COOLDOWN_BARS_HOURS * 60 // tf)
@@ -120,7 +149,11 @@ def run_base(candles: list, allow_short: bool, analyze, window: int = WINDOW, tf
                 return "тренд развернулся"
             return ""
 
-        j, price, why, t1_hit = _simulate_exit(sig, candles, i + 1, tf, exit_fn)
+        if ex:
+            j, price, why, t1_hit = _simulate_trail(sig, candles, i + 1, tf, exit_fn, ex.get("trail", 2.0), ex.get("t2", 0),
+                                                     ex.get("max_bars", 7 * 24 * 60 // tf))
+        else:
+            j, price, why, t1_hit = _simulate_exit(sig, candles, i + 1, tf, exit_fn)
         closed = j is not None
         ax = indicators.adx(sub[-120:])
         cl = [c["close"] for c in sub]
@@ -130,7 +163,7 @@ def run_base(candles: list, allow_short: bool, analyze, window: int = WINDOW, tf
             "gap_pct": round(gap, 2), "date": candles[i]["begin"], "direction": d, "entry": round(sig[1], 4),
             "stop": round(sig[2], 4), "target1": round(sig[3], 4), "target2": round(sig[4], 4),
             "exit_date": candles[j]["begin"] if closed else None, "exit_price": round(price, 4),
-            "reason": why, "setup": sig[5], "t1_hit": t1_hit, "result_pct": _result(sig, price, t1_hit), "closed": closed,
+            "reason": why, "setup": sig[5], "t1_hit": t1_hit, "result_pct": _result(sig, price, t1_hit, (ex or {}).get("frac", 0.5)), "closed": closed,
         })
         busy_until[d] = (j if closed else len(candles)) + cooldown
     return {"trades": trades, "bars": len(candles), "from": candles[0]["begin"] if candles else None,
