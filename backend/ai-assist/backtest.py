@@ -125,7 +125,7 @@ def run_base(candles: list, allow_short: bool, analyze) -> dict:
             "date": candles[i]["begin"], "direction": d, "entry": round(sig[1], 4),
             "stop": round(sig[2], 4), "target1": round(sig[3], 4), "target2": round(sig[4], 4),
             "exit_date": candles[j]["begin"] if closed else None, "exit_price": round(price, 4),
-            "reason": why, "t1_hit": t1_hit, "result_pct": _result(sig, price, t1_hit), "closed": closed,
+            "reason": why, "setup": sig[5], "t1_hit": t1_hit, "result_pct": _result(sig, price, t1_hit), "closed": closed,
         })
         busy_until[d] = (j if closed else len(candles)) + cooldown
     return {"trades": trades, "bars": len(candles), "from": candles[0]["begin"] if candles else None,
