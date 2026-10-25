@@ -94,12 +94,12 @@ def run_rule(rule: dict, by_tf: dict) -> dict:
             "to": main[-1]["begin"] if main else None}
 
 
-def run_base(candles: list, allow_short: bool, analyze) -> dict:
+def run_base(candles: list, allow_short: bool, analyze, window: int = WINDOW) -> dict:
     trades = []
     busy_until = {}
     cooldown = COOLDOWN_BARS_HOURS
     for i in range(55, len(candles) - 1):
-        sub = candles[max(0, i + 1 - WINDOW):i + 1]
+        sub = candles[max(0, i + 1 - window):i + 1]
         sig = analyze(sub, allow_short)
         if not sig:
             continue
@@ -108,8 +108,8 @@ def run_base(candles: list, allow_short: bool, analyze) -> dict:
             continue
 
         def exit_fn(j, d=d):
-            closes = [c["close"] for c in candles[max(0, j + 1 - WINDOW):j + 1]]
-            if len(closes) < 50:
+            closes = [c["close"] for c in candles[max(0, j + 1 - window):j + 1]]
+            if len(closes) < 50 or str(sig[5]).startswith("Боковик"):
                 return ""
             sma20 = sum(closes[-20:]) / 20
             sma50 = sum(closes[-50:]) / 50

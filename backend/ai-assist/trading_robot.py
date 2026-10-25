@@ -7,6 +7,7 @@ import psycopg2
 import requests
 import backtest
 import indicators
+import regime
 import rules_engine
 from psycopg2.extras import RealDictCursor
 
@@ -378,6 +379,12 @@ def analyze(candles: list, allow_short: bool, cfg: dict = None):
         return ("ШОРТ", last, max(hh, last + 1.5 * atr), last - 1.5 * atr, last - 3 * atr,
                 f"Отскок в нисходящем тренде, RSI {rsi:.0f}", last, atr)
     return None
+
+
+def analyze_mode(candles, allow_short, cfg):
+    if cfg.get("mode"):
+        return regime.analyze(candles, allow_short, cfg, analyze)
+    return analyze(candles, allow_short, cfg)
 
 
 def send_whatsapp(text: str) -> bool:
@@ -842,7 +849,7 @@ def run_backtest_batch(q: dict, event: dict) -> dict:
         candles = bcs_history(ticker, kind, 60, days)
         for v in body["base"][:40]:
             cfg = v.get("cfg") or {}
-            res = backtest.run_base(candles, kind == "future", lambda c, s, cfg=cfg: analyze(c, s, cfg))
+            res = backtest.run_base(candles, kind == "future", lambda c, s, cfg=cfg: analyze_mode(c, s, cfg), window=450)
             tr = res["trades"]
             item = {"name": v.get("name", ""), "all": backtest.summarize(tr)}
             if body.get("trades"):
