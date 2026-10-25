@@ -1,6 +1,7 @@
 import { useState } from 'react';
 import { Dialog, DialogContent, DialogTitle } from '@/components/ui/dialog';
 import RuleForm from './RuleForm';
+import BacktestPanel from './BacktestPanel';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Card, CardContent } from '@/components/ui/card';
@@ -9,6 +10,7 @@ import { ruleAction, type Rule } from './robotApi';
 
 export default function RulesList({ rules, onChanged }: { rules: Rule[]; onChanged: () => void }) {
   const [editing, setEditing] = useState<Rule | null>(null);
+  const [testing, setTesting] = useState<Rule | null>(null);
   if (rules.length === 0) {
     return <p className="text-sm text-muted-foreground">Своих правил пока нет. Робот работает по стандартной стратегии для АЛРОСА, ВТБ и Brent.</p>;
   }
@@ -34,6 +36,9 @@ export default function RulesList({ rules, onChanged }: { rules: Rule[]; onChang
                 <Button size="sm" variant="outline" onClick={() => act('robot_rule_toggle', r.id)}>
                   <Icon name={r.enabled ? 'Pause' : 'Play'} className="mr-1 h-4 w-4" />
                   {r.enabled ? 'Выключить' : 'Включить'}
+                </Button>
+                <Button size="sm" variant="ghost" title="Проверить на истории" onClick={() => setTesting(r)}>
+                  <Icon name="History" className="h-4 w-4" />
                 </Button>
                 <Button size="sm" variant="ghost" onClick={() => setEditing(r)}>
                   <Icon name="Pencil" className="h-4 w-4" />
@@ -61,6 +66,12 @@ export default function RulesList({ rules, onChanged }: { rules: Rule[]; onChang
         <DialogContent className="max-h-[90vh] max-w-3xl overflow-y-auto p-0">
           <DialogTitle className="sr-only">Изменить правило</DialogTitle>
           {editing && <RuleForm key={editing.id} rule={editing} onSaved={onChanged} onCancel={() => setEditing(null)} />}
+        </DialogContent>
+      </Dialog>
+      <Dialog open={!!testing} onOpenChange={(o) => !o && setTesting(null)}>
+        <DialogContent className="max-h-[90vh] max-w-3xl overflow-y-auto">
+          <DialogTitle>Проверка на истории: {testing?.name}</DialogTitle>
+          {testing && <BacktestPanel key={testing.id} target={{ ruleId: testing.id }} />}
         </DialogContent>
       </Dialog>
     </div>

@@ -4,7 +4,7 @@ import { Card, CardContent } from '@/components/ui/card';
 import { Label } from '@/components/ui/label';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import Icon from '@/components/ui/icon';
-import { runBacktest, type BacktestResult, type Rule } from './robotApi';
+import { runBacktest, type BacktestResult } from './robotApi';
 
 const pct = (v: number) => `${v > 0 ? '+' : ''}${v.toFixed(2)}%`;
 
@@ -57,25 +57,22 @@ function Compare({ mine, proven }: { mine: BacktestResult; proven: BacktestResul
   );
 }
 
-export default function BacktestPanel({ rules }: { rules: Rule[] }) {
-  const [target, setTarget] = useState('base:BR:future');
-  const [days, setDays] = useState('30');
+export type BacktestTarget = { robot: string } | { ruleId: number };
+
+export default function BacktestPanel({ target }: { target: BacktestTarget }) {
+  const isRobot = 'robot' in target;
+  const [days, setDays] = useState('90');
   const [loading, setLoading] = useState(false);
   const [res, setRes] = useState<BacktestResult | null>(null);
   const [cmp, setCmp] = useState<{ mine: BacktestResult; proven: BacktestResult } | null>(null);
 
+  const params = (): Record<string, string> => (isRobot ? { days, robot: target.robot } : { days, rule_id: String(target.ruleId) });
+
   const run = async () => {
     setLoading(true);
-    const [kind, a, b] = target.split(':');
-    const params: Record<string, string> = { days };
-    if (kind === 'rule') params.rule_id = a;
-    else {
-      params.ticker = a;
-      params.kind = b;
-      params.robot = a;
-    }
+    setCmp(null);
     try {
-      setRes(await runBacktest(params));
+      setRes(await runBacktest(params()));
     } catch {
       setRes({ error: 'Не удалось выполнить тест' } as BacktestResult);
     }
@@ -85,9 +82,9 @@ export default function BacktestPanel({ rules }: { rules: Rule[] }) {
   const compare = async () => {
     setLoading(true);
     setCmp(null);
+    setRes(null);
     try {
-      const base = { days, ticker: 'BR', kind: 'future', robot: 'BR' };
-      const [mine, proven] = await Promise.all([runBacktest(base), runBacktest({ ...base, proven: '1' })]);
+      const [mine, proven] = await Promise.all([runBacktest(params()), runBacktest({ ...params(), proven: '1' })]);
       setCmp({ mine, proven });
     } catch {
       setRes({ error: 'Не удалось выполнить сравнение' } as BacktestResult);
@@ -101,43 +98,31 @@ export default function BacktestPanel({ rules }: { rules: Rule[] }) {
       <p className="text-sm text-muted-foreground">
         Робот проходит историю свеча за свечой, как в жизни: на каждый момент он видит только то, что уже было, и не знает будущего.
       </p>
-      <div className="grid gap-3 sm:grid-cols-3">
-        <div className="space-y-1 sm:col-span-2">
-          <Label>Что проверить</Label>
-          <Select value={target} onValueChange={setTarget}>
-            <SelectTrigger><SelectValue /></SelectTrigger>
-            <SelectContent>
-              {rules.map((r) => (
-                <SelectItem key={r.id} value={`rule:${r.id}`}>Правило: {r.ticker} · {r.name}</SelectItem>
-              ))}
-              <SelectItem value="base:BR:future">Трендовый робот: Brent (фьючерс)</SelectItem>
-            </SelectContent>
-          </Select>
-        </div>
-        <div className="space-y-1">
-          <Label>Период</Label>
-          <Select value={days} onValueChange={setDays}>
-            <SelectTrigger><SelectValue /></SelectTrigger>
-            <SelectContent>
-              <SelectItem value="14">2 недели</SelectItem>
-              <SelectItem value="30">1 месяц</SelectItem>
-              <SelectItem value="60">2 месяца</SelectItem>
-              <SelectItem value="90">3 месяца</SelectItem>
-              <SelectItem value="180">6 месяцев</SelectItem>
-              <SelectItem value="330">11 месяцев</SelectItem>
-            </SelectContent>
-          </Select>
-        </div>
+      <div className="max-w-xs space-y-1">
+        <Label>Период</Label>
+        <Select value={days} onValueChange={setDays}>
+          <SelectTrigger><SelectValue /></SelectTrigger>
+          <SelectContent>
+            <SelectItem value="14">2 недели</SelectItem>
+            <SelectItem value="30">1 месяц</SelectItem>
+            <SelectItem value="60">2 месяца</SelectItem>
+            <SelectItem value="90">3 месяца</SelectItem>
+            <SelectItem value="180">6 месяцев</SelectItem>
+            <SelectItem value="330">11 месяцев</SelectItem>
+          </SelectContent>
+        </Select>
       </div>
       <div className="flex flex-wrap gap-2">
         <Button onClick={run} disabled={loading}>
           <Icon name="History" className="mr-1 h-4 w-4" />
           {loading ? 'Считаю...' : 'Запустить тест'}
         </Button>
-        <Button variant="outline" onClick={compare} disabled={loading}>
-          <Icon name="GitCompare" className="mr-1 h-4 w-4" />
-          Сравнить с проверенными
-        </Button>
+        {isRobot && (
+          <Button variant="outline" onClick={compare} disabled={loading}>
+            <Icon name="GitCompare" className="mr-1 h-4 w-4" />
+            Сравнить с проверенными
+          </Button>
+        )}
       </div>
 
       {cmp && <Compare mine={cmp.mine} proven={cmp.proven} />}

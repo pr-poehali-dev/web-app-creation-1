@@ -14,6 +14,11 @@ export default function MyRobots() {
   const { toast } = useToast();
   const [items, setItems] = useState<RobotItem[] | null>(null);
   const [edit, setEdit] = useState<RobotItem | null>(null);
+  const [tab, setTab] = useState<'settings' | 'history'>('settings');
+  const open = (r: RobotItem, t: 'settings' | 'history') => {
+    setTab(t);
+    setEdit(r);
+  };
 
   const refresh = useCallback(async () => setItems(await loadRobots()), []);
 
@@ -75,15 +80,21 @@ export default function MyRobots() {
               <span>
                 Сила тренда не ниже {r.summary.adx_min}, шорты {r.summary.allow_short ? 'разрешены' : 'выключены'}
               </span>
-              <Button size="sm" variant="outline" onClick={() => setEdit(r)}>
-                <Icon name="Settings" className="mr-1 h-4 w-4" />
-                Настроить
-              </Button>
+              <div className="flex gap-2">
+                <Button size="sm" variant="outline" onClick={() => open(r, 'history')}>
+                  <Icon name="History" className="mr-1 h-4 w-4" />
+                  История
+                </Button>
+                <Button size="sm" variant="outline" onClick={() => open(r, 'settings')}>
+                  <Icon name="Settings" className="mr-1 h-4 w-4" />
+                  Настроить
+                </Button>
+              </div>
             </div>
           </CardContent>
         </Card>
       ))}
-      <RobotSettingsDialog robot={edit} onClose={() => setEdit(null)} onSaved={refresh} />
+      <RobotSettingsDialog robot={edit} tab={tab} onTab={setTab} onClose={() => setEdit(null)} onSaved={refresh} />
     </div>
   );
 }

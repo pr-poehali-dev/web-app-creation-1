@@ -806,15 +806,21 @@ def run_backtest(q: dict, event: dict) -> dict:
         res = backtest.run_rule(rule, by_tf)
         title = f"{rule['ticker']} · {rule['name']}"
     else:
-        conn.close()
         kind = q.get("kind", "stock")
         ticker = q.get("ticker", "SBER")
+        if q.get("robot"):
+            cur.execute(f"SELECT ticker, kind, asset_code, asset_name FROM {SCHEMA}.robot_watchlist WHERE ticker=%s", (q["robot"],))
+            wl = cur.fetchone()
+            if wl:
+                kind = "future" if wl["kind"] == "future" else "stock"
+                ticker = (wl["asset_code"] or wl["ticker"]) if kind == "future" else wl["ticker"]
+        conn.close()
         if kind == "future":
             ticker = resolve_future(ticker) or ticker
         scfg = strategy.sanitize({}) if q.get("proven") == "1" else load_cfg(q.get("robot", ""), force=True)
         res = backtest.run_base(bcs_history(ticker, kind, 60, days), kind == "future",
                                 lambda c, s: strategy.analyze(c, s, scfg), window=450, scfg=scfg)
-        title = f"{ticker} · базовая стратегия"
+        title = f"{ticker} · {wl['asset_name']}" if q.get("robot") and wl else f"{ticker} · базовая стратегия"
     res["title"] = title
     res["ticker"] = ticker
     res["summary"] = backtest.summarize(res["trades"])
