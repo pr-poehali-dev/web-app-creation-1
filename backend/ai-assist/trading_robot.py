@@ -335,6 +335,25 @@ def analyze(candles: list, allow_short: bool, cfg: dict = None):
             pass
     if adx_min and ax[0] < adx_min:
         return None
+    adx_max = cfg.get("adx_max", 0)
+    ext_max = cfg.get("ext_max", 0)
+    fresh = cfg.get("fresh", 0)
+    if adx_max:
+        a2 = ax or indicators.adx(candles[-120:])
+        if a2 is None or a2[0] > adx_max:
+            return None
+    if ext_max and atr and abs(last - sma50) / atr > ext_max:
+        return None
+    if fresh:
+        cross = None
+        for k in range(1, fresh + 1):
+            seg = closes[:len(closes) - k + 1] if k > 1 else closes
+            a20, a50 = sum(seg[-20:]) / 20, sum(seg[-50:]) / 50
+            if (a20 > a50) != (sma20 > sma50):
+                cross = k
+                break
+        if cross is None:
+            return None
     long_ok = True
     short_ok = down
     if htf and len(closes) >= htf:
@@ -763,7 +782,7 @@ def run_backtest(q: dict, event: dict) -> dict:
         conn.close()
         return resp(403, {"error": "Доступ запрещён"})
     cur = conn.cursor()
-    days = max(3, min(int(q.get("days", "30")), 120))
+    days = max(3, min(int(q.get("days", "30")), 400))
     if q.get("rule_id"):
         cur.execute(f"SELECT * FROM {SCHEMA}.robot_rules WHERE id=%s", (int(q["rule_id"]),))
         rule = cur.fetchone()
@@ -811,7 +830,7 @@ def run_backtest_batch(q: dict, event: dict) -> dict:
         return resp(403, {"error": "Доступ запрещён"})
     conn.close()
     body = json.loads(event.get("body") or "{}")
-    days = max(3, min(int(body.get("days", 90)), 120))
+    days = max(3, min(int(body.get("days", 90)), 400))
     kind = body.get("kind", "future")
     ticker = body.get("ticker", "BR")
     if kind == "future":
@@ -826,6 +845,8 @@ def run_backtest_batch(q: dict, event: dict) -> dict:
             res = backtest.run_base(candles, kind == "future", lambda c, s, cfg=cfg: analyze(c, s, cfg))
             tr = res["trades"]
             item = {"name": v.get("name", ""), "all": backtest.summarize(tr)}
+            if body.get("trades"):
+                item["trades"] = [t for t in tr if t["closed"]]
             if split:
                 item["train"] = backtest.summarize([t for t in tr if t["date"] < split])
                 item["test"] = backtest.summarize([t for t in tr if t["date"] >= split])
