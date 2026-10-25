@@ -1,6 +1,7 @@
 from datetime import datetime, timedelta
 
 import indicators
+import strategy
 import rules_engine
 
 WINDOW = 250
@@ -19,7 +20,7 @@ def _pnl(direction: str, entry: float, price: float) -> float:
     return d if direction == "ЛОНГ" else -d
 
 
-def _simulate_exit(sig: tuple, candles: list, start: int, tf: int, exit_fn):
+def _simulate_exit(sig: tuple, candles: list, start: int, tf: int, exit_fn, max_bars_override: int = 0):
     direction, entry, stop, t1, t2 = sig[0], sig[1], sig[2], sig[3], sig[4]
     is_long = direction == "ЛОНГ"
     t1_hit = False
@@ -123,10 +124,10 @@ def run_rule(rule: dict, by_tf: dict) -> dict:
             "to": main[-1]["begin"] if main else None}
 
 
-def run_base(candles: list, allow_short: bool, analyze, window: int = WINDOW, tf: int = 60, ex: dict = None) -> dict:
+def run_base(candles: list, allow_short: bool, analyze, window: int = WINDOW, tf: int = 60, ex: dict = None, scfg: dict = None) -> dict:
     trades = []
     busy_until = {}
-    cooldown = max(1, COOLDOWN_BARS_HOURS * 60 // tf)
+    cooldown = max(1, (scfg["cooldown_hours"] if scfg else COOLDOWN_BARS_HOURS) * 60 // tf)
     for i in range(55, len(candles) - 1):
         sub = candles[max(0, i + 1 - window):i + 1]
         sig = analyze(sub, allow_short)
@@ -138,7 +139,11 @@ def run_base(candles: list, allow_short: bool, analyze, window: int = WINDOW, tf
 
         def exit_fn(j, d=d):
             closes = [c["close"] for c in candles[max(0, j + 1 - window):j + 1]]
-            if len(closes) < 50 or str(sig[5]).startswith("Боковик"):
+            if str(sig[5]).startswith("Боковик"):
+                return ""
+            if scfg:
+                return strategy.trend_exit(closes, d, scfg)
+            if len(closes) < 50:
                 return ""
             sma20 = sum(closes[-20:]) / 20
             sma50 = sum(closes[-50:]) / 50
@@ -153,7 +158,8 @@ def run_base(candles: list, allow_short: bool, analyze, window: int = WINDOW, tf
             j, price, why, t1_hit = _simulate_trail(sig, candles, i + 1, tf, exit_fn, ex.get("trail", 2.0), ex.get("t2", 0),
                                                      ex.get("max_bars", 7 * 24 * 60 // tf))
         else:
-            j, price, why, t1_hit = _simulate_exit(sig, candles, i + 1, tf, exit_fn)
+            j, price, why, t1_hit = _simulate_exit(sig, candles, i + 1, tf, exit_fn,
+                                                   scfg["max_days"] * 24 * 60 // tf if scfg else 0)
         closed = j is not None
         ax = indicators.adx(sub[-120:])
         cl = [c["close"] for c in sub]
@@ -163,7 +169,7 @@ def run_base(candles: list, allow_short: bool, analyze, window: int = WINDOW, tf
             "gap_pct": round(gap, 2), "date": candles[i]["begin"], "direction": d, "entry": round(sig[1], 4),
             "stop": round(sig[2], 4), "target1": round(sig[3], 4), "target2": round(sig[4], 4),
             "exit_date": candles[j]["begin"] if closed else None, "exit_price": round(price, 4),
-            "reason": why, "setup": sig[5], "t1_hit": t1_hit, "result_pct": _result(sig, price, t1_hit, (ex or {}).get("frac", 0.5)), "closed": closed,
+            "reason": why, "setup": sig[5], "t1_hit": t1_hit, "result_pct": _result(sig, price, t1_hit, scfg["t1_frac"] if scfg else (ex or {}).get("frac", 0.5)), "closed": closed,
         })
         busy_until[d] = (j if closed else len(candles)) + cooldown
     return {"trades": trades, "bars": len(candles), "from": candles[0]["begin"] if candles else None,

@@ -205,3 +205,47 @@ export async function saveTokenDate(expires: string): Promise<boolean> {
   const r = await fetch(`${API}?action=robot_token_set`, { method: 'POST', headers: headers(), body: JSON.stringify({ expires }) });
   return r.ok;
 }
+
+export interface StrategySettings {
+  sma_fast: number;
+  sma_slow: number;
+  rsi_period: number;
+  rsi_long: number;
+  rsi_short: number;
+  atr_period: number;
+  lookback: number;
+  adx_period: number;
+  adx_min: number;
+  adx_max: number;
+  short_adx: number;
+  htf: number;
+  ext_max: number;
+  fresh: number;
+  stop_atr: number;
+  t1_atr: number;
+  t2_atr: number;
+  t1_frac: number;
+  cooldown_hours: number;
+  max_days: number;
+  use_breakout: boolean;
+  use_pullback: boolean;
+  allow_short: boolean;
+  short_bounce: boolean;
+  trend_exit: boolean;
+  skip_hours: number[];
+}
+
+export async function loadStrategy(): Promise<{ settings: StrategySettings; defaults: StrategySettings; limits: Record<string, { min: number; max: number }> }> {
+  const r = await fetch(`${API}?action=robot_strategy_get`, { headers: headers() });
+  return r.json();
+}
+
+export async function saveStrategy(settings: StrategySettings | null): Promise<StrategySettings | null> {
+  const r = await fetch(`${API}?action=robot_strategy_set`, {
+    method: 'POST',
+    headers: headers(),
+    body: JSON.stringify(settings ? { settings } : { reset: true }),
+  });
+  if (!r.ok) return null;
+  return (await r.json()).settings;
+}

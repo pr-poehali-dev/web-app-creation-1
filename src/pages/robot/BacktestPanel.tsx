@@ -19,7 +19,7 @@ function Cell({ label, value, tone }: { label: string; value: string; tone?: 'go
 }
 
 export default function BacktestPanel({ rules }: { rules: Rule[] }) {
-  const [target, setTarget] = useState('base:SBER:stock');
+  const [target, setTarget] = useState('base:BR:future');
   const [days, setDays] = useState('30');
   const [loading, setLoading] = useState(false);
   const [res, setRes] = useState<BacktestResult | null>(null);
@@ -56,10 +56,7 @@ export default function BacktestPanel({ rules }: { rules: Rule[] }) {
               {rules.map((r) => (
                 <SelectItem key={r.id} value={`rule:${r.id}`}>Правило: {r.ticker} · {r.name}</SelectItem>
               ))}
-              <SelectItem value="base:SBER:stock">Базовая стратегия: Сбербанк</SelectItem>
-              <SelectItem value="base:ALRS:stock">Базовая стратегия: Алроса</SelectItem>
-              <SelectItem value="base:BR:future">Базовая стратегия: Brent (фьючерс)</SelectItem>
-              <SelectItem value="base:ALRS:future">Базовая стратегия: Алроса (фьючерс)</SelectItem>
+              <SelectItem value="base:BR:future">Трендовый робот: Brent (фьючерс)</SelectItem>
             </SelectContent>
           </Select>
         </div>
@@ -72,6 +69,8 @@ export default function BacktestPanel({ rules }: { rules: Rule[] }) {
               <SelectItem value="30">1 месяц</SelectItem>
               <SelectItem value="60">2 месяца</SelectItem>
               <SelectItem value="90">3 месяца</SelectItem>
+              <SelectItem value="180">6 месяцев</SelectItem>
+              <SelectItem value="330">11 месяцев</SelectItem>
             </SelectContent>
           </Select>
         </div>

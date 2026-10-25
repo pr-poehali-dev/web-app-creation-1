@@ -8,6 +8,7 @@ import requests
 import backtest
 import indicators
 import regime
+import strategy
 import rules_engine
 from psycopg2.extras import RealDictCursor
 
@@ -288,114 +289,31 @@ def hourly_candles(ticker: str, kind: str) -> list:
     return get_candles(ticker, kind, 60)
 
 
-DEFAULT_CFG = {"short_adx": 25, "adx_min": 20, "skip_hours": [12, 13, 14], "sm": 2.0}
+_CFG_CACHE = {"at": 0.0, "cfg": None}
 
 
-def _scale(sig, cfg):
-    if not sig or not (cfg.get("sm") or cfg.get("t1m") or cfg.get("t2m")):
-        return sig
-    d, e, atr = sig[0], sig[1], sig[7]
-    k = 1 if d == "ЛОНГ" else -1
-    sm = cfg.get("sm") or 1.5
-    t1m = cfg.get("t1m") or 1.5
-    t2m = cfg.get("t2m") or 3
-    return (d, e, e - k * sm * atr, e + k * t1m * atr, e + k * t2m * atr) + tuple(sig[5:])
+def load_cfg(force: bool = False) -> dict:
+    import time
+    if not force and _CFG_CACHE["cfg"] is not None and time.time() - _CFG_CACHE["at"] < 20:
+        return _CFG_CACHE["cfg"]
+    cfg = strategy.sanitize({})
+    try:
+        conn = db()
+        cur = conn.cursor()
+        cur.execute(f"SELECT value FROM {SCHEMA}.robot_settings WHERE key='strategy'")
+        row = cur.fetchone()
+        conn.close()
+        if row:
+            cfg = strategy.sanitize(json.loads(row["value"]))
+    except Exception as e:
+        print(f"strategy load error: {e}")
+    _CFG_CACHE["cfg"], _CFG_CACHE["at"] = cfg, time.time()
+    return cfg
 
 
 def analyze(candles: list, allow_short: bool, cfg: dict = None):
-    if cfg is None:
-        cfg = DEFAULT_CFG if allow_short else {}
-    return _scale(_analyze_core(candles, allow_short, cfg), cfg)
-
-
-def _analyze_core(candles: list, allow_short: bool, cfg: dict = None):
-    if cfg is None:
-        cfg = DEFAULT_CFG if allow_short else {}
-    closes = [c["close"] for c in candles]
-    if len(closes) < 55:
-        return None
-    last = closes[-1]
-    sma20 = sum(closes[-20:]) / 20
-    sma50 = sum(closes[-50:]) / 50
-    gains = losses = 0.0
-    for i in range(len(closes) - 14, len(closes)):
-        d = closes[i] - closes[i - 1]
-        if d > 0:
-            gains += d
-        else:
-            losses -= d
-    rsi = 100.0 if losses == 0 else 100 - 100 / (1 + gains / losses)
-    trs = []
-    for i in range(len(candles) - 14, len(candles)):
-        c, pc = candles[i], candles[i - 1]["close"]
-        trs.append(max(c["high"] - c["low"], abs(c["high"] - pc), abs(c["low"] - pc)))
-    atr = sum(trs) / len(trs)
-    prev = candles[-21:-1]
-    hh = max(c["high"] for c in prev)
-    ll = min(c["low"] for c in prev)
-    up = last > sma50 and sma20 > sma50
-    down = last < sma50 and sma20 < sma50
-
-    adx_min = cfg.get("adx_min", 0)
-    short_adx = cfg.get("short_adx", 0)
-    skip_hours = cfg.get("skip_hours") or []
-    htf = cfg.get("htf", 0)
-    ax = None
-    if adx_min or short_adx:
-        ax = indicators.adx(candles[-120:])
-        if ax is None:
-            return None
-    if skip_hours:
-        try:
-            if int(candles[-1]["begin"][11:13]) in skip_hours:
-                return None
-        except ValueError:
-            pass
-    if adx_min and ax[0] < adx_min:
-        return None
-    adx_max = cfg.get("adx_max", 0)
-    ext_max = cfg.get("ext_max", 0)
-    fresh = cfg.get("fresh", 0)
-    if adx_max:
-        a2 = ax or indicators.adx(candles[-120:])
-        if a2 is None or a2[0] > adx_max:
-            return None
-    if ext_max and atr and abs(last - sma50) / atr > ext_max:
-        return None
-    if fresh:
-        cross = None
-        for k in range(1, fresh + 1):
-            seg = closes[:len(closes) - k + 1] if k > 1 else closes
-            a20, a50 = sum(seg[-20:]) / 20, sum(seg[-50:]) / 50
-            if (a20 > a50) != (sma20 > sma50):
-                cross = k
-                break
-        if cross is None:
-            return None
-    long_ok = True
-    short_ok = down
-    if htf and len(closes) >= htf:
-        smah = sum(closes[-htf:]) / htf
-        long_ok = last > smah
-        short_ok = down and last < smah
-    if short_adx:
-        short_ok = short_ok and ax[0] >= short_adx and ax[2] > ax[1]
-    if cfg.get("no_short"):
-        allow_short = False
-
-    if up and long_ok and last > hh:
-        return ("ЛОНГ", last, last - 1.5 * atr, last + 1.5 * atr, last + 3 * atr,
-                f"Пробой максимума 20 часов {hh:.2f} в восходящем тренде (SMA20>SMA50), RSI {rsi:.0f}", last, atr)
-    if up and long_ok and rsi < 40:
-        return ("ЛОНГ", last, min(ll, last - 1.5 * atr), last + 1.5 * atr, last + 3 * atr,
-                f"Откат в восходящем тренде, RSI {rsi:.0f}", last, atr)
-    if allow_short and short_ok and last < ll:
-        return ("ШОРТ", last, last + 1.5 * atr, last - 1.5 * atr, last - 3 * atr,
-                f"Пробой минимума 20 часов {ll:.2f} в нисходящем тренде (SMA20<SMA50), RSI {rsi:.0f}", last, atr)
-    if allow_short and short_ok and rsi > 60 and not cfg.get("no_short_bounce"):
-        return ("ШОРТ", last, max(hh, last + 1.5 * atr), last - 1.5 * atr, last - 3 * atr,
-                f"Отскок в нисходящем тренде, RSI {rsi:.0f}", last, atr)
-    return None
+    full = load_cfg() if cfg is None else strategy.merge_explicit(cfg)
+    return strategy.analyze(candles, allow_short, full)
 
 
 def analyze_mode(candles, allow_short, cfg):
@@ -494,23 +412,20 @@ def track_exits(conn, now: datetime, force: bool) -> list:
             why = rules_engine.exit_reason(rule_view, by_tf)
             if why:
                 exit_price, reason = last, f"Сработало условие выхода: {why}"
+        scfg = load_cfg()
         if exit_price is None and not rule:
-            closes = [c["close"] for c in candles]
-            if len(closes) >= 50:
-                sma20 = sum(closes[-20:]) / 20
-                sma50 = sum(closes[-50:]) / 50
-                if is_long and sma20 < sma50 and last < sma50:
-                    exit_price, reason = last, "Тренд развернулся против позиции (SMA20 ниже SMA50)"
-                elif not is_long and sma20 > sma50 and last > sma50:
-                    exit_price, reason = last, "Тренд развернулся против позиции (SMA20 выше SMA50)"
-        max_days = 7 if tf == 60 else 1
+            why = strategy.trend_exit([c["close"] for c in candles], direction, scfg)
+            if why:
+                exit_price, reason = last, f"Тренд развернулся против позиции (SMA{scfg['sma_fast']}/SMA{scfg['sma_slow']})"
+        max_days = scfg["max_days"] if (tf == 60 and not rule) else (7 if tf == 60 else 1)
         if exit_price is None and (utc_now - s["created_at"]).days >= max_days:
             exit_price, reason = last, f"Прошло {max_days} дн., сигнал устарел"
         name = f"{s['asset_name']} ({ticker}) {direction}"
         if exit_price is not None:
             pct = pnl(direction, entry, exit_price)
             if t1_hit:
-                pct = 0.5 * pnl(direction, entry, t1) + 0.5 * pct
+                fr = scfg["t1_frac"] if not rule else 0.5
+                pct = fr * pnl(direction, entry, t1) + (1 - fr) * pct
             text = (f"Выход из сделки\n{name}\n{reason}\nВход: {entry:.2f}, выход: {exit_price:.2f}\n"
                     f"Результат: {pct:+.2f}%" + (" (половина позиции закрыта по цели 1)" if t1_hit else "") +
                     "\n\nЭто сигнал, а не рекомендация. Заявки робот не выставляет.")
@@ -535,14 +450,15 @@ def track_exits(conn, now: datetime, force: bool) -> list:
 
 def publish(conn, cur, ticker: str, asset_name: str, sig, rule_id, result: list, tf: int = 60) -> None:
     direction, entry, stop, t1, t2, reason, price, atr = sig
+    hours = DEDUP_HOURS if rule_id else int(load_cfg()["cooldown_hours"])
     if rule_id:
         cur.execute(
             f"SELECT 1 FROM {SCHEMA}.robot_signals WHERE rule_id=%s AND ticker=%s AND direction=%s "
-            f"AND (status='open' OR created_at > NOW() - INTERVAL '{DEDUP_HOURS} hours')", (rule_id, ticker, direction))
+            f"AND (status='open' OR created_at > NOW() - INTERVAL '{hours} hours')", (rule_id, ticker, direction))
     else:
         cur.execute(
             f"SELECT 1 FROM {SCHEMA}.robot_signals WHERE rule_id IS NULL AND ticker=%s AND direction=%s "
-            f"AND (status='open' OR created_at > NOW() - INTERVAL '{DEDUP_HOURS} hours')", (ticker, direction))
+            f"AND (status='open' OR created_at > NOW() - INTERVAL '{hours} hours')", (ticker, direction))
     if cur.fetchone():
         result.append({"ticker": ticker, "status": "сигнал уже отправлялся"})
         return
@@ -674,6 +590,18 @@ def manage(action: str, q: dict, event: dict) -> dict:
             exp, src = token_expiry(conn)
             return resp(200, {"expires": exp.isoformat() if exp else None, "source": src,
                               "days_left": (exp - datetime.now(MSK).date()).days if exp else None})
+        if action == "robot_strategy_get":
+            return resp(200, {"settings": load_cfg(force=True), "defaults": strategy.sanitize({}),
+                              "limits": {k: {"min": v[1], "max": v[2]} for k, v in strategy.SCHEMA_FIELDS.items()}})
+        if action == "robot_strategy_set":
+            raw = body.get("settings") or {}
+            cfg = strategy.sanitize({} if body.get("reset") else raw)
+            cur.execute(
+                f"INSERT INTO {SCHEMA}.robot_settings (key, value) VALUES ('strategy', %s) "
+                f"ON CONFLICT (key) DO UPDATE SET value=EXCLUDED.value, updated_at=NOW()", (json.dumps(cfg),))
+            conn.commit()
+            _CFG_CACHE["cfg"] = None
+            return resp(200, {"ok": True, "settings": cfg})
         if action == "robot_token_set":
             val = str(body.get("expires") or "")
             try:
@@ -828,17 +756,9 @@ def run_backtest(q: dict, event: dict) -> dict:
         ticker = q.get("ticker", "SBER")
         if kind == "future":
             ticker = resolve_future(ticker) or ticker
-        cfg = {}
-        for k in ("adx_min", "short_adx", "htf"):
-            if q.get(k):
-                cfg[k] = float(q[k])
-        if q.get("skip_hours"):
-            cfg["skip_hours"] = [int(x) for x in q["skip_hours"].split(",")]
-        for k in ("no_short", "no_short_bounce"):
-            if q.get(k) == "1":
-                cfg[k] = True
+        scfg = load_cfg(force=True)
         res = backtest.run_base(bcs_history(ticker, kind, 60, days), kind == "future",
-                                lambda c, s: analyze(c, s, cfg if (cfg or q.get("custom") == "1") else None))
+                                lambda c, s: strategy.analyze(c, s, scfg), window=450, scfg=scfg)
         title = f"{ticker} · базовая стратегия"
     res["title"] = title
     res["ticker"] = ticker
@@ -882,7 +802,8 @@ def run_backtest_batch(q: dict, event: dict) -> dict:
         candles = bcs_history(ticker, kind, tf, days)
         for v in body["base"][:40]:
             cfg = v.get("cfg") or {}
-            res = backtest.run_base(candles, kind == "future", lambda c, s, cfg=cfg: analyze_mode(c, s, cfg), window=450, tf=tf, ex=v.get("exit"))
+            res = backtest.run_base(candles, kind == "future", lambda c, s, cfg=cfg: analyze_mode(c, s, cfg), window=450, tf=tf, ex=v.get("exit"),
+                                    scfg=strategy.merge_explicit(cfg))
             tr = res["trades"]
             item = {"name": v.get("name", ""), "all": backtest.summarize(tr)}
             if body.get("trades"):
@@ -946,7 +867,7 @@ def bcs_history(ticker: str, kind: str, tf: int, days: int) -> list:
 
 
 def handle_action(action: str, q: dict, event: dict = None) -> dict:
-    if action in ("robot_rules", "robot_rule_save", "robot_rule_toggle", "robot_rule_delete", "robot_signal_update", "robot_signal_delete", "robot_token_get", "robot_token_set"):
+    if action in ("robot_rules", "robot_rule_save", "robot_rule_toggle", "robot_rule_delete", "robot_signal_update", "robot_signal_delete", "robot_token_get", "robot_token_set", "robot_strategy_get", "robot_strategy_set"):
         return manage(action, q, event or {})
     if action == "robot_signals":
         return resp(200, list_signals())
