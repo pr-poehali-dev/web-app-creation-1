@@ -289,30 +289,53 @@ def hourly_candles(ticker: str, kind: str) -> list:
     return get_candles(ticker, kind, 60)
 
 
-_CFG_CACHE = {"at": 0.0, "cfg": None}
+_CFG_CACHE = {}
 
 
-def load_cfg(force: bool = False) -> dict:
+def load_cfg(robot: str = "", force: bool = False) -> dict:
     import time
-    if not force and _CFG_CACHE["cfg"] is not None and time.time() - _CFG_CACHE["at"] < 20:
-        return _CFG_CACHE["cfg"]
+    hit = _CFG_CACHE.get(robot)
+    if not force and hit and time.time() - hit[0] < 20:
+        return hit[1]
     cfg = strategy.sanitize({})
     try:
         conn = db()
         cur = conn.cursor()
-        cur.execute(f"SELECT value FROM {SCHEMA}.robot_settings WHERE key='strategy'")
-        row = cur.fetchone()
+        raw = None
+        if robot:
+            cur.execute(f"SELECT settings FROM {SCHEMA}.robot_watchlist WHERE ticker=%s", (robot,))
+            row = cur.fetchone()
+            raw = row["settings"] if row else None
+        if not raw:
+            cur.execute(f"SELECT value FROM {SCHEMA}.robot_settings WHERE key='strategy'")
+            row = cur.fetchone()
+            raw = row["value"] if row else None
         conn.close()
-        if row:
-            cfg = strategy.sanitize(json.loads(row["value"]))
+        if raw:
+            cfg = strategy.sanitize(json.loads(raw))
     except Exception as e:
         print(f"strategy load error: {e}")
-    _CFG_CACHE["cfg"], _CFG_CACHE["at"] = cfg, time.time()
+    _CFG_CACHE[robot] = (time.time(), cfg)
     return cfg
 
 
-def analyze(candles: list, allow_short: bool, cfg: dict = None):
-    full = load_cfg() if cfg is None else strategy.merge_explicit(cfg)
+def robot_by_contract(cur) -> dict:
+    cur.execute(f"SELECT ticker, kind, asset_code FROM {SCHEMA}.robot_watchlist")
+    out = {}
+    for r in cur.fetchall():
+        if r["kind"] == "future":
+            try:
+                c = resolve_future(r["asset_code"] or r["ticker"])
+            except Exception:
+                c = ""
+            if c:
+                out[c] = r["ticker"]
+        out[r["ticker"]] = r["ticker"]
+    return out
+
+
+def analyze(candles: list, allow_short: bool, cfg: dict = None, robot: str = ""):
+    full = load_cfg(robot) if cfg is None else strategy.merge_explicit(cfg)
     return strategy.analyze(candles, allow_short, full)
 
 
@@ -364,6 +387,7 @@ def track_exits(conn, now: datetime, force: bool) -> list:
             shares.add(r["ticker"])
     events = []
     utc_now = datetime.utcnow()
+    contract_robot = robot_by_contract(cur)
     for s in open_items:
         ticker = s["ticker"]
         kind = "share" if ticker in shares else "future"
@@ -412,7 +436,7 @@ def track_exits(conn, now: datetime, force: bool) -> list:
             why = rules_engine.exit_reason(rule_view, by_tf)
             if why:
                 exit_price, reason = last, f"Сработало условие выхода: {why}"
-        scfg = load_cfg()
+        scfg = load_cfg(contract_robot.get(ticker, ""))
         if exit_price is None and not rule:
             why = strategy.trend_exit([c["close"] for c in candles], direction, scfg)
             if why:
@@ -448,9 +472,9 @@ def track_exits(conn, now: datetime, force: bool) -> list:
     return events
 
 
-def publish(conn, cur, ticker: str, asset_name: str, sig, rule_id, result: list, tf: int = 60) -> None:
+def publish(conn, cur, ticker: str, asset_name: str, sig, rule_id, result: list, tf: int = 60, robot: str = "") -> None:
     direction, entry, stop, t1, t2, reason, price, atr = sig
-    hours = DEDUP_HOURS if rule_id else int(load_cfg()["cooldown_hours"])
+    hours = DEDUP_HOURS if rule_id else int(load_cfg(robot)["cooldown_hours"])
     if rule_id:
         cur.execute(
             f"SELECT 1 FROM {SCHEMA}.robot_signals WHERE rule_id=%s AND ticker=%s AND direction=%s "
@@ -590,17 +614,48 @@ def manage(action: str, q: dict, event: dict) -> dict:
             exp, src = token_expiry(conn)
             return resp(200, {"expires": exp.isoformat() if exp else None, "source": src,
                               "days_left": (exp - datetime.now(MSK).date()).days if exp else None})
+        if action == "robot_list":
+            cur.execute(f"SELECT ticker, asset_name, kind, asset_code, enabled, settings FROM {SCHEMA}.robot_watchlist ORDER BY enabled DESC, ticker")
+            items = cur.fetchall()
+            cur.execute(
+                f"SELECT asset_name, COUNT(*) FILTER (WHERE status='open') AS open_count, "
+                f"COUNT(*) FILTER (WHERE status='closed') AS closed, "
+                f"COUNT(*) FILTER (WHERE status='closed' AND result_pct > 0) AS wins, "
+                f"COALESCE(SUM(result_pct) FILTER (WHERE status='closed'), 0) AS total_pct "
+                f"FROM {SCHEMA}.robot_signals WHERE rule_id IS NULL GROUP BY asset_name")
+            st = {r["asset_name"]: r for r in cur.fetchall()}
+            out = []
+            for it in items:
+                cfg = load_cfg(it["ticker"], force=True)
+                s = st.get(it["asset_name"]) or {}
+                out.append({"ticker": it["ticker"], "asset_name": it["asset_name"], "kind": it["kind"], "enabled": it["enabled"],
+                            "custom": bool(it["settings"]),
+                            "open_count": int(s.get("open_count") or 0), "closed": int(s.get("closed") or 0),
+                            "wins": int(s.get("wins") or 0), "total_pct": float(s.get("total_pct") or 0),
+                            "summary": {"stop_atr": cfg["stop_atr"], "t1_atr": cfg["t1_atr"], "t2_atr": cfg["t2_atr"],
+                                        "adx_min": cfg["adx_min"], "allow_short": cfg["allow_short"]}})
+            return resp(200, {"items": out})
+        if action == "robot_toggle":
+            tk = str(body.get("ticker") or "")
+            cur.execute(f"UPDATE {SCHEMA}.robot_watchlist SET enabled=%s WHERE ticker=%s", (bool(body.get("enabled")), tk))
+            conn.commit()
+            return resp(200, {"ok": True})
         if action == "robot_strategy_get":
-            return resp(200, {"settings": load_cfg(force=True), "defaults": strategy.sanitize({}),
+            tk = str(q.get("robot") or "")
+            return resp(200, {"settings": load_cfg(tk, force=True), "defaults": strategy.sanitize({}),
                               "limits": {k: {"min": v[1], "max": v[2]} for k, v in strategy.SCHEMA_FIELDS.items()}})
         if action == "robot_strategy_set":
+            tk = str(body.get("robot") or q.get("robot") or "")
             raw = body.get("settings") or {}
             cfg = strategy.sanitize({} if body.get("reset") else raw)
-            cur.execute(
-                f"INSERT INTO {SCHEMA}.robot_settings (key, value) VALUES ('strategy', %s) "
-                f"ON CONFLICT (key) DO UPDATE SET value=EXCLUDED.value, updated_at=NOW()", (json.dumps(cfg),))
+            if tk:
+                cur.execute(f"UPDATE {SCHEMA}.robot_watchlist SET settings=%s WHERE ticker=%s", (json.dumps(cfg), tk))
+            else:
+                cur.execute(
+                    f"INSERT INTO {SCHEMA}.robot_settings (key, value) VALUES ('strategy', %s) "
+                    f"ON CONFLICT (key) DO UPDATE SET value=EXCLUDED.value, updated_at=NOW()", (json.dumps(cfg),))
             conn.commit()
-            _CFG_CACHE["cfg"] = None
+            _CFG_CACHE.clear()
             return resp(200, {"ok": True, "settings": cfg})
         if action == "robot_token_set":
             val = str(body.get("expires") or "")
@@ -688,14 +743,14 @@ def run(force: bool) -> dict:
                 result.append({"ticker": it["ticker"], "status": "контракт не найден"})
                 continue
         try:
-            sig = analyze(hourly_candles(ticker, kind), allow_short=(kind == "future"))
+            sig = analyze(hourly_candles(ticker, kind), allow_short=(kind == "future"), robot=it["ticker"])
         except Exception as e:
             result.append({"ticker": it["ticker"], "status": f"ошибка данных: {e}"})
             continue
         if not sig:
             result.append({"ticker": it["ticker"], "status": "сигнала нет"})
             continue
-        publish(conn, cur, ticker, it["asset_name"], sig, None, result)
+        publish(conn, cur, ticker, it["asset_name"], sig, None, result, robot=it["ticker"])
     run_rules(conn, cur, now, force, result)
     conn.close()
     return {"checked": result, "exits": exits, "time": now.strftime("%Y-%m-%d %H:%M")}
@@ -756,7 +811,7 @@ def run_backtest(q: dict, event: dict) -> dict:
         ticker = q.get("ticker", "SBER")
         if kind == "future":
             ticker = resolve_future(ticker) or ticker
-        scfg = strategy.sanitize({}) if q.get("proven") == "1" else load_cfg(force=True)
+        scfg = strategy.sanitize({}) if q.get("proven") == "1" else load_cfg(q.get("robot", ""), force=True)
         res = backtest.run_base(bcs_history(ticker, kind, 60, days), kind == "future",
                                 lambda c, s: strategy.analyze(c, s, scfg), window=450, scfg=scfg)
         title = f"{ticker} · базовая стратегия"
@@ -867,7 +922,7 @@ def bcs_history(ticker: str, kind: str, tf: int, days: int) -> list:
 
 
 def handle_action(action: str, q: dict, event: dict = None) -> dict:
-    if action in ("robot_rules", "robot_rule_save", "robot_rule_toggle", "robot_rule_delete", "robot_signal_update", "robot_signal_delete", "robot_token_get", "robot_token_set", "robot_strategy_get", "robot_strategy_set"):
+    if action in ("robot_rules", "robot_rule_save", "robot_rule_toggle", "robot_rule_delete", "robot_signal_update", "robot_signal_delete", "robot_token_get", "robot_token_set", "robot_strategy_get", "robot_strategy_set", "robot_list", "robot_toggle"):
         return manage(action, q, event or {})
     if action == "robot_signals":
         return resp(200, list_signals())

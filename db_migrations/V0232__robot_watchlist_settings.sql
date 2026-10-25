@@ -1,0 +1,1 @@
+ALTER TABLE t_p42562714_web_app_creation_1.robot_watchlist ADD COLUMN IF NOT EXISTS settings TEXT;

@@ -72,6 +72,7 @@ export default function BacktestPanel({ rules }: { rules: Rule[] }) {
     else {
       params.ticker = a;
       params.kind = b;
+      params.robot = a;
     }
     try {
       setRes(await runBacktest(params));
@@ -85,7 +86,7 @@ export default function BacktestPanel({ rules }: { rules: Rule[] }) {
     setLoading(true);
     setCmp(null);
     try {
-      const base = { days, ticker: 'BR', kind: 'future' };
+      const base = { days, ticker: 'BR', kind: 'future', robot: 'BR' };
       const [mine, proven] = await Promise.all([runBacktest(base), runBacktest({ ...base, proven: '1' })]);
       setCmp({ mine, proven });
     } catch {

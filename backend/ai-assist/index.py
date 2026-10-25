@@ -543,7 +543,7 @@ def handler(event: dict, context) -> dict:
     params = event.get("queryStringParameters") or {}
     query_action = params.get("action", "")
 
-    if query_action in ("robot_run", "robot_backtest", "robot_backtest_batch", "robot_source", "robot_signals", "robot_test", "robot_rules", "robot_rule_save", "robot_rule_toggle", "robot_rule_delete", "robot_signal_update", "robot_signal_delete", "robot_token_get", "robot_token_set", "robot_strategy_get", "robot_strategy_set"):
+    if query_action in ("robot_run", "robot_backtest", "robot_backtest_batch", "robot_source", "robot_signals", "robot_test", "robot_rules", "robot_rule_save", "robot_rule_toggle", "robot_rule_delete", "robot_signal_update", "robot_signal_delete", "robot_token_get", "robot_token_set", "robot_strategy_get", "robot_strategy_set", "robot_list", "robot_toggle"):
         from trading_robot import handle_action
         return handle_action(query_action, params, event)
 

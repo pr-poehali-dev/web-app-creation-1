@@ -235,17 +235,40 @@ export interface StrategySettings {
   skip_hours: number[];
 }
 
-export async function loadStrategy(): Promise<{ settings: StrategySettings; defaults: StrategySettings; limits: Record<string, { min: number; max: number }> }> {
-  const r = await fetch(`${API}?action=robot_strategy_get`, { headers: headers() });
+export async function loadStrategy(robot = ''): Promise<{ settings: StrategySettings; defaults: StrategySettings; limits: Record<string, { min: number; max: number }> }> {
+  const r = await fetch(`${API}?action=robot_strategy_get&robot=${encodeURIComponent(robot)}`, { headers: headers() });
   return r.json();
 }
 
-export async function saveStrategy(settings: StrategySettings | null): Promise<StrategySettings | null> {
+export async function saveStrategy(settings: StrategySettings | null, robot = ''): Promise<StrategySettings | null> {
   const r = await fetch(`${API}?action=robot_strategy_set`, {
     method: 'POST',
     headers: headers(),
-    body: JSON.stringify(settings ? { settings } : { reset: true }),
+    body: JSON.stringify({ robot, ...(settings ? { settings } : { reset: true }) }),
   });
   if (!r.ok) return null;
   return (await r.json()).settings;
+}
+
+export interface RobotItem {
+  ticker: string;
+  asset_name: string;
+  kind: string;
+  enabled: boolean;
+  custom: boolean;
+  open_count: number;
+  closed: number;
+  wins: number;
+  total_pct: number;
+  summary: { stop_atr: number; t1_atr: number; t2_atr: number; adx_min: number; allow_short: boolean };
+}
+
+export async function loadRobots(): Promise<RobotItem[]> {
+  const r = await fetch(`${API}?action=robot_list`, { headers: headers() });
+  if (!r.ok) return [];
+  return (await r.json()).items || [];
+}
+
+export async function toggleRobot(ticker: string, enabled: boolean): Promise<void> {
+  await fetch(`${API}?action=robot_toggle`, { method: 'POST', headers: headers(), body: JSON.stringify({ ticker, enabled }) });
 }

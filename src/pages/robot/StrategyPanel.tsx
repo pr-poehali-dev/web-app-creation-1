@@ -11,7 +11,7 @@ import { FLAGS, GROUPS } from './StrategyFields';
 
 type Limits = Record<string, { min: number; max: number }>;
 
-export default function StrategyPanel() {
+export default function StrategyPanel({ robot = '', onSaved }: { robot?: string; onSaved?: () => void }) {
   const { toast } = useToast();
   const [cfg, setCfg] = useState<StrategySettings | null>(null);
   const [limits, setLimits] = useState<Limits>({});
@@ -24,10 +24,10 @@ export default function StrategyPanel() {
   };
 
   const load = useCallback(async () => {
-    const d = await loadStrategy();
+    const d = await loadStrategy(robot);
     apply(d.settings);
     setLimits(d.limits);
-  }, []);
+  }, [robot]);
 
   useEffect(() => {
     load();
@@ -47,10 +47,11 @@ export default function StrategyPanel() {
 
   const save = async () => {
     setSaving(true);
-    const res = await saveStrategy({ ...cfg, skip_hours: parseHours() });
+    const res = await saveStrategy({ ...cfg, skip_hours: parseHours() }, robot);
     setSaving(false);
     if (res) {
       apply(res);
+      onSaved?.();
       toast({ title: 'Настройки сохранены', description: 'Новые значения применятся при следующей проверке рынка и в тесте на истории.' });
     } else {
       toast({ title: 'Не удалось сохранить', variant: 'destructive' });
@@ -59,10 +60,11 @@ export default function StrategyPanel() {
 
   const reset = async () => {
     setSaving(true);
-    const res = await saveStrategy(null);
+    const res = await saveStrategy(null, robot);
     setSaving(false);
     if (res) {
       apply(res);
+      onSaved?.();
       toast({ title: 'Возвращены проверенные настройки' });
     }
   };
@@ -70,8 +72,8 @@ export default function StrategyPanel() {
   return (
     <div className="space-y-4">
       <p className="text-sm text-muted-foreground">
-        Здесь можно изменить любой показатель, по которому торгует трендовый робот Brent. Изменения влияют на новые сигналы и на тест на истории.
-        Проверенные настройки дали +25% за 11 месяцев при просадке 6%. Любое изменение сначала проверьте во вкладке «Тест на истории».
+        Здесь можно изменить любой показатель, по которому торгует робот. Изменения влияют на новые сигналы и на тест на истории.
+        Проверенные настройки подбирались под Brent: +25% за 11 месяцев при просадке 6%. Любое изменение сначала проверьте во вкладке «Тест на истории».
       </p>
 
       <Card>

@@ -12,7 +12,7 @@ import RulesList from './robot/RulesList';
 import RuleEfficiency from './robot/RuleEfficiency';
 import TokenExpiry from './robot/TokenExpiry';
 import BacktestPanel from './robot/BacktestPanel';
-import StrategyPanel from './robot/StrategyPanel';
+import MyRobots from './robot/MyRobots';
 import SignalsList from './robot/SignalsList';
 import { loadRules, loadSignals, loadDataSource, runRobotNow, type Rule, type Signal, type Stats, type RuleStats } from './robot/robotApi';
 
@@ -96,7 +96,7 @@ export default function AdminRobot({ isAuthenticated, onLogout }: Props) {
               <TabsTrigger value="signals">Сигналы</TabsTrigger>
               <TabsTrigger value="rules">Мои правила</TabsTrigger>
               <TabsTrigger value="eff">Эффективность</TabsTrigger>
-              <TabsTrigger value="strategy">Настройки робота</TabsTrigger>
+              <TabsTrigger value="robots">Мои роботы</TabsTrigger>
               <TabsTrigger value="test">Тест на истории</TabsTrigger>
               <TabsTrigger value="new">Новое правило</TabsTrigger>
             </TabsList>
@@ -109,8 +109,8 @@ export default function AdminRobot({ isAuthenticated, onLogout }: Props) {
             <TabsContent value="rules">
               <RulesList rules={rules} onChanged={refresh} />
             </TabsContent>
-            <TabsContent value="strategy">
-              <StrategyPanel />
+            <TabsContent value="robots">
+              <MyRobots />
             </TabsContent>
             <TabsContent value="test">
               <BacktestPanel rules={rules} />
