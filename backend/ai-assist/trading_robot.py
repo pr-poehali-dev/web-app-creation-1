@@ -6,6 +6,7 @@ from urllib.parse import urlencode
 import psycopg2
 import requests
 import backtest
+import indicators
 import rules_engine
 from psycopg2.extras import RealDictCursor
 
@@ -286,7 +287,12 @@ def hourly_candles(ticker: str, kind: str) -> list:
     return get_candles(ticker, kind, 60)
 
 
-def analyze(candles: list, allow_short: bool):
+DEFAULT_CFG = {"short_adx": 25, "skip_hours": [12, 13, 14]}
+
+
+def analyze(candles: list, allow_short: bool, cfg: dict = None):
+    if cfg is None:
+        cfg = DEFAULT_CFG if allow_short else {}
     closes = [c["close"] for c in candles]
     if len(closes) < 55:
         return None
@@ -312,16 +318,44 @@ def analyze(candles: list, allow_short: bool):
     up = last > sma50 and sma20 > sma50
     down = last < sma50 and sma20 < sma50
 
-    if up and last > hh:
+    adx_min = cfg.get("adx_min", 0)
+    short_adx = cfg.get("short_adx", 0)
+    skip_hours = cfg.get("skip_hours") or []
+    htf = cfg.get("htf", 0)
+    ax = None
+    if adx_min or short_adx:
+        ax = indicators.adx(candles[-120:])
+        if ax is None:
+            return None
+    if skip_hours:
+        try:
+            if int(candles[-1]["begin"][11:13]) in skip_hours:
+                return None
+        except ValueError:
+            pass
+    if adx_min and ax[0] < adx_min:
+        return None
+    long_ok = True
+    short_ok = down
+    if htf and len(closes) >= htf:
+        smah = sum(closes[-htf:]) / htf
+        long_ok = last > smah
+        short_ok = down and last < smah
+    if short_adx:
+        short_ok = short_ok and ax[0] >= short_adx and ax[2] > ax[1]
+    if cfg.get("no_short"):
+        allow_short = False
+
+    if up and long_ok and last > hh:
         return ("ЛОНГ", last, last - 1.5 * atr, last + 1.5 * atr, last + 3 * atr,
                 f"Пробой максимума 20 часов {hh:.2f} в восходящем тренде (SMA20>SMA50), RSI {rsi:.0f}", last, atr)
-    if up and rsi < 40:
+    if up and long_ok and rsi < 40:
         return ("ЛОНГ", last, min(ll, last - 1.5 * atr), last + 1.5 * atr, last + 3 * atr,
                 f"Откат в восходящем тренде, RSI {rsi:.0f}", last, atr)
-    if allow_short and down and last < ll:
+    if allow_short and short_ok and last < ll:
         return ("ШОРТ", last, last + 1.5 * atr, last - 1.5 * atr, last - 3 * atr,
                 f"Пробой минимума 20 часов {ll:.2f} в нисходящем тренде (SMA20<SMA50), RSI {rsi:.0f}", last, atr)
-    if allow_short and down and rsi > 60:
+    if allow_short and short_ok and rsi > 60 and not cfg.get("no_short_bounce"):
         return ("ШОРТ", last, max(hh, last + 1.5 * atr), last - 1.5 * atr, last - 3 * atr,
                 f"Отскок в нисходящем тренде, RSI {rsi:.0f}", last, atr)
     return None
@@ -751,7 +785,17 @@ def run_backtest(q: dict, event: dict) -> dict:
         ticker = q.get("ticker", "SBER")
         if kind == "future":
             ticker = resolve_future(ticker) or ticker
-        res = backtest.run_base(bcs_history(ticker, kind, 60, days), kind == "future", analyze)
+        cfg = {}
+        for k in ("adx_min", "short_adx", "htf"):
+            if q.get(k):
+                cfg[k] = float(q[k])
+        if q.get("skip_hours"):
+            cfg["skip_hours"] = [int(x) for x in q["skip_hours"].split(",")]
+        for k in ("no_short", "no_short_bounce"):
+            if q.get(k) == "1":
+                cfg[k] = True
+        res = backtest.run_base(bcs_history(ticker, kind, 60, days), kind == "future",
+                                lambda c, s: analyze(c, s, cfg if (cfg or q.get("custom") == "1") else None))
         title = f"{ticker} · базовая стратегия"
     res["title"] = title
     res["ticker"] = ticker
@@ -775,6 +819,18 @@ def run_backtest_batch(q: dict, event: dict) -> dict:
     split = body.get("split")
     cache = {}
     out = []
+    if body.get("base"):
+        candles = bcs_history(ticker, kind, 60, days)
+        for v in body["base"][:40]:
+            cfg = v.get("cfg") or {}
+            res = backtest.run_base(candles, kind == "future", lambda c, s, cfg=cfg: analyze(c, s, cfg))
+            tr = res["trades"]
+            item = {"name": v.get("name", ""), "all": backtest.summarize(tr)}
+            if split:
+                item["train"] = backtest.summarize([t for t in tr if t["date"] < split])
+                item["test"] = backtest.summarize([t for t in tr if t["date"] >= split])
+            out.append(item)
+        return resp(200, {"ticker": ticker, "variants": out})
     for v in (body.get("variants") or [])[:40]:
         rule = {
             "name": v.get("name", ""), "direction": v.get("direction", "ЛОНГ"), "timeframe": int(v.get("timeframe", 60)), "kind": kind,
