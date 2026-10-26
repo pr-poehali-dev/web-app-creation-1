@@ -1,0 +1,1 @@
+ALTER TABLE t_p42562714_web_app_creation_1.futures_news_events ADD COLUMN IF NOT EXISTS repeat_until TIMESTAMP;

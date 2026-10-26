@@ -74,6 +74,7 @@ export interface BotEvent {
   title: string;
   importance: number;
   repeat_weekly: boolean;
+  repeat_until?: string | null;
 }
 
 export interface BotBacktest extends BacktestResult {
@@ -103,5 +104,5 @@ export const botsBacktest = (id: number, days: string, proven = false) =>
   call<BotBacktest>('bots_backtest', { query: { id: String(id), days, ...(proven ? { proven: '1' } : {}) } });
 export const botsRun = (id: number) => call<{ status: string }>('bots_run', { body: { id } });
 export const botsEvents = async () => (await call<{ items: BotEvent[] }>('bots_events')).items;
-export const botsEventSave = (body: { title: string; event_time: string; importance: number; repeat_weekly: boolean }) => call('bots_event_save', { body });
+export const botsEventSave = (body: { title: string; event_time: string; importance: number; repeat_weekly: boolean; repeat_until?: string }) => call('bots_event_save', { body });
 export const botsEventDelete = (id: number) => call('bots_event_delete', { body: { id } });

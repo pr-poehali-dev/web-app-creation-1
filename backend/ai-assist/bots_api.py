@@ -120,7 +120,7 @@ def handle(action, q, event):
                     ov = None
             return tr.resp(200, eng.run_backtest(cur, b, days, proven=q.get("proven") == "1", overrides=ov))
         if action == "bots_events":
-            cur.execute(f"SELECT id, event_time, title, importance, repeat_weekly FROM {SCHEMA}.futures_news_events ORDER BY event_time DESC LIMIT 200")
+            cur.execute(f"SELECT id, event_time, title, importance, repeat_weekly, repeat_until FROM {SCHEMA}.futures_news_events ORDER BY event_time DESC LIMIT 200")
             return tr.resp(200, {"items": cur.fetchall()})
         if action == "bots_event_save":
             title = (body.get("title") or "").strip()[:200]
@@ -131,8 +131,14 @@ def handle(action, q, event):
             if not title:
                 return tr.resp(400, {"error": "Укажите название события"})
             imp = min(max(int(body.get("importance") or 2), 1), 3)
-            cur.execute(f"INSERT INTO {SCHEMA}.futures_news_events (event_time, title, importance, repeat_weekly) VALUES (%s,%s,%s,%s)",
-                        (when, title, imp, bool(body.get("repeat_weekly"))))
+            until = None
+            if body.get("repeat_until"):
+                try:
+                    until = datetime.strptime(str(body["repeat_until"]), "%Y-%m-%dT%H:%M")
+                except ValueError:
+                    return tr.resp(400, {"error": "Неверная дата окончания повтора"})
+            cur.execute(f"INSERT INTO {SCHEMA}.futures_news_events (event_time, title, importance, repeat_weekly, repeat_until) VALUES (%s,%s,%s,%s,%s)",
+                        (when, title, imp, bool(body.get("repeat_weekly")), until))
             conn.commit()
             return tr.resp(200, {"ok": True})
         if action == "bots_event_delete":

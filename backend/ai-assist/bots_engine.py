@@ -24,7 +24,7 @@ def load_cfg(row):
 
 
 def load_events(cur, start, end, min_importance):
-    cur.execute(f"SELECT id, event_time, title, importance, repeat_weekly FROM {SCHEMA}.futures_news_events")
+    cur.execute(f"SELECT id, event_time, title, importance, repeat_weekly, repeat_until FROM {SCHEMA}.futures_news_events")
     return occurrences(cur.fetchall(), start, end, min_importance)
 
 

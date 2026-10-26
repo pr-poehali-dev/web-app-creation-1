@@ -42,7 +42,7 @@ def _types(s, n):
 
 def find_setup(P, s, cfg, close, atr, i):
     cv = s * close
-    if cfg["use_wave3"] and len(P) >= 3:
+    if len(P) >= 3:
         L = P[-3:]
         if [p[2] for p in L] == _types(s, 3):
             v0, v1, v2 = (s * p[1] for p in L)
@@ -53,17 +53,6 @@ def find_setup(P, s, cfg, close, atr, i):
                     return {"kind": "3", "key": (L[0][0], L[2][0], s), "stop_v": v2 - cfg["stop_buf_atr"] * atr,
                             "target_v": v2 + cfg["ext3"] * w1,
                             "why": f"волна 3: откат волны 2 {retr:.0%} от волны 1, пробой вершины волны 1 {s * v1:.2f}"}
-    if cfg["use_wave5"] and len(P) >= 5:
-        L = P[-5:]
-        if [p[2] for p in L] == _types(s, 5):
-            v0, v1, v2, v3, v4 = (s * p[1] for p in L)
-            w1, w3 = v1 - v0, v3 - v2
-            if w1 > 0 and w3 >= w1 and v2 > v0 and v3 > v1 and v4 > v1 and i - L[4][3] <= cfg["max_wait_bars"]:
-                retr = (v3 - v4) / w3
-                if cfg["min_retr4"] <= retr <= cfg["max_retr4"] and cv > v3:
-                    return {"kind": "5", "key": (L[0][0], L[4][0], s), "stop_v": v4 - cfg["stop_buf_atr"] * atr,
-                            "target_v": v4 + cfg["w5_ratio"] * w1,
-                            "why": f"волна 5: волна 3 длиннее волны 1, волна 4 не заходит на волну 1, откат {retr:.0%}, пробой вершины волны 3 {s * v3:.2f}"}
     return None
 
 

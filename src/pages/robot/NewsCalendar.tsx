@@ -93,7 +93,7 @@ export default function NewsCalendar() {
                 <div className="font-medium">{e.title}</div>
                 <div className="text-xs text-muted-foreground">
                   {new Date(e.event_time).toLocaleString('ru-RU', { dateStyle: 'medium', timeStyle: 'short' })} · важность: {IMP[e.importance]}
-                  {e.repeat_weekly ? ' · каждую неделю' : ''}
+                  {e.repeat_weekly ? ` · каждую неделю${e.repeat_until ? ` до ${new Date(e.repeat_until).toLocaleDateString('ru-RU')}` : ''}` : ''}
                 </div>
               </div>
               <Button size="sm" variant="ghost" onClick={() => remove(e.id)}>

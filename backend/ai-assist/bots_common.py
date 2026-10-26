@@ -136,9 +136,10 @@ def occurrences(rows, start, end, min_importance):
             continue
         t = r["event_time"]
         if r.get("repeat_weekly"):
+            stop = min(end, r["repeat_until"]) if r.get("repeat_until") else end
             while t < start:
                 t += timedelta(days=7)
-            while t <= end:
+            while t <= stop:
                 out.append({"id": r["id"], "title": r["title"], "t": t, "importance": int(r["importance"])})
                 t += timedelta(days=7)
         elif start <= t <= end:
