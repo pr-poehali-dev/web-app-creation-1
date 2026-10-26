@@ -77,6 +77,10 @@ def _hourly_exit(st, s, hp, hr, hclose, hmacd, k, cfg, dth):
 def sim_abc(cfg, info, c5, hr, daily):
     trades, log = [], []
     nd = len(daily)
+    bar_min = 60 if cfg.get("entry_tf") == "60" else 5
+    if bar_min == 60:
+        c5 = hr
+    bar_len = timedelta(minutes=bar_min)
     if len(c5) < 200 or len(hr) < 60 or nd < cfg["trend_ema"] + 5:
         return trades, log
     dt5, dth, ddt = dts(c5), dts(hr), dts(daily)
@@ -92,10 +96,11 @@ def sim_abc(cfg, info, c5, hr, daily):
     zh = {"trend": 0, "hi": (0, hr[0]["high"]), "lo": (0, hr[0]["low"]), "ext": None, "p": []}
     hj, j, st, entry_i = 0, -1, None, None
     traded, warned = set(), set()
+    retry = None
     for i in range(1, len(c5)):
         bar = c5[i]
         new_h = False
-        while hj < len(hr) and dth[hj] + HOUR <= dt5[i] + BAR:
+        while hj < len(hr) and dth[hj] + HOUR <= dt5[i] + bar_len:
             if hatr[hj]:
                 zigzag_step(zh, hj, hr[hj], cfg["h_zz_atr"] * hatr[hj])
             hj += 1
@@ -130,10 +135,33 @@ def sim_abc(cfg, info, c5, hr, daily):
                     _finish(st, bar["close"], "срок удержания", bar["begin"])
             if st["closed"]:
                 log.append((bar["begin"], "exit", f"выход {st['dir']}: " + ", ".join(dict.fromkeys(f[2] for f in st["fixes"]))))
+                if cfg["retry_on"] and not st.get("retry") and not st["moved"] and st["fixes"][-1][2] == "стоп":
+                    s0 = sign(st["dir"])
+                    retry = {"dir": st["dir"], "stop0": st["init_stop"], "start": i, "ext": bar["low"] if s0 > 0 else bar["high"]}
                 st = None
             continue
         if st:
             continue
+        if retry:
+            s0 = sign(retry["dir"])
+            ext = bar["low"] if s0 > 0 else bar["high"]
+            if s0 * ext < s0 * retry["ext"]:
+                retry["ext"] = ext
+            if i - retry["start"] > cfg["retry_hours"] * 60 / bar_min:
+                retry = None
+            elif i > retry["start"] and s0 * bar["close"] > s0 * retry["stop0"]:
+                entry, stop = bar["close"], retry["ext"] - s0 * cfg["retry_buf_atr"] * atr[i]
+                if s0 * (entry - stop) > 0 and abs(entry - stop) <= cfg["max_stop_atr"] * atr[i] and not clearing_block(cfg, dt5[i]) and _days_left(info, dt5[i]) > cfg["expiry_days"]:
+                    n, note = size(cfg, info, entry, stop)
+                    if n >= 1:
+                        st = new_state({"dir": retry["dir"], "entry": entry, "stop": stop, "take": None, "scenario": "повторный вход"}, bar["begin"])
+                        st["moved"], st["retry"], st["h_atr"] = False, True, (hatr[hj - 1] if hj and hatr[hj - 1] else atr[i] * 3)
+                        entry_i = i
+                        trades.append(_mk(st, n, note))
+                        log.append((bar["begin"], "entry", f"повторный вход {retry['dir']} {n} шт. по {entry:.2f}: прежний стоп {retry['stop0']:.2f} был выбит, цена вернулась за него, новый стоп за свежим экстремумом {stop:.2f}"))
+                        retry = None
+                        continue
+                retry = None
         up = (hclose[hj - 1] > hema[hj - 1]) if hour_trend else (dclose[j] > dema[j])
         d = "ЛОНГ" if up else "ШОРТ"
         if d == "ШОРТ" and not cfg["allow_short"]:
@@ -169,6 +197,7 @@ def sim_abc(cfg, info, c5, hr, daily):
         st = new_state({"dir": d, "entry": entry, "stop": stop, "take": None, "scenario": "волна C"}, bar["begin"])
         st["moved"], st["h_atr"] = False, (hatr[hj - 1] if hj and hatr[hj - 1] else atr[i] * 3)
         entry_i = i
+        retry = None
         trades.append(_mk(st, n, note))
         log.append((bar["begin"], "entry", f"вход {d} {n} шт. по {entry:.2f} на волне C по дневному тренду: {su['why']}; стоп {stop:.2f}, ориентир волны C {su['target']:.2f}"))
     return trades, log
