@@ -82,9 +82,11 @@ def sim_abc(cfg, info, c5, hr, daily):
     dt5, dth, ddt = dts(c5), dts(hr), dts(daily)
     dclose = [x["close"] for x in daily]
     dema = ema_series(dclose, cfg["trend_ema"])
+    hour_trend = cfg.get("trend_tf") == "60"
     hclose = [x["close"] for x in hr]
     hatr = atr_series(hr, 14)
     hmacd, _ = macd_series(hclose)
+    hema = ema_series(hclose, cfg["trend_ema_h"])
     atr = atr_series(c5, 14)
     z = {"trend": 0, "hi": (0, c5[0]["high"]), "lo": (0, c5[0]["low"]), "ext": None, "p": []}
     zh = {"trend": 0, "hi": (0, hr[0]["high"]), "lo": (0, hr[0]["low"]), "ext": None, "p": []}
@@ -103,7 +105,7 @@ def sim_abc(cfg, info, c5, hr, daily):
         if not atr[i]:
             continue
         zigzag_step(z, i, bar, cfg["zz_atr"] * atr[i])
-        if j < cfg["trend_ema"]:
+        if j < cfg["trend_ema"] or (hour_trend and hj < cfg["trend_ema_h"] + 2):
             continue
         if st and i > entry_i:
             s = sign(st["dir"])
@@ -132,7 +134,7 @@ def sim_abc(cfg, info, c5, hr, daily):
             continue
         if st:
             continue
-        up = dclose[j] > dema[j]
+        up = (hclose[hj - 1] > hema[hj - 1]) if hour_trend else (dclose[j] > dema[j])
         d = "ЛОНГ" if up else "ШОРТ"
         if d == "ШОРТ" and not cfg["allow_short"]:
             continue
