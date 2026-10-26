@@ -6,17 +6,23 @@ import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, 
 import Icon from '@/components/ui/icon';
 import type { Bot } from './botsApi';
 
-const MODES: { id: Bot['mode']; label: string }[] = [
-  { id: 'off', label: 'Выключен' },
-  { id: 'paper', label: 'Тест' },
-  { id: 'live', label: 'Боевой' },
+const MODES: { id: Bot['mode']; icon: string; action: string; current: string; active: string }[] = [
+  { id: 'off', icon: 'Power', action: 'Выключить', current: 'Выключен', active: 'bg-slate-700 text-white disabled:opacity-100' },
+  { id: 'paper', icon: 'Play', action: 'Запустить тест', current: 'Тест идёт', active: 'bg-blue-600 text-white disabled:opacity-100' },
+  { id: 'live', icon: 'Zap', action: 'Боевой режим', current: 'Боевой идёт', active: 'bg-red-600 text-white disabled:opacity-100' },
 ];
+
+const STATUS: Record<Bot['mode'], { text: string; cls: string; dot: string }> = {
+  off: { text: 'Выключен: сигналов нет', cls: 'bg-slate-200 text-slate-800', dot: 'bg-slate-500' },
+  paper: { text: 'Работает в тесте', cls: 'bg-blue-100 text-blue-800', dot: 'bg-blue-600 animate-pulse' },
+  live: { text: 'Работает в боевом режиме', cls: 'bg-red-100 text-red-800', dot: 'bg-red-600 animate-pulse' },
+};
 
 const pct = (v: number) => `${v > 0 ? '+' : ''}${v.toFixed(2)}%`;
 
 interface Props {
   bot: Bot;
-  onMode: (b: Bot, mode: Bot['mode']) => void;
+  onMode: (b: Bot, mode: Bot['mode']) => Promise<void> | void;
   onOpen: (b: Bot, tab: string) => void;
   onDelete: (b: Bot) => void;
 }
@@ -24,6 +30,12 @@ interface Props {
 export default function BotCard({ bot, onMode, onOpen, onDelete }: Props) {
   const [confirm, setConfirm] = useState(false);
   const [del, setDel] = useState(false);
+  const [busy, setBusy] = useState(false);
+  const pick = async (m: Bot['mode']) => {
+    setBusy(true);
+    await onMode(bot, m);
+    setBusy(false);
+  };
   const st = bot.mode === 'live' ? bot.live : bot.paper;
   const shortPaper = bot.mode === 'live' && bot.paper_days < 30;
 
@@ -36,23 +48,30 @@ export default function BotCard({ bot, onMode, onOpen, onDelete }: Props) {
           <Badge variant="outline">{bot.type_title}</Badge>
           <Badge variant="secondary">{bot.asset_code}{bot.contract ? ` · ${bot.contract}` : ''}</Badge>
           {bot.days_left !== null && bot.days_left <= 10 && <Badge className="bg-amber-600 text-white">до экспирации {bot.days_left} дн.</Badge>}
-          <div className="ml-auto flex items-center gap-2">
-            <span className="text-xs text-muted-foreground">Режим:</span>
-          <div className="flex rounded-md border p-0.5">
-            {MODES.map((m) => (
-              <button
+          <span className={`ml-auto inline-flex items-center gap-2 rounded-full px-3 py-1 text-sm font-semibold ${STATUS[bot.mode].cls}`}>
+            <span className={`h-2.5 w-2.5 rounded-full ${STATUS[bot.mode].dot}`} />
+            {STATUS[bot.mode].text}
+          </span>
+        </div>
+        <div className="flex flex-wrap items-center gap-2 rounded-md bg-muted/50 p-2">
+          <span className="text-xs text-muted-foreground">Переключить:</span>
+          {MODES.map((m) => {
+            const active = bot.mode === m.id;
+            return (
+              <Button
                 key={m.id}
+                size="sm"
                 type="button"
-                onClick={() => (m.id === 'live' && bot.mode !== 'live' ? setConfirm(true) : m.id !== bot.mode && onMode(bot, m.id))}
-                className={`rounded px-3 py-1 text-xs font-medium ${
-                  bot.mode === m.id ? (m.id === 'live' ? 'bg-red-600 text-white' : m.id === 'paper' ? 'bg-blue-600 text-white' : 'bg-slate-700 text-white') : 'text-muted-foreground hover:bg-muted'
-                }`}
+                disabled={active || busy}
+                variant={active ? 'default' : 'outline'}
+                className={active ? m.active : ''}
+                onClick={() => (m.id === 'live' ? setConfirm(true) : pick(m.id))}
               >
-                {m.label}
-              </button>
-            ))}
-          </div>
-          </div>
+                <Icon name={active ? 'Check' : m.icon} className="mr-1 h-4 w-4" />
+                {active ? m.current : m.action}
+              </Button>
+            );
+          })}
         </div>
         <div className="grid grid-cols-2 gap-2 text-sm sm:grid-cols-4">
           <div>
@@ -103,7 +122,7 @@ export default function BotCard({ bot, onMode, onOpen, onDelete }: Props) {
           </AlertDialogHeader>
           <AlertDialogFooter>
             <AlertDialogCancel>Отмена</AlertDialogCancel>
-            <AlertDialogAction onClick={() => onMode(bot, 'live')}>Включить боевой</AlertDialogAction>
+            <AlertDialogAction onClick={() => pick('live')}>Включить боевой</AlertDialogAction>
           </AlertDialogFooter>
         </AlertDialogContent>
       </AlertDialog>

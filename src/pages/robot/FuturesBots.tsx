@@ -25,8 +25,8 @@ export default function FuturesBots() {
   const mode = async (b: Bot, m: Bot['mode']) => {
     try {
       await botsMode(b.id, m, m === 'live');
-      toast({ title: m === 'off' ? `${b.name}: выключен` : m === 'paper' ? `${b.name}: тестовый режим` : `${b.name}: боевой режим` });
-      refresh();
+      toast({ title: m === 'off' ? `${b.name}: выключен` : m === 'paper' ? `${b.name}: тестовый режим запущен` : `${b.name}: боевой режим запущен` });
+      await refresh();
     } catch (e) {
       toast({ title: e instanceof Error ? e.message : 'Не удалось сменить режим', variant: 'destructive' });
     }
