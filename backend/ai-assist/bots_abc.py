@@ -41,7 +41,7 @@ def find_abc(P, s, cfg, close, atr, i):
     near4 = abs(v[6] - v[4]) <= cfg["a_near4_atr"] * atr if cfg["a_near4_atr"] > 0 else True
     if not near4:
         return None
-    stop_w = v[5] + cfg["stop_buf_atr"] * atr
+    stop_w = v[5] + cfg["stop_buf_atr"] * atr + cfg.get("stop_buf_pts", 0)
     target_w = v[7] - cfg["c_ratio"] * (v[5] - v[6])
     why = (f"{'двойная вершина' if double and s > 0 else 'двойное дно' if double else 'пять волн'} импульса {s * v[5]:.2f}; "
            f"волна A {a_retr:.0%} от волны 5, волна B {b_retr:.0%} от A, вершина B ниже пика волны 5")
@@ -150,7 +150,7 @@ def sim_abc(cfg, info, c5, hr, daily):
             if i - retry["start"] > cfg["retry_hours"] * 60 / bar_min:
                 retry = None
             elif i > retry["start"] and s0 * bar["close"] > s0 * retry["stop0"]:
-                entry, stop = bar["close"], retry["ext"] - s0 * cfg["retry_buf_atr"] * atr[i]
+                entry, stop = bar["close"], retry["ext"] - s0 * (cfg["retry_buf_atr"] * atr[i] + cfg.get("stop_buf_pts", 0))
                 if s0 * (entry - stop) > 0 and abs(entry - stop) <= cfg["max_stop_atr"] * atr[i] and not clearing_block(cfg, dt5[i]) and _days_left(info, dt5[i]) > cfg["expiry_days"]:
                     n, note = size(cfg, info, entry, stop)
                     if n >= 1:
