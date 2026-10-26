@@ -1,11 +1,7 @@
 from datetime import datetime, timedelta
 
-from bots_common import FMT, atr_series, clearing_block, dts, new_state, sign, size
+from bots_common import FMT, atr_series, clearing_block, dts, fix, new_state, sign, size
 from bots_logic import _days_left, _finish, _mk
-
-
-def _vol(c):
-    return c.get("volume") or 0
 
 
 def _mean(vals):
@@ -35,37 +31,66 @@ def _fractals15(c5, dt5):
     return found
 
 
-def find_impulse(c, atr, i, s, cfg):
-    lo_i = max(0, i - int(cfg["window_bars"]))
-    if i - lo_i < 6:
-        return None
+def _views(c, s):
     if s > 0:
-        b = max(range(lo_i, i), key=lambda k: (c[k]["high"], k))
-        a = min(range(lo_i, b + 1), key=lambda k: (c[k]["low"], -k))
-        start, end = c[a]["low"], c[b]["high"]
-    else:
-        b = min(range(lo_i, i), key=lambda k: (c[k]["low"], k))
-        a = max(range(lo_i, b + 1), key=lambda k: (c[k]["high"], -k))
-        start, end = c[a]["high"], c[b]["low"]
-    leg = s * (end - start)
+        return (lambda k: c[k]["high"]), (lambda k: c[k]["low"]), (lambda k: c[k]["open"]), (lambda k: c[k]["close"])
+    return (lambda k: -c[k]["low"]), (lambda k: -c[k]["high"]), (lambda k: -c[k]["open"]), (lambda k: -c[k]["close"])
+
+
+def find_setup(c, atr, i, s, cfg):
+    H, L, O, C = _views(c, s)
+    lo_i = max(0, i - int(cfg["window_bars"]))
+    if i - lo_i < 10:
+        return None
+    b = max(range(lo_i, i), key=lambda k: (H(k), k))
+    if i - b < 3 or i - b > cfg["max_wait_bars"]:
+        return None
+    a = min(range(max(0, b - int(cfg["max_impulse_bars"])), b + 1), key=lambda k: (L(k), -k))
+    start, end = L(a), H(b)
+    leg = end - start
     if b <= a or not atr[b] or leg < cfg["min_impulse_atr"] * atr[b]:
         return None
-    if b - a > cfg["max_impulse_bars"] or i - b > cfg["max_wait_bars"] or i - b < 2:
+    e = min(range(b + 1, i + 1), key=lambda k: (L(k), -k))
+    low = L(e)
+    if low <= start:
+        return {"dead": True, "key": (a, b, s)}
+    depth = (low - start) / leg * 100
+    if not (cfg["turn_min_pct"] <= depth <= cfg["turn_max_pct"]):
         return None
     if cfg["use_volume"]:
-        base = _mean([_vol(c[k]) for k in range(max(0, a - 20), a)])
-        imp = _mean([_vol(c[k]) for k in range(a, b + 1)])
-        pull = _mean([_vol(c[k]) for k in range(b + 1, i)])
-        if base > 0 and imp < cfg["vol_mult"] * base:
+        cb = int(cfg["calm_bars"])
+        calm = range(max(0, a - cb), a)
+        base = range(max(0, a - cb - int(cfg["base_bars"])), max(0, a - cb))
+        if len(calm) < cb // 2 or len(base) < 20:
             return None
-        if imp > 0 and pull > cfg["pull_vol"] * imp:
+        v_calm, v_base = _mean([c[k]["volume"] for k in calm]), _mean([c[k]["volume"] for k in base])
+        r_calm, r_base = _mean([c[k]["high"] - c[k]["low"] for k in calm]), _mean([c[k]["high"] - c[k]["low"] for k in base])
+        if v_base > 0 and v_calm > cfg["calm_vol"] * v_base:
             return None
-    return {"a": a, "b": b, "start": start, "end": end, "leg": leg}
+        if r_base > 0 and r_calm > cfg["calm_range"] * r_base:
+            return None
+        v_imp = _mean([c[k]["volume"] for k in range(a, b + 1)])
+        if v_calm > 0 and v_imp < cfg["vol_mult"] * v_calm:
+            return None
+        pull = [c[k]["volume"] for k in range(b + 1, i)]
+        v_pull = _mean(pull)
+        if v_imp > 0 and v_pull > cfg["pull_vol"] * v_imp:
+            return None
+        if pull and c[i]["volume"] < cfg["confirm_vol"] * v_pull:
+            return None
+    if not (C(i) > O(i) and C(i) > C(i - 1)):
+        return None
+    f = a
+    for k in range(a, max(2, a - 40), -1):
+        if all(L(k) < L(k + d) for d in (-2, -1, 1, 2)):
+            f = k
+            break
+    return {"dead": False, "key": (a, b, s), "a": a, "b": b, "start": start, "end": end, "fr": L(f), "depth": depth}
 
 
 def sim_pullback(cfg, info, c5):
     trades, log = [], []
-    if len(c5) < 120:
+    if len(c5) < 200:
         return trades, log
     dt5 = dts(c5)
     atr = atr_series(c5, 14)
@@ -76,15 +101,25 @@ def sim_pullback(cfg, info, c5):
         if st and i > entry_i:
             s = sign(st["dir"])
             if (bar["low"] <= st["stop"]) if s > 0 else (bar["high"] >= st["stop"]):
-                _finish(st, st["stop"], "стоп", bar["begin"])
+                why = "трейлинг-стоп" if st.get("trailed") else ("стоп в безубытке" if st.get("tp1") else "стоп")
+                _finish(st, st["stop"], why, bar["begin"])
             else:
-                if cfg["exit_mode"] == "impulse_high" and ((bar["high"] >= st["take"]) if s > 0 else (bar["low"] <= st["take"])):
-                    _finish(st, st["take"], "хай импульса", bar["begin"])
-                elif cfg["exit_mode"] == "fractal15":
+                if not st.get("tp1") and ((bar["high"] >= st["take"]) if s > 0 else (bar["low"] <= st["take"])):
+                    fix(st, cfg["tp1_share"] / 100, st["take"], "часть на вершине импульса")
+                    st["tp1"], st["stop"] = True, st["entry"]
+                    log.append((bar["begin"], "move", f"{st['dir']}: зафиксирована часть позиции по {st['take']:.2f}, стоп перенесён в безубыток {st['entry']:.2f}"))
+                if st.get("tp1") and not st["closed"]:
                     for kind, v in fr15.get(i, []):
-                        if (kind == "H" and s > 0 and v > st["entry"]) or (kind == "L" and s < 0 and v < st["entry"]):
-                            _finish(st, bar["close"], "хай на 15 минутах" if s > 0 else "лой на 15 минутах", bar["begin"])
-                            break
+                        if s > 0 and kind == "L":
+                            new = v - cfg["trail_buf_pts"]
+                            if new > st["stop"] and new < bar["close"]:
+                                st["stop"], st["trailed"] = new, True
+                                log.append((bar["begin"], "move", f"стоп подтянут под 15-минутный фрактал: {new:.2f}"))
+                        elif s < 0 and kind == "H":
+                            new = v + cfg["trail_buf_pts"]
+                            if new < st["stop"] and new > bar["close"]:
+                                st["stop"], st["trailed"] = new, True
+                                log.append((bar["begin"], "move", f"стоп подтянут над 15-минутным фракталом: {new:.2f}"))
                 if not st["closed"] and dt5[i] - datetime.strptime(st["open_time"], FMT) >= timedelta(hours=cfg["max_hold_hours"]):
                     _finish(st, bar["close"], "срок удержания", bar["begin"])
             if st["closed"]:
@@ -96,39 +131,40 @@ def sim_pullback(cfg, info, c5):
         for s in (1, -1):
             if s < 0 and not cfg["allow_short"]:
                 continue
-            imp = find_impulse(c5, atr, i, s, cfg)
-            if not imp:
+            su = find_setup(c5, atr, i, s, cfg)
+            if not su or su["key"] in traded:
                 continue
-            key = (imp["a"], imp["b"], s)
-            if key in traded:
+            traded.add(su["key"])
+            if su["dead"]:
                 continue
-            level = imp["start"] + s * cfg["entry_pct"] / 100 * imp["leg"]
-            touched = (bar["low"] <= level) if s > 0 else (bar["high"] >= level)
-            if not touched:
-                continue
-            traded.add(key)
             d = "ЛОНГ" if s > 0 else "ШОРТ"
-            stop = imp["start"] - s * (cfg["stop_buf_atr"] * atr[i] + cfg["stop_buf_pts"])
-            entry = level
+            entry = bar["close"]
+            stop = s * (su["fr"] - cfg["stop_buf_pts"])
+            target = s * su["end"]
+            risk, reward = abs(entry - stop), s * (target - entry)
             reject = ""
-            if s * (entry - stop) <= 0 or ((bar["low"] <= stop) if s > 0 else (bar["high"] >= stop)):
-                reject = "цена уже за началом импульса"
-            elif abs(entry - stop) > cfg["max_stop_atr"] * atr[i]:
-                reject = f"стоп слишком далеко ({abs(entry - stop) / atr[i]:.1f} ATR, максимум {cfg['max_stop_atr']})"
+            if s * (entry - stop) <= 0:
+                reject = "стоп не по ту сторону входа"
+            elif reward <= 0:
+                reject = "цена уже у вершины импульса"
+            elif risk > cfg["max_stop_atr"] * atr[i]:
+                reject = f"стоп слишком далеко ({risk / atr[i]:.1f} ATR, максимум {cfg['max_stop_atr']})"
+            elif reward / risk < cfg["min_rr"]:
+                reject = f"до вершины импульса {reward / risk:.2f} от риска, меньше минимума {cfg['min_rr']}"
             elif _days_left(info, dt5[i]) <= cfg["expiry_days"]:
                 reject = "близка экспирация контракта"
             elif clearing_block(cfg, dt5[i]):
                 reject = "рядом клиринг"
             if reject:
-                log.append((bar["begin"], "skip", f"{d}, импульс {imp['start']:.2f}→{imp['end']:.2f}: пропуск, {reject}"))
+                log.append((bar["begin"], "skip", f"{d}, импульс {s * su['start']:.2f}→{target:.2f}: пропуск, {reject}"))
                 continue
             cnt, note = size(cfg, info, entry, stop)
             if cnt < 1:
                 log.append((bar["begin"], "skip", f"{d}: 1 контракт не укладывается в риск или обеспечение ({note})"))
                 continue
-            st = new_state({"dir": d, "entry": entry, "stop": stop, "take": imp["end"], "scenario": "откат после импульса"}, bar["begin"])
+            st = new_state({"dir": d, "entry": entry, "stop": stop, "take": target, "scenario": "откат после импульса"}, bar["begin"])
             entry_i = i
             trades.append(_mk(st, cnt, note))
-            log.append((bar["begin"], "entry", f"вход {d} {cnt} шт. по {entry:.2f}: импульс {imp['start']:.2f}→{imp['end']:.2f} за {imp['b'] - imp['a']} баров, цена откатила к {cfg['entry_pct']:.0f}% пути от начала; стоп за началом {stop:.2f}"))
+            log.append((bar["begin"], "entry", f"вход {d} {cnt} шт. по {entry:.2f}: после затишья импульс {s * su['start']:.2f}→{target:.2f}, откат {su['depth']:.0f}% с затуханием объёма, объём вновь растёт; стоп под фракталом {stop:.2f}, первая цель {target:.2f}"))
             break
     return trades, log
