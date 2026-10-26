@@ -3,6 +3,7 @@ from datetime import datetime, timedelta
 
 import backtest
 import bots_data as data
+import bots_elliott as elliott
 import bots_logic as logic
 import bots_schema as schema
 from bots_common import FMT, occurrences, result, trade_row
@@ -11,7 +12,7 @@ import trading_robot as tr
 
 SCHEMA = tr.SCHEMA
 MODE_LABEL = {"paper": "ТЕСТ", "live": "БОЕВОЙ"}
-TYPE_LABEL = {"intraday": "Внутридневной", "trend": "Среднесрочный", "news": "Новостной"}
+TYPE_LABEL = {"intraday": "Внутридневной", "trend": "Среднесрочный", "news": "Новостной", "elliott": "Волны Эллиотта"}
 
 
 def load_cfg(row):
@@ -40,6 +41,10 @@ def simulate(cur, bot_type, cfg, info, secid, days):
         c5 = data.history(secid, 5, days)
         t, log = logic.sim_intraday(cfg, info, c5)
         return t, log, c5
+    if bot_type == "elliott":
+        trig = data.history(secid, int(cfg["trigger_tf"]), days + 60)
+        t, log = elliott.sim_elliott(cfg, info, trig)
+        return t, log, trig
     if bot_type == "trend":
         daily = data.history(secid, 1440, days + 220)
         trig = data.history(secid, int(cfg["trigger_tf"]), days + 60)
@@ -115,7 +120,7 @@ def sync_live(conn, cur, bot, cfg, mode, secid, trades, log, candles, now, allow
     bot_id = bot["id"]
     cur.execute(f"SELECT * FROM {SCHEMA}.robot_signals WHERE bot_id=%s AND status='open'", (bot_id,))
     open_rows = {r["signal_key"]: r for r in cur.fetchall()}
-    horizon = now.replace(tzinfo=None) - timedelta(minutes=20 if bot["bot_type"] != "trend" else 250)
+    horizon = now.replace(tzinfo=None) - timedelta(minutes=20 if bot["bot_type"] in ("intraday", "news") else 250)
     events = []
     for a, kind, text in log:
         try:
@@ -142,7 +147,7 @@ def sync_live(conn, cur, bot, cfg, mode, secid, trades, log, candles, now, allow
             cur.execute(
                 f"INSERT INTO {SCHEMA}.robot_signals (ticker, asset_name, timeframe, direction, price, entry, stop_loss, target1, target2, reason, sent, "
                 f"bot_id, bot_mode, signal_key, bot_state, contracts) VALUES (%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s)",
-                (secid, bot["name"], "5m" if bot["bot_type"] != "trend" else "1h", st["dir"], st["entry"], st["entry"], st["init_stop"],
+                (secid, bot["name"], "5m" if bot["bot_type"] in ("intraday", "news") else "1h", st["dir"], st["entry"], st["entry"], st["init_stop"],
                  st.get("take") or st["entry"], st.get("take") or st["entry"], f"[{MODE_LABEL[mode]}] {why}", sent, bot_id, mode, key,
                  json.dumps({"fixes": st["fixes"]}), n))
             events.append(f"{bot['name']}: вход {st['dir']} {secid}")
@@ -169,7 +174,7 @@ def close_stale(conn, cur, bot, cfg, mode, now):
     out = []
     for r in cur.fetchall():
         same_day = r["created_at"].date() == now.replace(tzinfo=None).date()
-        if bot["bot_type"] == "trend" or same_day:
+        if bot["bot_type"] in ("trend", "elliott") or same_day:
             continue
         candles = tr.get_candles(r["ticker"], "future", 5)
         if not candles:
@@ -219,7 +224,7 @@ def run_bot(conn, cur, bot, now, force=False):
     events = []
     try:
         events += close_stale(conn, cur, bot, cfg, mode, now)
-        if bot["bot_type"] == "trend":
+        if bot["bot_type"] in ("trend", "elliott"):
             events += roll_open(conn, cur, bot, cfg, mode)
         if not force and not in_session(now):
             status = "рынок закрыт"
@@ -236,6 +241,9 @@ def run_bot(conn, cur, bot, now, force=False):
                     trig = data.history(c["secid"], int(cfg["trigger_tf"]), 90)
                     trades, log = logic.sim_trend(cfg, c, daily, trig)
                     candles = trig
+                elif bot["bot_type"] == "elliott":
+                    candles = data.history(c["secid"], int(cfg["trigger_tf"]), 60)
+                    trades, log = elliott.sim_elliott(cfg, c, candles)
                 elif bot["bot_type"] == "intraday":
                     candles = tr.get_candles(c["secid"], "future", 5)
                     trades, log = logic.sim_intraday(cfg, c, candles)

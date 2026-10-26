@@ -7,7 +7,7 @@ import Icon from '@/components/ui/icon';
 import { useToast } from '@/hooks/use-toast';
 import { botsSave, type BotMeta } from './botsApi';
 
-const ICONS: Record<string, string> = { intraday: 'Zap', trend: 'TrendingUp', news: 'Newspaper' };
+const ICONS: Record<string, string> = { intraday: 'Zap', trend: 'TrendingUp', news: 'Newspaper', elliott: 'Waves' };
 
 interface Props {
   meta: BotMeta;
