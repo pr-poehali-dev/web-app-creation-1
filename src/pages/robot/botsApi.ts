@@ -26,6 +26,7 @@ export interface BotTypeMeta {
   title: string;
   desc: string;
   timeframe: string;
+  market?: string;
   groups: BotGroup[];
   defaults: Record<string, number | boolean | string>;
 }

@@ -2,6 +2,7 @@ import json
 from datetime import datetime, timedelta
 
 import backtest
+import bots_crypto as crypto
 import bots_data as data
 import bots_abc as abc_bot
 import bots_pullback as pullback
@@ -14,7 +15,7 @@ import trading_robot as tr
 
 SCHEMA = tr.SCHEMA
 MODE_LABEL = {"paper": "ТЕСТ", "live": "БОЕВОЙ"}
-TYPE_LABEL = {"intraday": "Внутридневной", "trend": "Среднесрочный", "news": "Новостной", "elliott": "Волны Эллиотта", "abc": "Волны Эллиотта A-B-C", "pullback": "Откат после импульса"}
+TYPE_LABEL = {"intraday": "Внутридневной", "trend": "Среднесрочный", "news": "Новостной", "elliott": "Волны Эллиотта", "abc": "Волны Эллиотта A-B-C", "pullback": "Откат после импульса", "ctrend": "Крипто: тренд (Bybit)"}
 
 
 def load_cfg(row):
@@ -22,7 +23,13 @@ def load_cfg(row):
         raw = json.loads(row.get("settings") or "{}")
     except ValueError:
         raw = {}
-    return schema.sanitize(row["bot_type"], raw)
+    return _hidden(row["bot_type"], schema.sanitize(row["bot_type"], raw))
+
+
+def _hidden(bot_type, cfg):
+    if bot_type == "ctrend":
+        cfg = dict(cfg, expiry_days=0, roll_days=0, roll_slippage_pct=0, clearing_guard_min=0)
+    return cfg
 
 
 def load_events(cur, start, end, min_importance):
@@ -30,7 +37,10 @@ def load_events(cur, start, end, min_importance):
     return occurrences(cur.fetchall(), start, end, min_importance)
 
 
-def pick_contract(asset, expiry_days):
+def pick_contract(asset, expiry_days, cfg=None):
+    if crypto.is_crypto(asset):
+        i = crypto.info_for(asset, cfg or {})
+        return dict(i, days_left=9999, margin=i["margin"])
     cs = data.contracts(asset)
     for c in cs:
         if c["days_left"] > expiry_days:
@@ -57,7 +67,7 @@ def simulate(cur, bot_type, cfg, info, secid, days):
         trig = data.history(secid, int(cfg["trigger_tf"]), days + 60)
         t, log = elliott.sim_elliott(cfg, info, trig)
         return t, log, trig
-    if bot_type == "trend":
+    if bot_type in ("trend", "ctrend"):
         daily = data.history(secid, 1440, days + 220)
         trig = data.history(secid, int(cfg["trigger_tf"]), days + 60)
         t, log = logic.sim_trend(cfg, info, daily, trig)
@@ -87,7 +97,7 @@ def run_backtest(cur, bot, days, proven=False, overrides=None):
     cfg = schema.defaults(bot["bot_type"]) if proven else load_cfg(bot)
     if overrides:
         cfg = schema.sanitize(bot["bot_type"], dict(cfg, **overrides))
-    c = pick_contract(bot["asset_code"], 0)
+    c = pick_contract(bot["asset_code"], 0, cfg)
     if not c:
         return {"error": "Контракт не найден"}
     trades, log, candles = simulate(cur, bot["bot_type"], cfg, c, c["secid"], days)
@@ -120,10 +130,16 @@ def _tp(v):
     return f"{v:.2f}"
 
 
+def _vol(secid, n):
+    if crypto.is_crypto(secid):
+        return crypto.qty_text(secid, n, crypto.instrument(secid)["step"])
+    return f"{n} контр."
+
+
 def notify_open(bot, mode, secid, st, n, why):
     take = f"\nТейк: {_tp(st['take'])}" if st.get("take") else ""
     text = (f"[{MODE_LABEL[mode]}] {bot['name']}\nСигнал {st['dir']} по {secid}\nВход: {_tp(st['entry'])}\nСтоп: {_tp(st['stop'])}{take}\n"
-            f"Объём: {n} контр.\nОснование: {why}\n\n" +
+            f"Объём: {_vol(secid, n)}\nОснование: {why}\n\n" +
             ("Это учебная сделка, деньги не используются." if mode == "paper" else "Заявки робот не выставляет, решение за вами."))
     return tr.send_whatsapp(text)
 
@@ -133,6 +149,8 @@ def sync_live(conn, cur, bot, cfg, mode, secid, trades, log, candles, now, allow
     cur.execute(f"SELECT * FROM {SCHEMA}.robot_signals WHERE bot_id=%s AND status='open'", (bot_id,))
     open_rows = {r["signal_key"]: r for r in cur.fetchall()}
     horizon = now.replace(tzinfo=None) - timedelta(minutes=20 if bot["bot_type"] in ("intraday", "news", "abc", "pullback") else 250)
+    if crypto.is_crypto(secid):
+        horizon = datetime.utcnow() - timedelta(minutes=250)
     events = []
     for a, kind, text in log:
         try:
@@ -153,6 +171,9 @@ def sync_live(conn, cur, bot, cfg, mode, secid, trades, log, candles, now, allow
                 continue
             fresh = datetime.strptime(st["open_time"], FMT) >= horizon
             if not (allow_new and fresh) or st["closed"]:
+                continue
+            if crypto.is_crypto(secid) and crypto.funding_blocks(st["dir"], crypto.instrument(secid)["funding"], cfg.get("max_funding_pct", 0)):
+                add_log(cur, bot_id, "skip", f"{secid}: вход {st['dir']} пропущен, ставка финансирования {crypto.instrument(secid)['funding']:+.4f}% за 8 ч слишком невыгодна")
                 continue
             why = f"{TYPE_LABEL[bot['bot_type']]}: " + (st.get("scenario") or "по правилам робота")
             sent = notify_open(bot, mode, secid, st, n, why)
@@ -186,7 +207,7 @@ def close_stale(conn, cur, bot, cfg, mode, now):
     out = []
     for r in cur.fetchall():
         same_day = r["created_at"].date() == now.replace(tzinfo=None).date()
-        if bot["bot_type"] in ("trend", "elliott", "abc", "pullback") or same_day:
+        if bot["bot_type"] in ("trend", "ctrend", "elliott", "abc", "pullback") or same_day:
             continue
         candles = tr.get_candles(r["ticker"], "future", 5)
         if not candles:
@@ -238,17 +259,17 @@ def run_bot(conn, cur, bot, now, force=False):
         events += close_stale(conn, cur, bot, cfg, mode, now)
         if bot["bot_type"] in ("trend", "elliott", "abc", "pullback"):
             events += roll_open(conn, cur, bot, cfg, mode)
-        if not force and not in_session(now):
+        if not force and not in_session(now) and not crypto.is_crypto(bot["asset_code"]):
             status = "рынок закрыт"
         else:
-            c = pick_contract(bot["asset_code"], cfg["expiry_days"])
+            c = pick_contract(bot["asset_code"], cfg["expiry_days"], cfg)
             if not c:
                 status = "контракт не найден"
             else:
                 if c["days_left"] <= cfg["expiry_days"]:
                     add_log(cur, bot["id"], "skip", f"{c['secid']}: до экспирации {c['days_left']} дн., новых входов нет")
                 allow_new = c["days_left"] > cfg["expiry_days"]
-                if bot["bot_type"] == "trend":
+                if bot["bot_type"] in ("trend", "ctrend"):
                     daily = data.history(c["secid"], 1440, 300)
                     trig = data.history(c["secid"], int(cfg["trigger_tf"]), 90)
                     trades, log = logic.sim_trend(cfg, c, daily, trig)

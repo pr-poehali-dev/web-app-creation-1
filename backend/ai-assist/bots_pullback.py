@@ -108,7 +108,7 @@ def sim_pullback(cfg, info, c5):
             s = sign(st["dir"])
             if (bar["low"] <= st["stop"]) if s > 0 else (bar["high"] >= st["stop"]):
                 why = "трейлинг-стоп" if st.get("trailed") else ("стоп в безубытке" if st.get("be") else "стоп")
-                _finish(st, st["stop"], why, bar["begin"])
+                _finish(st, min(st["stop"], bar["open"]) if s > 0 else max(st["stop"], bar["open"]), why, bar["begin"])
             else:
                 if not st.get("tp1") and ((bar["high"] >= st["take"]) if s > 0 else (bar["low"] <= st["take"])):
                     fix(st, cfg["tp1_share"] / 100, st["take"], "часть на вершине импульса")

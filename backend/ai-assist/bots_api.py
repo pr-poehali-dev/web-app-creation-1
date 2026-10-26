@@ -11,6 +11,10 @@ ACTIONS = ("bots_meta", "bots_list", "bots_save", "bots_delete", "bots_mode", "b
            "bots_events", "bots_event_save", "bots_event_delete", "bots_run", "bots_assets")
 
 
+def crypto_bot(b):
+    return b["bot_type"] in schema.CRYPTO_TYPES
+
+
 def _bot(cur, bid):
     cur.execute(f"SELECT * FROM {SCHEMA}.futures_bots WHERE id=%s", (bid,))
     return cur.fetchone()
@@ -31,9 +35,9 @@ def _card(cur, b):
     live = cur.fetchone()
     contract = None
     try:
-        c = eng.pick_contract(b["asset_code"], cfg["expiry_days"])
+        c = eng.pick_contract(b["asset_code"], cfg["expiry_days"], cfg)
         contract = c["secid"] if c else None
-        days_left = c["days_left"] if c else None
+        days_left = None if crypto_bot(b) else (c["days_left"] if c else None)
     except Exception:
         days_left = None
     paper_days = 0
@@ -75,6 +79,8 @@ def handle(action, q, event):
             asset = str(body.get("asset_code") or "").strip()[:10]
             if not asset:
                 return tr.resp(400, {"error": "Выберите актив"})
+            if (bt in schema.CRYPTO_TYPES) != data.crypto.is_crypto(asset):
+                return tr.resp(400, {"error": "Этот тип робота не подходит для выбранного инструмента"})
             if asset not in {x[0] for x in data.all_assets()}:
                 return tr.resp(400, {"error": "Такого фьючерса нет на бирже или по нему нет торгов"})
             cfg = json.dumps(schema.sanitize(bt, body.get("settings") or {}))

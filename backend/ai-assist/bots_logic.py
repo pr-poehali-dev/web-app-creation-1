@@ -177,7 +177,8 @@ def sim_trend(cfg, info, daily, trig):
             s = sign(st["dir"])
             hit = (bar["low"] <= st["stop"]) if s > 0 else (bar["high"] >= st["stop"])
             if hit:
-                _finish(st, st["stop"], "трейлинг-стоп" if st["stage"] >= 1 else "стоп", bar["begin"])
+                px = min(st["stop"], bar["open"]) if s > 0 else max(st["stop"], bar["open"])
+                _finish(st, px, "трейлинг-стоп" if st["stage"] >= 1 else "стоп", bar["begin"])
             else:
                 st["extreme"] = max(st["extreme"], bar["high"]) if s > 0 else min(st["extreme"], bar["low"])
                 if st["stage"] >= 1:

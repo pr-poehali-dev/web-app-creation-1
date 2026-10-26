@@ -332,10 +332,37 @@ PULLBACK = {
     ],
 }
 
-TYPES = {"intraday": INTRADAY, "trend": TREND, "news": NEWS, "elliott": ELLIOTT, "abc": ABC, "pullback": PULLBACK}
+import copy
+
+CTREND = copy.deepcopy(TREND)
+CTREND["title"] = "Крипто: среднесрочный тренд (Bybit)"
+CTREND["desc"] = "Торгует бессрочными фьючерсами Bybit USDT по тренду: дневной тренд задаёт направление, вход на откате к средней на 4-часовом графике. Работает круглосуточно, время по UTC. Заявки на биржу не отправляет."
+CTREND["groups"] = [g for g in CTREND["groups"] if g["title"] != "Роллирование контрактов"]
+CTREND["groups"][0]["fields"]["adx_min"] = num(25, 0, 50, "ADX не ниже", "Ниже — боковик, входов нет. На истории 25 заметно лучше 20")
+for _g in CTREND["groups"]:
+    if "trail_atr" in _g["fields"]:
+        _g["fields"]["trail_atr"] = num(2.5, 1, 8, "Трейлинг-стоп, ATR", "Включается после первой фиксации. Тест на 10 монетах: 2,5 надёжнее, чем 3 и тем более 0,8")
+        _g["fields"]["max_hold_days"] = num(45, 3, 120, "Макс. срок удержания, дней", "", True)
+
+CRYPTO_TYPES = ("ctrend",)
+TYPES = {"intraday": INTRADAY, "trend": TREND, "news": NEWS, "elliott": ELLIOTT, "abc": ABC, "pullback": PULLBACK, "ctrend": CTREND}
 RISK = {"intraday": (0.5, 2, 0.03), "trend": (1.0, 4, 0.03), "news": (0.5, 2, 0.04), "elliott": (1.0, 4, 0.03), "abc": (0.5, 4, 0.03), "pullback": (0.5, 2, 0.03)}
 for _k, _v in RISK.items():
     TYPES[_k]["groups"].insert(0, risk_group(*_v))
+
+TYPES["ctrend"]["groups"].insert(0, {
+    "title": "Риск и безопасность",
+    "note": "Комиссия Bybit: тейкер 0,055% на вход и на выход, итого около 0,11% за круг, плюс проскальзывание и платёж по ставке финансирования (раз в 8 часов). Поэтому по умолчанию заложено 0,25% за круг.",
+    "fields": {
+        "capital": num(1000, 50, 100000000, "Капитал робота, USDT", "Отдельная часть счёта для этого робота"),
+        "risk_pct": num(1.0, 0.1, 3, "Риск на сделку, % капитала", "Размер позиции считается так, чтобы стоп стоил не больше"),
+        "max_funding_pct": num(0.05, 0, 0.5, "Не входить, если финансирование дороже, % за 8 ч", "Если вы платите по ставке больше этой, вход пропускается. 0 — не проверять"),
+        "leverage": num(3, 1, 10, "Плечо", "Влияет только на занятую маржу. Риск задаётся стопом, а не плечом"),
+        "max_margin_pct": num(50, 5, 100, "Макс. доля капитала под маржу, %", "Больше этой доли робот не займёт"),
+        "cost_pct": num(0.25, 0.05, 1, "Комиссия, проскальзывание и финансирование, % за круг", "Учитывается в тесте на истории"),
+        "allow_short": flag(True, "Разрешить шорты", "Без шортов на истории результат резко хуже"),
+    },
+})
 
 
 def fields(bot_type: str) -> dict:
@@ -371,5 +398,6 @@ def sanitize(bot_type: str, raw) -> dict:
 
 
 def public_types() -> dict:
-    return {k: {"title": v["title"], "desc": v["desc"], "timeframe": v["timeframe"], "groups": v["groups"], "defaults": defaults(k)}
+    return {k: {"title": v["title"], "desc": v["desc"], "timeframe": v["timeframe"], "groups": v["groups"], "defaults": defaults(k),
+                "market": "crypto" if k in CRYPTO_TYPES else "futures"}
             for k, v in TYPES.items()}

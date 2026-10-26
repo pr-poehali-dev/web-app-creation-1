@@ -2,6 +2,7 @@ from concurrent.futures import ThreadPoolExecutor
 from datetime import datetime, timedelta
 
 import trading_robot as tr
+import bots_crypto as crypto
 
 _INFO = {"day": "", "rows": []}
 ASSETS = [
@@ -34,7 +35,7 @@ def all_assets():
     names = dict(ASSETS)
     out = [[a, names.get(a) or a, int(v)] for a, v in oi.items() if v > 0]
     out.sort(key=lambda x: (x[0] not in names, -x[2]))
-    return out
+    return out + crypto.assets()
 
 
 def contracts(asset):
@@ -128,6 +129,8 @@ def agg(candles, minutes):
 
 
 def history(secid, tf, days):
+    if crypto.is_crypto(secid):
+        return crypto.history(secid, tf, days)
     now = datetime.now(tr.MSK).replace(tzinfo=None)
     if tf == 1440:
         out = _moex_hist(secid, 24, days)

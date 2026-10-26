@@ -157,7 +157,11 @@ def size(cfg, info, entry, stop):
     margin = info.get("margin") or 0
     if margin > 0:
         n = min(n, int(cfg["capital"] * cfg["max_margin_pct"] / 100 // margin))
-    return max(n, 0), f"риск на контракт {risk_rub:,.0f} ₽, бюджет риска {budget:,.0f} ₽, ГО {margin:,.0f} ₽".replace(",", " ")
+    ccy = info.get("ccy", "₽")
+    if n < info.get("min_lots", 1):
+        n = 0
+    dec = 2 if ccy != "₽" else 0
+    return max(n, 0), f"риск на {info.get('unit', 'контракт')} {risk_rub:,.{dec}f} {ccy}, бюджет риска {budget:,.{dec}f} {ccy}, ГО {margin:,.{dec}f} {ccy}".replace(",", " ")
 
 
 def clearing_block(cfg, now):

@@ -46,7 +46,7 @@ export default function BotCard({ bot, onMode, onOpen, onDelete }: Props) {
           <Icon name="Bot" className="h-5 w-5" />
           <span className="font-semibold">{bot.name}</span>
           <Badge variant="outline">{bot.type_title}</Badge>
-          <Badge variant="secondary">{bot.asset_code}{bot.contract ? ` · ${bot.contract}` : ''}</Badge>
+          <Badge variant="secondary">{bot.asset_code}{bot.contract && bot.contract !== bot.asset_code ? ` · ${bot.contract}` : ''}</Badge>
           {bot.days_left !== null && bot.days_left <= 10 && <Badge className="bg-amber-600 text-white">до экспирации {bot.days_left} дн.</Badge>}
           <span className={`ml-auto inline-flex items-center gap-2 rounded-full px-3 py-1 text-sm font-semibold ${STATUS[bot.mode].cls}`}>
             <span className={`h-2.5 w-2.5 rounded-full ${STATUS[bot.mode].dot}`} />
