@@ -8,6 +8,7 @@ import { useToast } from '@/hooks/use-toast';
 import BotSettingsForm from './BotSettingsForm';
 import BotBacktest from './BotBacktest';
 import BotLog from './BotLog';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { botsSave, type Bot, type BotMeta, type BotSettings } from './botsApi';
 
 interface Props {
@@ -23,12 +24,14 @@ export default function BotDialog({ bot, meta, tab, onTab, onClose, onChanged }:
   const { toast } = useToast();
   const [cfg, setCfg] = useState<BotSettings>({});
   const [name, setName] = useState('');
+  const [asset, setAsset] = useState('');
   const [saving, setSaving] = useState(false);
 
   useEffect(() => {
     if (bot) {
       setCfg(bot.settings);
       setName(bot.name);
+      setAsset(bot.asset_code);
     }
   }, [bot]);
 
@@ -38,7 +41,7 @@ export default function BotDialog({ bot, meta, tab, onTab, onClose, onChanged }:
   const save = async () => {
     setSaving(true);
     try {
-      await botsSave({ id: bot.id, bot_type: bot.bot_type, name, asset_code: bot.asset_code, settings: cfg });
+      await botsSave({ id: bot.id, bot_type: bot.bot_type, name, asset_code: asset, settings: cfg });
       toast({ title: 'Настройки сохранены' });
       onChanged();
     } catch (e) {
@@ -65,9 +68,26 @@ export default function BotDialog({ bot, meta, tab, onTab, onClose, onChanged }:
             <TabsTrigger value="log">Журнал решений</TabsTrigger>
           </TabsList>
           <TabsContent value="settings" className="space-y-4">
-            <div className="max-w-sm space-y-1">
-              <Label>Название</Label>
-              <Input value={name} onChange={(e) => setName(e.target.value)} maxLength={100} />
+            <div className="grid gap-3 sm:grid-cols-2">
+              <div className="space-y-1">
+                <Label>Название</Label>
+                <Input value={name} onChange={(e) => setName(e.target.value)} maxLength={100} />
+              </div>
+              <div className="space-y-1">
+                <Label>Фьючерс</Label>
+                <Select value={asset} onValueChange={setAsset}>
+                  <SelectTrigger>
+                    <SelectValue />
+                  </SelectTrigger>
+                  <SelectContent className="max-h-72">
+                    {meta.assets.map(([c, n]) => (
+                      <SelectItem key={c} value={c}>
+                        {n} ({c})
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </div>
             </div>
             <BotSettingsForm meta={tm} value={cfg} onChange={setCfg} />
             <div className="flex gap-2">

@@ -29,8 +29,10 @@ export default function MyRobots() {
 
   const toggle = async (r: RobotItem, enabled: boolean) => {
     setItems((list) => list && list.map((x) => (x.ticker === r.ticker ? { ...x, enabled } : x)));
-    await toggleRobot(r.ticker, enabled);
-    toast({ title: enabled ? `${r.asset_name}: робот включён` : `${r.asset_name}: робот выключен` });
+    const ok = await toggleRobot(r.ticker, enabled);
+    if (!ok) toast({ title: 'Не удалось переключить робота', variant: 'destructive' });
+    else toast({ title: enabled ? `${r.asset_name}: робот включён` : `${r.asset_name}: робот выключен` });
+    refresh();
   };
 
   if (!items) return <p className="text-sm text-muted-foreground">Загружаю роботов...</p>;

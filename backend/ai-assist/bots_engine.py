@@ -66,8 +66,10 @@ def rows_from(trades, cfg, candles):
     return out
 
 
-def run_backtest(cur, bot, days, proven=False):
+def run_backtest(cur, bot, days, proven=False, overrides=None):
     cfg = schema.defaults(bot["bot_type"]) if proven else load_cfg(bot)
+    if overrides:
+        cfg = schema.sanitize(bot["bot_type"], dict(cfg, **overrides))
     c = pick_contract(bot["asset_code"], 0)
     if not c:
         return {"error": "Контракт не найден"}

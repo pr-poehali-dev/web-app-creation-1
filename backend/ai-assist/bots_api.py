@@ -8,7 +8,7 @@ import trading_robot as tr
 
 SCHEMA = tr.SCHEMA
 ACTIONS = ("bots_meta", "bots_list", "bots_save", "bots_delete", "bots_mode", "bots_log", "bots_backtest",
-           "bots_events", "bots_event_save", "bots_event_delete", "bots_run")
+           "bots_events", "bots_event_save", "bots_event_delete", "bots_run", "bots_assets")
 
 
 def _bot(cur, bid):
@@ -61,7 +61,9 @@ def handle(action, q, event):
         bid = int(body.get("id") or q.get("id") or 0)
 
         if action == "bots_meta":
-            return tr.resp(200, {"types": schema.public_types(), "assets": data.ASSETS})
+            return tr.resp(200, {"types": schema.public_types(), "assets": [[x[0], x[1]] for x in data.all_assets()]})
+        if action == "bots_assets":
+            return tr.resp(200, {"assets": data.all_assets()})
         if action == "bots_list":
             cur.execute(f"SELECT * FROM {SCHEMA}.futures_bots ORDER BY id")
             return tr.resp(200, {"items": [_card(cur, b) for b in cur.fetchall()]})
@@ -73,6 +75,8 @@ def handle(action, q, event):
             asset = str(body.get("asset_code") or "").strip()[:10]
             if not asset:
                 return tr.resp(400, {"error": "Выберите актив"})
+            if asset not in {x[0] for x in data.all_assets()}:
+                return tr.resp(400, {"error": "Такого фьючерса нет на бирже или по нему нет торгов"})
             cfg = json.dumps(schema.sanitize(bt, body.get("settings") or {}))
             if bid:
                 cur.execute(f"UPDATE {SCHEMA}.futures_bots SET name=%s, asset_code=%s, settings=%s WHERE id=%s", (name, asset, cfg, bid))
@@ -108,7 +112,13 @@ def handle(action, q, event):
             if not b:
                 return tr.resp(404, {"error": "Робот не найден"})
             days = max(5, min(int(q.get("days") or 30), 120 if b["bot_type"] != "trend" else 330))
-            return tr.resp(200, eng.run_backtest(cur, b, days, proven=q.get("proven") == "1"))
+            ov = None
+            if q.get("ov"):
+                try:
+                    ov = json.loads(q["ov"])
+                except ValueError:
+                    ov = None
+            return tr.resp(200, eng.run_backtest(cur, b, days, proven=q.get("proven") == "1", overrides=ov))
         if action == "bots_events":
             cur.execute(f"SELECT id, event_time, title, importance, repeat_weekly FROM {SCHEMA}.futures_news_events ORDER BY event_time DESC LIMIT 200")
             return tr.resp(200, {"items": cur.fetchall()})

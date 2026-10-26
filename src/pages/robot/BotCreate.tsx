@@ -2,7 +2,7 @@ import { useState } from 'react';
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { Button } from '@/components/ui/button';
 import { Label } from '@/components/ui/label';
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+import { Input } from '@/components/ui/input';
 import Icon from '@/components/ui/icon';
 import { useToast } from '@/hooks/use-toast';
 import { botsSave, type BotMeta } from './botsApi';
@@ -21,6 +21,8 @@ export default function BotCreate({ meta, open, onClose, onCreated }: Props) {
   const [type, setType] = useState('intraday');
   const [asset, setAsset] = useState('BR');
   const [busy, setBusy] = useState(false);
+  const [q, setQ] = useState('');
+  const found = meta.assets.filter(([c, n]) => (c + ' ' + n).toLowerCase().includes(q.trim().toLowerCase()));
 
   const create = async () => {
     setBusy(true);
@@ -59,20 +61,23 @@ export default function BotCreate({ meta, open, onClose, onCreated }: Props) {
             </button>
           ))}
         </div>
-        <div className="max-w-xs space-y-1">
-          <Label>Актив</Label>
-          <Select value={asset} onValueChange={setAsset}>
-            <SelectTrigger>
-              <SelectValue />
-            </SelectTrigger>
-            <SelectContent>
-              {meta.assets.map(([c, n]) => (
-                <SelectItem key={c} value={c}>
-                  {n} ({c})
-                </SelectItem>
-              ))}
-            </SelectContent>
-          </Select>
+        <div className="space-y-2">
+          <Label>Фьючерс: выбран {asset} ({meta.assets.length} доступно)</Label>
+          <Input value={q} onChange={(e) => setQ(e.target.value)} placeholder="Поиск: Brent, Si, RTS, золото..." />
+          <div className="max-h-48 overflow-y-auto rounded-md border">
+            {found.length === 0 && <p className="p-2 text-sm text-muted-foreground">Ничего не найдено</p>}
+            {found.map(([c, n]) => (
+              <button
+                key={c}
+                type="button"
+                onClick={() => setAsset(c)}
+                className={`flex w-full items-center justify-between px-3 py-1.5 text-left text-sm hover:bg-muted ${asset === c ? 'bg-primary/10 font-semibold' : ''}`}
+              >
+                <span>{n}</span>
+                <span className="text-xs text-muted-foreground">{c}</span>
+              </button>
+            ))}
+          </div>
         </div>
         <Button onClick={create} disabled={busy}>
           {busy ? 'Создаю...' : 'Создать робота'}

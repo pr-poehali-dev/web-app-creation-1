@@ -16,10 +16,25 @@ def _load():
     if _INFO["day"] != today or not _INFO["rows"]:
         raw = tr.moex("engines/futures/markets/forts/boards/RFUD/securities", {
             "iss.meta": "off", "iss.only": "securities",
-            "securities.columns": "SECID,ASSETCODE,LASTTRADEDATE,MINSTEP,STEPPRICE,INITIALMARGIN"})
+            "securities.columns": "SECID,ASSETCODE,LASTTRADEDATE,MINSTEP,STEPPRICE,INITIALMARGIN,PREVOPENPOSITION,SHORTNAME"})
         _INFO["rows"] = tr.rows(raw.get("securities", {}))
         _INFO["day"] = today
     return _INFO["rows"], today
+
+
+def all_assets():
+    rows, today = _load()
+    oi, short = {}, {}
+    for r in rows:
+        a = r.get("ASSETCODE")
+        if not a or (r.get("LASTTRADEDATE") or "") <= today:
+            continue
+        oi[a] = oi.get(a, 0) + (r.get("PREVOPENPOSITION") or 0)
+        short.setdefault(a, r.get("SHORTNAME") or a)
+    names = dict(ASSETS)
+    out = [[a, names.get(a) or a, int(v)] for a, v in oi.items() if v > 0]
+    out.sort(key=lambda x: (x[0] not in names, -x[2]))
+    return out
 
 
 def contracts(asset):

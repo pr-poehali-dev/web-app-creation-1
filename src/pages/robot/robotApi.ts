@@ -269,6 +269,7 @@ export async function loadRobots(): Promise<RobotItem[]> {
   return (await r.json()).items || [];
 }
 
-export async function toggleRobot(ticker: string, enabled: boolean): Promise<void> {
-  await fetch(`${API}?action=robot_toggle`, { method: 'POST', headers: headers(), body: JSON.stringify({ ticker, enabled }) });
+export async function toggleRobot(ticker: string, enabled: boolean): Promise<boolean> {
+  const r = await fetch(`${API}?action=robot_toggle`, { method: 'POST', headers: headers(), body: JSON.stringify({ ticker, enabled }) });
+  return r.ok;
 }

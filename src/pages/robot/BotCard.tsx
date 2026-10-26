@@ -36,7 +36,9 @@ export default function BotCard({ bot, onMode, onOpen, onDelete }: Props) {
           <Badge variant="outline">{bot.type_title}</Badge>
           <Badge variant="secondary">{bot.asset_code}{bot.contract ? ` · ${bot.contract}` : ''}</Badge>
           {bot.days_left !== null && bot.days_left <= 10 && <Badge className="bg-amber-600 text-white">до экспирации {bot.days_left} дн.</Badge>}
-          <div className="ml-auto flex rounded-md border p-0.5">
+          <div className="ml-auto flex items-center gap-2">
+            <span className="text-xs text-muted-foreground">Режим:</span>
+          <div className="flex rounded-md border p-0.5">
             {MODES.map((m) => (
               <button
                 key={m.id}
@@ -49,6 +51,7 @@ export default function BotCard({ bot, onMode, onOpen, onDelete }: Props) {
                 {m.label}
               </button>
             ))}
+          </div>
           </div>
         </div>
         <div className="grid grid-cols-2 gap-2 text-sm sm:grid-cols-4">
