@@ -18,8 +18,7 @@ function Cell({ label, value, tone }: { label: string; value: string; tone?: 'go
 }
 
 export default function BotBacktest({ bot }: { bot: Bot }) {
-  const trend = bot.bot_type === 'trend';
-  const [days, setDays] = useState(trend ? '180' : '30');
+  const [days, setDays] = useState('30');
   const [loading, setLoading] = useState(false);
   const [mine, setMine] = useState<Result | null>(null);
   const [proven, setProven] = useState<Result | null>(null);
@@ -45,9 +44,7 @@ export default function BotBacktest({ bot }: { bot: Bot }) {
 
   const s = mine?.summary;
   const p = proven?.summary;
-  const periods = trend
-    ? [['60', '2 месяца'], ['120', '4 месяца'], ['180', '6 месяцев'], ['330', '11 месяцев']]
-    : [['10', '10 дней'], ['20', '20 дней'], ['30', '1 месяц'], ['60', '2 месяца'], ['90', '3 месяца']];
+  const periods = [['7', '1 неделя'], ['14', '2 недели'], ['21', '3 недели'], ['30', '1 месяц']];
 
   return (
     <div className="space-y-4">

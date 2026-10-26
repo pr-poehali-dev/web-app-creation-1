@@ -75,13 +75,16 @@ def run_backtest(cur, bot, days, proven=False, overrides=None):
         return {"error": "Контракт не найден"}
     trades, log, candles = simulate(cur, bot["bot_type"], cfg, c, c["secid"], days)
     rows = rows_from(trades, cfg, candles)
+    cutoff = (datetime.now(tr.MSK).replace(tzinfo=None) - timedelta(days=days)).strftime(FMT)
+    rows = [r for r in rows if r["date"] >= cutoff]
+    log = [x for x in log if x[0] >= cutoff]
     summ = backtest.summarize(rows)
     done = [r for r in rows if r["closed"]]
     summ["avg_r"] = round(sum(r["r"] for r in done) / len(done), 2) if done else 0
     summ["total_r"] = round(sum(r["r"] for r in done), 2)
     summ["contracts_note"] = "Размер позиции считается по риску на сделку и обеспечению; результат в % к цене входа, с учётом комиссии"
     return {
-        "title": f"{bot['name']} · {c['secid']}", "ticker": c["secid"], "from": candles[0]["begin"] if candles else None,
+        "title": f"{bot['name']} · {c['secid']}", "ticker": c["secid"], "from": max(cutoff, candles[0]["begin"]) if candles else None,
         "to": candles[-1]["begin"] if candles else None, "trades": rows, "summary": summ,
         "log": [{"t": a, "kind": k, "text": x} for a, k, x in log[-250:]],
     }
