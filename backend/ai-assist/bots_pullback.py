@@ -148,7 +148,7 @@ def sim_pullback(cfg, info, c5):
                 continue
             d = "ЛОНГ" if s > 0 else "ШОРТ"
             entry = bar["close"]
-            stop = s * (su["fr"] - cfg["stop_buf_pts"])
+            stop = s * (su["fr"] - cfg["stop_buf_pts"] - cfg["stop_buf_atr"] * atr[i])
             target = s * su["end"]
             risk, reward = abs(entry - stop), s * (target - entry)
             reject = ""
