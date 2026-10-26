@@ -167,3 +167,10 @@ def clearing_block(cfg, now):
         if c - g <= m < c + 5:
             return True
     return False
+
+
+def macd_series(closes, fast=12, slow=26, signal=9):
+    ef, es = ema_series(closes, fast), ema_series(closes, slow)
+    line = [a - b for a, b in zip(ef, es)]
+    sig = ema_series(line, signal)
+    return line, sig
