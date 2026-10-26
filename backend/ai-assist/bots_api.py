@@ -111,7 +111,7 @@ def handle(action, q, event):
             b = _bot(cur, bid)
             if not b:
                 return tr.resp(404, {"error": "Робот не найден"})
-            days = max(5, min(int(q.get("days") or 30), 120 if b["bot_type"] in ("intraday", "news", "abc") else 330))
+            days = max(5, min(int(q.get("days") or 30), 120 if b["bot_type"] in ("intraday", "news", "abc", "pullback") else 330))
             ov = None
             if q.get("ov"):
                 try:
