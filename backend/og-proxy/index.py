@@ -10,7 +10,7 @@ def get_db():
     return psycopg2.connect(os.environ['DATABASE_URL'])
 
 
-def html_response(title: str, description: str, image_url: str, page_url: str, redirect_url: str) -> dict:
+def html_response(title: str, description: str, image_url: str, page_url: str, redirect_url: str, site_name: str = 'ЕРТТП', og_type: str = 'product') -> dict:
     safe_title = title.replace('"', '&quot;').replace('<', '&lt;').replace('>', '&gt;')
     safe_desc = description.replace('"', '&quot;').replace('<', '&lt;').replace('>', '&gt;')
     safe_image = image_url.replace('"', '&quot;')
@@ -29,8 +29,8 @@ def html_response(title: str, description: str, image_url: str, page_url: str, r
 <meta property="og:image:width" content="1200">
 <meta property="og:image:height" content="630">
 <meta property="og:url" content="{safe_page_url}">
-<meta property="og:type" content="product">
-<meta property="og:site_name" content="ЕРТТП">
+<meta property="og:type" content="{og_type}">
+<meta property="og:site_name" content="{site_name}">
 <meta name="twitter:card" content="summary_large_image">
 <meta name="twitter:title" content="{safe_title}">
 <meta name="twitter:description" content="{safe_desc}">
@@ -76,6 +76,26 @@ def handler(event: dict, context) -> dict:
             'path': '/brain-booster',
         },
     }
+
+    GAMES_ORIGIN = 'https://erttp.ru'
+    GAME_PAGES = {
+        'chess': ('Приглашение в игру «Шахматы»', 'Тебя приглашают на партию в шахматы. Нажми, чтобы присоединиться!', 'games-og-chess.jpg'),
+        'checkers': ('Приглашение в игру «Шашки»', 'Тебя приглашают на партию в шашки. Нажми, чтобы присоединиться!', 'games-og-checkers.jpg'),
+        'poker': ('Приглашение в игру «Покер»', 'Тебя приглашают за стол в покер. Нажми, чтобы присоединиться!', 'games-og-poker.jpg'),
+        'durak': ('Приглашение в карточную игру «Дурак»', 'Тебя приглашают сыграть в переводного дурака. Нажми, чтобы присоединиться!', 'games-og-durak.jpg'),
+        'baarys': ('Приглашение в игру «Баарыс»', 'Тебя приглашают на партию в Баарыс. Нажми, чтобы присоединиться!', 'games-og-baarys.jpg'),
+        'nardy': ('Приглашение в игру «Длинные нарды»', 'Тебя приглашают на партию в Длинные нарды. Нажми, чтобы присоединиться!', 'games-og-nardy.jpg'),
+    }
+    if item_type == 'game':
+        code = ''.join(ch for ch in params.get('c', '') if ch.isalnum())[:40]
+        frm = ''.join(ch for ch in params.get('f', '') if ch.isalnum())[:40]
+        if item_id in GAME_PAGES and code:
+            title, desc, img = GAME_PAGES[item_id]
+            redirect = f"{GAMES_ORIGIN}/games/invite/{code}" + (f"?from={frm}" if frm else '')
+            return html_response(title, desc, f"{GAMES_ORIGIN}/{img}", redirect, redirect, 'Игровой клуб ЕРТТП', 'website')
+        title = 'Игровой клуб — шахматы, шашки, карты и покер онлайн'
+        desc = 'Играй с друзьями онлайн: шахматы, шашки, дурак, Баарыс и покер. Заходи и присоединяйся!'
+        return html_response(title, desc, f"{GAMES_ORIGIN}/games-og.jpg", f"{GAMES_ORIGIN}/games", f"{GAMES_ORIGIN}/games", 'Игровой клуб ЕРТТП', 'website')
 
     if item_type == 'page' and item_id in STATIC_PAGES:
         p = STATIC_PAGES[item_id]

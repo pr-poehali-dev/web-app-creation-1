@@ -23,6 +23,18 @@
       "method": "GET",
       "path": "/?type=unknown&id=123",
       "expectedStatus": 200
+    },
+    {
+      "name": "OG proxy game invite",
+      "method": "GET",
+      "path": "/?type=game&id=chess&c=ABC123",
+      "expectedStatus": 200
+    },
+    {
+      "name": "OG proxy games club",
+      "method": "GET",
+      "path": "/?type=game&id=club",
+      "expectedStatus": 200
     }
   ]
 }

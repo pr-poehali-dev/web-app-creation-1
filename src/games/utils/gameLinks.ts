@@ -1,4 +1,7 @@
+import func2url from '../../../backend/func2url.json';
+
 const CANONICAL_ORIGIN = 'https://erttp.ru';
+const ogProxy = (): string | undefined => (func2url as Record<string, string>)['og-proxy'];
 
 export const getGamesOrigin = (): string => {
   const host = window.location.hostname;
@@ -20,11 +23,13 @@ const SHORT_PAGES: Record<string, string> = {
 
 export const makeShareUrl = (rawUrl: string, _senderNickname?: string, gameType?: string): string => {
   const origin = getGamesOrigin();
+  const proxy = ogProxy();
   const invite = rawUrl.match(/\/games\/invite\/([A-Za-z0-9]+)/);
   if (invite && gameType && SHORT_PAGES[gameType]) {
+    if (proxy) return `${proxy}?type=game&id=${encodeURIComponent(gameType)}&c=${invite[1]}`;
     return `${origin}/${SHORT_PAGES[gameType]}.html?c=${invite[1]}`;
   }
-  if (rawUrl === buildClubUrl()) return `${origin}/g.html`;
+  if (rawUrl === buildClubUrl()) return proxy ? `${proxy}?type=game&id=club` : `${origin}/g.html`;
   return rawUrl;
 };
 
