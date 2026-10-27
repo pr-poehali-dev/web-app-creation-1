@@ -1,6 +1,7 @@
 import { useNavigate } from 'react-router-dom';
 import Icon from '@/components/ui/icon';
 import { Button } from '@/components/ui/button';
+import RobotConfigurator from '@/components/robot/RobotConfigurator';
 
 const FILE_URL = '/ElliottWaveC_EA.mq5';
 
@@ -122,13 +123,15 @@ export default function RobotMT5() {
           <p className="text-muted-foreground">
             Автоматически ищет волны A, B и C и входит в сделку на отбое от конца волны C. Работает на любых инструментах и таймфреймах. Есть стоп-лосс, тейк-профит и дневной лимит убытка.
           </p>
-          <Button asChild size="lg">
+          <Button asChild size="lg" variant="outline">
             <a href={FILE_URL} download="ElliottWaveC_EA.mq5">
               <Icon name="Download" size={18} className="mr-2" />
-              Скачать робота (.mq5)
+              Скачать старую версию (.mq5)
             </a>
           </Button>
         </header>
+
+        <RobotConfigurator />
 
         <section className="rounded-lg border border-amber-500/40 bg-amber-500/10 p-4 text-sm">
           <div className="flex items-start gap-2">
