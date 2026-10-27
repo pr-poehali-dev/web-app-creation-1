@@ -88,6 +88,7 @@ export const OrderPage = lazyWithRetry(() => import("./pages/OrderPage"));
 export const MyReviews = lazyWithRetry(() => import("./pages/MyReviews"));
 export const BrainBooster = lazyWithRetry(() => import("./pages/BrainBooster"));
 export const TaxReports = lazyWithRetry(() => import("./pages/TaxReports"));
+export const RobotMT5 = lazyWithRetry(() => import("./pages/RobotMT5"));
 export const SellerReviews = lazyWithRetry(() => import("./pages/SellerReviews"));
 export const TermsOfService = lazyWithRetry(() => import("./pages/TermsOfService"));
 export const PrivacyPolicy = lazyWithRetry(() => import("./pages/PrivacyPolicy"));

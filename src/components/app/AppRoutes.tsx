@@ -115,6 +115,7 @@ export default function AppRoutes({ isAuthenticated, onLogin, onRegister, onLogo
             <Route path="/my-reviews" element={<P.MyReviews {...auth} />} />
             <Route path="/brain-booster" element={<ProtectedRoute isAuthenticated={isAuthenticated}><P.BrainBooster /></ProtectedRoute>} />
             <Route path="/tax-reports" element={<P.TaxReports />} />
+            <Route path="/robot-mt5" element={<P.RobotMT5 />} />
             <Route path="/seller/:userId" element={<P.SellerReviews {...auth} />} />
             <Route path="/register" element={<P.Register onRegister={onRegister} />} />
             <Route path="/reset-password" element={<P.ResetPassword />} />
