@@ -260,6 +260,30 @@ export default function Profile({ isAuthenticated, onLogout }: ProfileProps) {
             </Card>
           )}
 
+          {isViewingOwnProfile && currentUser.email?.trim().toLowerCase() === 'doydum-invest@mail.ru' && (
+            <Card>
+              <CardHeader>
+                <CardTitle className="flex items-center gap-2">
+                  <Icon name="Bot" className="h-5 w-5" />
+                  Торговый робот
+                </CardTitle>
+              </CardHeader>
+              <CardContent>
+                <Button
+                  variant="outline"
+                  className="justify-start gap-2 h-auto py-3 w-full sm:w-auto"
+                  onClick={() => navigate('/robot-mt5')}
+                >
+                  <Icon name="ChartCandlestick" className="h-4 w-4 text-primary flex-shrink-0" />
+                  <div className="text-left">
+                    <div className="font-medium">Робот для MetaTrader 5</div>
+                    <div className="text-xs text-muted-foreground">Скачать и установить по инструкции</div>
+                  </div>
+                </Button>
+              </CardContent>
+            </Card>
+          )}
+
           {isViewingOwnProfile && (
             <>
               <NotificationSettings userId={String(currentUser?.id ?? '')} />
