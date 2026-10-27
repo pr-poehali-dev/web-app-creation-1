@@ -401,7 +401,7 @@ export default function DurakGame() {
               {finished && <LeaveRoomButton roomId={numericRoomId} />}
             </div>
 
-            <div className="relative bg-gradient-to-br from-emerald-900 to-emerald-950 rounded-3xl border-4 border-amber-700/40 shadow-2xl p-4 sm:p-6 min-h-[420px]">
+            <div className={`relative bg-gradient-to-br from-emerald-900 to-emerald-950 rounded-3xl border-4 border-amber-700/40 shadow-2xl p-4 sm:p-6 ${room.status === 'waiting' ? 'min-h-[160px] sm:min-h-[420px]' : 'min-h-[420px]'}`}>
               <div className="flex flex-wrap justify-center gap-2 sm:gap-3 mb-4">
                 {others.map((p) => {
                   const uid = String(p.user_id);
@@ -450,7 +450,7 @@ export default function DurakGame() {
               </div>
 
               {room.status === 'waiting' && (
-                <p className="text-center text-sm text-emerald-100/70 py-16">
+                <p className="text-center text-sm text-emerald-100/70 py-6 sm:py-16">
                   {isOwner ? 'Дождитесь игроков (от 2 до 6) и нажмите «Начать игру»' : 'Ожидаем, пока создатель комнаты начнёт игру...'}
                 </p>
               )}

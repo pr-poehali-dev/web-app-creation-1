@@ -133,7 +133,7 @@ export default function GameChatPanel({ roomId, userId, messages, onSent }: Game
   };
 
   return (
-    <div className="bg-slate-900/60 border border-slate-800 rounded-xl flex flex-col h-[500px]">
+    <div className="bg-slate-900/60 border border-slate-800 rounded-xl flex flex-col h-[260px] sm:h-[500px]">
       {viewer && <ImageViewer src={viewer} onClose={() => setViewer(null)} />}
       <div className="p-3 border-b border-slate-800 font-semibold text-slate-200 flex items-center gap-2">
         <Icon name="MessageCircle" size={18} />
