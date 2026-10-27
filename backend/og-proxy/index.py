@@ -86,6 +86,14 @@ def handler(event: dict, context) -> dict:
         'baarys': ('Приглашение в игру «Баарыс»', 'Тебя приглашают на партию в Баарыс. Нажми, чтобы присоединиться!', 'games-og-baarys.jpg'),
         'nardy': ('Приглашение в игру «Длинные нарды»', 'Тебя приглашают на партию в Длинные нарды. Нажми, чтобы присоединиться!', 'games-og-nardy.jpg'),
     }
+    short_g = ''.join(ch for ch in params.get('g', '') if ch.isalnum())[:41]
+    if short_g:
+        letters = {'c': 'chess', 's': 'checkers', 'p': 'poker', 'd': 'durak', 'b': 'baarys', 'n': 'nardy'}
+        if short_g[0] in letters and len(short_g) > 1:
+            item_type, item_id = 'game', letters[short_g[0]]
+            params = {**params, 'c': short_g[1:]}
+        elif short_g == 'club':
+            item_type, item_id = 'game', 'club'
     if item_type == 'game':
         code = ''.join(ch for ch in params.get('c', '') if ch.isalnum())[:40]
         frm = ''.join(ch for ch in params.get('f', '') if ch.isalnum())[:40]

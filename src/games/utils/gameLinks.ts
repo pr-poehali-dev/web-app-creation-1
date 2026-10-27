@@ -12,6 +12,15 @@ export const getGamesOrigin = (): string => {
 export const buildInviteUrl = (inviteCode: string): string => `${getGamesOrigin()}/games/invite/${inviteCode}`;
 export const buildClubUrl = (): string => `${getGamesOrigin()}/games`;
 
+const SHORT_LETTERS: Record<string, string> = {
+  chess: 'c',
+  checkers: 's',
+  poker: 'p',
+  durak: 'd',
+  baarys: 'b',
+  nardy: 'n',
+};
+
 const SHORT_PAGES: Record<string, string> = {
   chess: 'ch',
   checkers: 'sh',
@@ -26,10 +35,10 @@ export const makeShareUrl = (rawUrl: string, _senderNickname?: string, gameType?
   const proxy = ogProxy();
   const invite = rawUrl.match(/\/games\/invite\/([A-Za-z0-9]+)/);
   if (invite && gameType && SHORT_PAGES[gameType]) {
-    if (proxy) return `${proxy}?type=game&id=${encodeURIComponent(gameType)}&c=${invite[1]}`;
+    if (proxy) return `${proxy}?g=${SHORT_LETTERS[gameType] || 'c'}${invite[1]}`;
     return `${origin}/${SHORT_PAGES[gameType]}.html?c=${invite[1]}`;
   }
-  if (rawUrl === buildClubUrl()) return proxy ? `${proxy}?type=game&id=club` : `${origin}/g.html`;
+  if (rawUrl === buildClubUrl()) return proxy ? `${proxy}?g=club` : `${origin}/g.html`;
   return rawUrl;
 };
 
