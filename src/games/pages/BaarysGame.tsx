@@ -288,8 +288,6 @@ export default function BaarysGame() {
         Назад в лобби
       </button>
 
-      {room && <InviteShareBox room={room} user={user} />}
-
       {!room ? (
         <div className="text-center py-20 text-slate-500">
           <Icon name="Loader2" size={32} className="mx-auto mb-2 animate-spin" />
@@ -370,7 +368,7 @@ export default function BaarysGame() {
               {finished && <LeaveRoomButton roomId={numericRoomId} />}
             </div>
 
-            <div className="relative bg-gradient-to-br from-emerald-900 to-emerald-950 rounded-3xl border-4 border-amber-700/40 shadow-2xl p-4 sm:p-6 min-h-[420px]">
+            <div className={`relative bg-gradient-to-br from-emerald-900 to-emerald-950 rounded-3xl border-4 border-amber-700/40 shadow-2xl p-4 sm:p-6 ${room.status === 'waiting' ? 'min-h-[120px] sm:min-h-[420px]' : 'min-h-[420px]'}`}>
               {opponent && (
                 <div className="flex flex-wrap items-center justify-center gap-3 mb-4">
                   <div className={`rounded-xl p-2 min-w-[120px] text-center border-2 ${
@@ -406,7 +404,7 @@ export default function BaarysGame() {
               )}
 
               {room.status === 'waiting' && (
-                <p className="text-center text-sm text-emerald-100/70 py-16">
+                <p className="text-center text-sm text-emerald-100/70 py-6 sm:py-16">
                   {isOwner ? 'Дождитесь соперника и нажмите «Начать игру»' : 'Ожидаем, пока создатель комнаты начнёт игру...'}
                 </p>
               )}
@@ -565,6 +563,7 @@ export default function BaarysGame() {
           </div>
 
           <GameChatPanel roomId={numericRoomId} userId={user.id} messages={chatMessages} onSent={loadChat} />
+          {room && <div className="mt-4"><InviteShareBox room={room} user={user} /></div>}
         </div>
       )}
     </GameLayout>

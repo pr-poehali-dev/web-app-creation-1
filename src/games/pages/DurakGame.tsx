@@ -326,8 +326,6 @@ export default function DurakGame() {
         Назад в лобби
       </button>
 
-      {room && <InviteShareBox room={room} user={user} />}
-
       {!room ? (
         <div className="text-center py-20 text-slate-500">
           <Icon name="Loader2" size={32} className="mx-auto mb-2 animate-spin" />
@@ -401,7 +399,7 @@ export default function DurakGame() {
               {finished && <LeaveRoomButton roomId={numericRoomId} />}
             </div>
 
-            <div className={`relative bg-gradient-to-br from-emerald-900 to-emerald-950 rounded-3xl border-4 border-amber-700/40 shadow-2xl p-4 sm:p-6 ${room.status === 'waiting' ? 'min-h-[160px] sm:min-h-[420px]' : 'min-h-[420px]'}`}>
+            <div className={`relative bg-gradient-to-br from-emerald-900 to-emerald-950 rounded-3xl border-4 border-amber-700/40 shadow-2xl p-4 sm:p-6 ${room.status === 'waiting' ? 'min-h-[120px] sm:min-h-[420px]' : 'min-h-[420px]'}`}>
               <div className="flex flex-wrap justify-center gap-2 sm:gap-3 mb-4">
                 {others.map((p) => {
                   const uid = String(p.user_id);
@@ -626,6 +624,7 @@ export default function DurakGame() {
           </div>
 
           <GameChatPanel roomId={numericRoomId} userId={user.id} messages={chatMessages} onSent={loadChat} />
+          {room && <div className="mt-4"><InviteShareBox room={room} user={user} /></div>}
         </div>
       )}
     </GameLayout>
