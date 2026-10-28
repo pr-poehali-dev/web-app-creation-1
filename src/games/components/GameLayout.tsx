@@ -25,8 +25,8 @@ export default function GameLayout({ user, onLogout, children }: GameLayoutProps
     <div className="min-h-screen bg-gradient-to-br from-slate-950 via-slate-900 to-purple-950 text-slate-100">
       <GamesPWAMeta />
       <header className="border-b border-amber-500/20 bg-slate-950/60 backdrop-blur-md sticky top-0 z-40">
-        <div className="container mx-auto px-4 h-16 flex items-center justify-between">
-          <Link to="/games" className="flex items-center gap-2 group">
+        <div className="container mx-auto px-4 h-16 flex items-center justify-between gap-2">
+          <Link to="/games" className="flex items-center gap-2 group shrink-0">
             <div className="h-9 w-9 rounded-lg bg-gradient-to-br from-amber-400 to-amber-600 flex items-center justify-center shadow-lg shadow-amber-500/30 group-hover:scale-105 transition-transform">
               <Icon name="Spade" size={20} className="text-slate-950" />
             </div>
@@ -37,7 +37,7 @@ export default function GameLayout({ user, onLogout, children }: GameLayoutProps
           </Link>
 
           {user && (
-            <div className="flex items-center gap-3">
+            <div className="flex items-center gap-2 sm:gap-3 min-w-0">
               <GameNotificationBanner />
               <div className="hidden sm:flex items-center gap-2 bg-slate-800/60 border border-amber-500/20 rounded-full px-3 py-1.5">
                 <Icon name="Coins" size={16} className="text-amber-400" />
@@ -47,14 +47,14 @@ export default function GameLayout({ user, onLogout, children }: GameLayoutProps
                 type="button"
                 onClick={() => setAvatarOpen(true)}
                 title="Сменить фото"
-                className="flex items-center gap-2 bg-slate-800/60 border border-slate-700 hover:border-amber-500/40 rounded-full pl-1.5 pr-3 py-1 transition-colors"
+                className="flex items-center gap-2 min-w-0 bg-slate-800/60 border border-slate-700 hover:border-amber-500/40 rounded-full pl-1.5 pr-3 py-1 transition-colors"
               >
                 <PlayerAvatar emoji={user.avatar_emoji} url={user.avatar_url} size={28} zoomable={false} />
-                <span className="text-sm font-medium">{user.nickname}</span>
+                <span className="text-sm font-medium truncate max-w-[90px] sm:max-w-[200px]">{user.nickname}</span>
               </button>
               <button
                 onClick={handleLogout}
-                className="h-9 w-9 flex items-center justify-center rounded-full hover:bg-slate-800 text-slate-400 hover:text-red-400 transition-colors"
+                className="h-9 w-9 shrink-0 flex items-center justify-center rounded-full hover:bg-slate-800 text-slate-400 hover:text-red-400 transition-colors"
                 title="Выйти"
               >
                 <Icon name="LogOut" size={18} />
