@@ -109,7 +109,7 @@ export default function InstallHint({ guest = false }: { guest?: boolean }) {
             <Icon name="Smartphone" size={20} className="text-slate-950" />
           </div>
           <div className="min-w-0 flex-1">
-            <p className="text-sm font-semibold text-slate-100">Добавьте клуб на главный экран</p>
+            <p className="text-sm font-semibold text-slate-100">Установить Игровой клуб на экран телефона</p>
             <p className="text-xs text-slate-400">Открывается в одно касание, вход сохраняется надёжнее.</p>
           </div>
           <Button onClick={handleClick} size="sm" className="bg-amber-500 font-semibold text-slate-950 hover:bg-amber-600">
