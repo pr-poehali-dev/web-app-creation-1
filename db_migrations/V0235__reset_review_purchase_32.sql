@@ -1,0 +1,1 @@
+UPDATE t_p42562714_web_app_creation_1.market_review_purchases SET review_text = NULL, updated_at = NOW() WHERE id = 32 AND status = 'paid';

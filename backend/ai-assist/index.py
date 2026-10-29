@@ -136,6 +136,24 @@ def _detect_board(ticker: str, market_hint: str) -> dict:
     return KNOWN_BOARDS["shares"]
 
 
+def _resolve_futures_ticker(ticker: str) -> str:
+    try:
+        raw = _moex_get(
+            "engines/futures/markets/forts/boards/RFUD/securities",
+            {"iss.meta": "off", "iss.only": "securities", "securities.columns": "SECID,ASSETCODE,LASTTRADEDATE"},
+        )
+        today = datetime.now().strftime("%Y-%m-%d")
+        best = None
+        for r in _rows_to_dicts(raw.get("securities", {})):
+            if (r.get("ASSETCODE") or "").upper() != ticker.upper() or (r.get("LASTTRADEDATE") or "") < today:
+                continue
+            if best is None or r["LASTTRADEDATE"] < best["LASTTRADEDATE"]:
+                best = r
+        return best["SECID"] if best else ticker
+    except Exception:
+        return ticker
+
+
 def market_quote(ticker: str, market_hint: str = "", days: int = 90) -> dict:
     """Текущая котировка + свечи за последний квартал для графика."""
     ticker = (ticker or "").strip().upper()
@@ -144,6 +162,8 @@ def market_quote(ticker: str, market_hint: str = "", days: int = 90) -> dict:
 
     board_info = _detect_board(ticker, market_hint)
     engine, market, board = board_info["engine"], board_info["market"], board_info["board"]
+    if engine == "futures":
+        ticker = _resolve_futures_ticker(ticker)
 
     try:
         raw = _moex_get(
