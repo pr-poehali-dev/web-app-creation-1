@@ -445,7 +445,7 @@ SMARTLAB_FIELDS = (
 )
 
 
-def _smartlab_fundamentals(ticker: str) -> str:
+def _smartlab_fetch(ticker: str) -> str:
     for std in ("MSFO", "RSBU"):
         try:
             url = f"https://smart-lab.ru/q/{urllib.parse.quote(ticker.upper())}/f/y/{std}/"
@@ -474,6 +474,43 @@ def _smartlab_fundamentals(ticker: str) -> str:
                 lines.append(f"{label}: " + " | ".join(v or "-" for v in vals))
         return "\n".join(lines)
     return ""
+
+
+def _smartlab_fundamentals(ticker: str) -> str:
+    key = (ticker or "").upper()
+    cached, fresh = "", False
+    try:
+        conn = get_db()
+        try:
+            with conn.cursor() as cur:
+                cur.execute("SELECT report_text, updated_at > NOW() - INTERVAL '3 days' AS fresh FROM market_fundamentals_cache WHERE ticker = %s", (key,))
+                row = cur.fetchone()
+                if row:
+                    cached, fresh = row["report_text"], bool(row["fresh"])
+        finally:
+            conn.close()
+    except Exception:
+        pass
+    if cached and fresh:
+        return cached
+    text = _smartlab_fetch(key)
+    if text:
+        try:
+            conn = get_db()
+            try:
+                with conn.cursor() as cur:
+                    cur.execute(
+                        "INSERT INTO market_fundamentals_cache (ticker, report_text, updated_at) VALUES (%s, %s, NOW()) "
+                        "ON CONFLICT (ticker) DO UPDATE SET report_text = EXCLUDED.report_text, updated_at = NOW()",
+                        (key, text),
+                    )
+                conn.commit()
+            finally:
+                conn.close()
+        except Exception:
+            pass
+        return text
+    return cached
 
 
 def market_review_generate(ticker: str, name: str, quote: dict, news: list) -> str:
