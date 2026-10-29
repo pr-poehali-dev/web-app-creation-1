@@ -1,4 +1,6 @@
+import { useState } from 'react';
 import { useNavigate, useSearchParams } from 'react-router-dom';
+import { useToast } from '@/hooks/use-toast';
 import { Button } from '@/components/ui/button';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { useScrollToTop } from '@/hooks/useScrollToTop';
@@ -23,6 +25,29 @@ export default function Market({ isAuthenticated, onLogout }: MarketProps) {
     ? { ticker: retTicker, name: searchParams.get('name') || retTicker }
     : null;
   const purchaseId = isNaN(retPurchase) ? null : retPurchase;
+  const { toast } = useToast();
+  const [tab, setTab] = useState<string>(
+    returned ? retMarket : searchParams.get('tab') === 'futures' ? 'futures' : 'shares',
+  );
+
+  const handleShare = async () => {
+    const url = `${window.location.origin}/market${tab === 'futures' ? '?tab=futures' : ''}`;
+    const data = { title: 'Рынок — ЕРТТП', text: 'Котировки, графики и ИИ-обзоры по акциям и фьючерсам', url };
+    if (navigator.share) {
+      try {
+        await navigator.share(data);
+        return;
+      } catch (e) {
+        if ((e as Error).name === 'AbortError') return;
+      }
+    }
+    try {
+      await navigator.clipboard.writeText(url);
+      toast({ title: 'Ссылка скопирована', description: 'Теперь можно отправить её в любой мессенджер' });
+    } catch {
+      toast({ title: 'Не удалось скопировать ссылку', description: url, variant: 'destructive' });
+    }
+  };
 
   return (
     <div className="min-h-screen flex flex-col bg-background">
@@ -38,12 +63,16 @@ export default function Market({ isAuthenticated, onLogout }: MarketProps) {
             </div>
             <h1 className="text-xl font-bold">Рынок</h1>
           </div>
+          <Button variant="outline" size="sm" onClick={handleShare} className="ml-auto gap-1.5">
+            <Icon name="Share2" size={14} />
+            Поделиться
+          </Button>
         </div>
         <p className="text-sm text-muted-foreground mb-6 ml-12">
           Котировки, графики и новости по фондовому и фьючерсному рынку
         </p>
 
-        <Tabs defaultValue={returned ? retMarket : 'shares'}>
+        <Tabs value={tab} onValueChange={setTab}>
           <TabsList className="mb-4">
             <TabsTrigger value="shares" className="gap-1.5">
               <Icon name="Building2" size={14} />

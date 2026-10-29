@@ -644,7 +644,9 @@ def market_review_list(user_id: int, ticker: str) -> dict:
 
 POPULAR_TICKERS = ["SBER", "GAZP", "LKOH", "GMKN", "YDEX", "ROSN", "TATN", "SNGS", "NLMK", "MAGN", "ALRS", "MTSS", "MOEX", "VTBR",
                    "PHOR", "OZON", "CHMF", "PLZL", "NVTK", "SIBN", "AFLT", "TRNFP", "PIKK", "RUAL", "IRAO", "HYDR", "FEES", "CBOM",
-                   "T", "X5", "MGNT", "AFKS", "POLY", "FLOT", "BSPB", "RTKM", "SMLT", "ENPG", "LSRG", "UPRO"]
+                   "T", "X5", "MGNT", "AFKS", "POLY", "FLOT", "BSPB", "RTKM", "SMLT", "ENPG", "LSRG", "UPRO",
+                   "BELU", "ASTR", "HEAD", "MTLR", "SVCB", "LENT", "VKCO", "SGZH", "NKNC", "TRMK", "KMAZ", "AQUA", "DELI", "WUSH", "RENI",
+                   "SELG", "GCHE", "MSNG", "MRKP", "MRKC", "OGKB", "TGKA", "UNAC", "DIAS", "BANE", "KZOS", "PMSB", "RASP", "NMTP", "FESH"]
 
 
 def market_fundamentals_warmup(offset: int, limit: int = 2) -> dict:
