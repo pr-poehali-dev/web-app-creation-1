@@ -434,6 +434,48 @@ def _google_news(query: str, limit: int = 15) -> list:
     return out
 
 
+SMARTLAB_FIELDS = (
+    ("revenue", "Выручка, млрд руб"), ("cost_of_production", "Себестоимость, млрд руб"), ("opex", "Опер. расходы, млрд руб"),
+    ("operating_income", "Операционная прибыль, млрд руб"), ("ebitda", "EBITDA, млрд руб"), ("ebitda_margin", "Маржа EBITDA"),
+    ("net_income", "Чистая прибыль, млрд руб"), ("net_margin", "Чистая маржа"), ("ocf", "Операционный денежный поток, млрд руб"),
+    ("capex", "CAPEX, млрд руб"), ("fcf", "Свободный денежный поток, млрд руб"), ("debt", "Долг, млрд руб"),
+    ("cash", "Деньги, млрд руб"), ("net_debt", "Чистый долг, млрд руб"), ("debt_ebitda", "Чистый долг/EBITDA"),
+    ("dividend", "Дивиденд, руб/акцию"), ("div_yield", "Дивидендная доходность"), ("eps", "EPS, руб"),
+    ("roe", "ROE"), ("p_e", "P/E"), ("ev_ebitda", "EV/EBITDA"), ("p_bv", "P/BV"), ("p_s", "P/S"),
+)
+
+
+def _smartlab_fundamentals(ticker: str) -> str:
+    for std in ("MSFO", "RSBU"):
+        try:
+            url = f"https://smart-lab.ru/q/{urllib.parse.quote(ticker.upper())}/f/y/{std}/"
+            req = urllib.request.Request(url, headers={"User-Agent": "Mozilla/5.0"})
+            with urllib.request.urlopen(req, timeout=8) as resp:
+                html_text = resp.read().decode("utf-8", errors="ignore")
+        except Exception:
+            continue
+        head = re.search(r'<tr class="header_row">(.*?)</tr>', html_text, re.S)
+        if not head:
+            continue
+        periods = [_strip_html(x).strip() for x in re.findall(r"<strong>(.*?)</strong>", head.group(1), re.S)]
+        rows = {}
+        for f, body in re.findall(r'<tr field="([^"]+)"[^>]*>(.*?)</tr>', html_text, re.S):
+            cells = re.findall(r"<td(?![^>]*chartrow)[^>]*>(.*?)</td>", body, re.S)
+            vals = [_strip_html(c).replace("&nbsp;", "").replace("\xa0", "").strip() for c in cells]
+            if len(vals) == len(periods) + 1:
+                del vals[len(periods) - 1]
+            rows[f] = vals
+        if not periods or not rows.get("revenue"):
+            continue
+        lines = [f"Отчётность {std} (smart-lab.ru), периоды: " + ", ".join(periods)]
+        for key, label in SMARTLAB_FIELDS:
+            vals = rows.get(key)
+            if vals and any(vals):
+                lines.append(f"{label}: " + " | ".join(v or "-" for v in vals))
+        return "\n".join(lines)
+    return ""
+
+
 def market_review_generate(ticker: str, name: str, quote: dict, news: list) -> str:
     """Подробный платный обзор: данные MOEX + интернет-новости + технический анализ, генерирует YandexGPT Pro."""
     is_futures = (quote or {}).get("market") == "forts"
@@ -443,12 +485,14 @@ def market_review_generate(ticker: str, name: str, quote: dict, news: list) -> s
                       f"день: {quote.get('low')}–{quote.get('high')}.")
     tech = _technical_summary((quote or {}).get("candles") or [])
     from concurrent.futures import ThreadPoolExecutor
-    with ThreadPoolExecutor(max_workers=4) as ex:
+    with ThreadPoolExecutor(max_workers=5) as ex:
+        f_rep = ex.submit(_smartlab_fundamentals, ticker)
         f_fund = ex.submit(_moex_fundamentals, ticker, quote or {})
         f_web = ex.submit(_google_news, f"{name} акции" if not is_futures else f"{name} фьючерс")
         f_fin = ex.submit(_google_news, f"{name} выручка EBITDA чистая прибыль МСФО", 10)
         f_sanc = ex.submit(_google_news, f"{name} санкции планы стратегия инвестиции", 10)
         fundamentals = f_fund.result()
+        report = f_rep.result()
         web = f_web.result()
         fin_news = f_fin.result()
         sanc_news = f_sanc.result()
@@ -466,7 +510,7 @@ def market_review_generate(ticker: str, name: str, quote: dict, news: list) -> s
               "по последней доступной отчётности (МСФО/РСБУ): выручка, операционные и прочие расходы, себестоимость, "
               "EBITDA и рентабельность, чистая прибыль, чистый долг и Net Debt/EBITDA, капекс, дивидендная политика, "
               "мультипликаторы P/E и EV/EBITDA, с указанием периода (год/квартал) и пометкой «около», если цифры "
-              "приблизительные. Цифры из блока новостей используй в первую очередь. Обязательно разбирай влияние "
+              "приблизительные. Цифры из блока ФИНАНСОВАЯ ОТЧЁТНОСТЬ используй в первую очередь, считай динамику год к году. Не используй markdown-разметку (#, **), заголовки пиши заглавными буквами. Обязательно разбирай влияние "
               "санкций (какие действуют, как влияют на экспорт, логистику, оборудование, расчёты), возможность их "
               "снятия или обхода и вероятные сроки, а также публично заявленные планы компании (стратегия, "
               "инвестпрограмма, рост добычи/производства, M&A, дивиденды). Не пиши «изучите отчётность» — делай "
@@ -476,6 +520,7 @@ def market_review_generate(ticker: str, name: str, quote: dict, news: list) -> s
     prompt = (
         f"Сделай подробный платный аналитический обзор {kind} «{name}» (тикер {ticker}).\n\n"
         f"ДАННЫЕ БИРЖИ:\n{price_line}\n{fundamentals}\n\n"
+        f"ФИНАНСОВАЯ ОТЧЁТНОСТЬ (последний столбец LTM — последние 12 месяцев; используй эти цифры как основные):\n{report or 'Нет данных отчётности.'}\n\n"
         f"ТЕХНИЧЕСКИЕ ПОКАЗАТЕЛИ:\n{tech or 'Недостаточно данных.'}\n\n"
         f"НОВОСТИ ЗА 30 ДНЕЙ (из интернета):\n{news_text}\n\n"
         f"Структура ответа (используй заголовки):\n"
@@ -496,7 +541,9 @@ def market_review_generate(ticker: str, name: str, quote: dict, news: list) -> s
         f"5. ИТОГ — взвешенная оценка (позитивно / нейтрально / негативно) с обоснованием.\n"
         f"Объём 5000–7000 символов. В конце фраза: «Не является индивидуальной инвестиционной рекомендацией»."
     )
-    return call_yandex_gpt(prompt, max_tokens=3000, model="yandexgpt", timeout=57, temperature=0.3, system=system)
+    text = call_yandex_gpt(prompt, max_tokens=3000, model="yandexgpt", timeout=57, temperature=0.3, system=system)
+    text = re.sub(r"^\s*#{1,6}\s*", "", text, flags=re.M)
+    return text.replace("**", "").replace("__", "")
 
 
 def market_my_assets(user_id: int, market: str) -> dict:
