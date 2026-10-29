@@ -442,6 +442,13 @@ SMARTLAB_FIELDS = (
     ("cash", "Деньги, млрд руб"), ("net_debt", "Чистый долг, млрд руб"), ("debt_ebitda", "Чистый долг/EBITDA"),
     ("dividend", "Дивиденд, руб/акцию"), ("div_yield", "Дивидендная доходность"), ("eps", "EPS, руб"),
     ("roe", "ROE"), ("p_e", "P/E"), ("ev_ebitda", "EV/EBITDA"), ("p_bv", "P/BV"), ("p_s", "P/S"),
+    ("net_operating_income", "Чистый операционный доход, млрд руб"), ("net_interest_income", "Чистый процентный доход, млрд руб"),
+    ("commission_income", "Комиссионный доход, млрд руб"), ("creation_of_provision_for_loan_impairment", "Резервы под кредиты, млрд руб"),
+    ("bank_assets", "Активы банка, млрд руб"), ("capital", "Капитал, млрд руб"), ("loan_portfolio", "Кредитный портфель, млрд руб"),
+    ("deposits", "Депозиты, млрд руб"), ("core_capital_adequacy_ratio", "Достаточность базового капитала Н1.2"),
+    ("total_capital_adequacy_ratio", "Достаточность капитала Н1.0"), ("cost_of_risk_ratio", "Стоимость риска"),
+    ("cost_to_income", "Cost/Income"), ("share_of_non_performing_loans", "Доля просроченных кредитов"),
+    ("net_intertest_margin", "Чистая процентная маржа"), ("p_b", "P/B"),
 )
 
 
@@ -465,7 +472,7 @@ def _smartlab_fetch(ticker: str) -> str:
             if len(vals) == len(periods) + 1:
                 del vals[len(periods) - 1]
             rows[f] = vals
-        if not periods or not rows.get("revenue"):
+        if not periods or not (rows.get("revenue") or rows.get("net_income")):
             continue
         lines = [f"Отчётность {std} (smart-lab.ru), периоды: " + ", ".join(periods)]
         for key, label in SMARTLAB_FIELDS:
