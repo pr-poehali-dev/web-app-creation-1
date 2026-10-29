@@ -61,7 +61,7 @@ export default function Market({ isAuthenticated, onLogout }: MarketProps) {
             <div className="h-9 w-9 rounded-lg bg-gradient-to-br from-primary to-primary/60 flex items-center justify-center">
               <Icon name="LineChart" className="h-5 w-5 text-primary-foreground" />
             </div>
-            <h1 className="text-xl font-bold">Рынок</h1>
+            <h1 className="text-xl font-bold">Торги на ММВБ</h1>
           </div>
           <Button variant="outline" size="sm" onClick={handleShare} className="ml-auto gap-1.5">
             <Icon name="Share2" size={14} />

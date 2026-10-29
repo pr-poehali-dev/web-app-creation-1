@@ -58,7 +58,7 @@ export default function HeaderMobileMenu({
         className="block mx-4 px-3 py-2 text-sm font-medium text-foreground hover:bg-primary/5 hover:text-primary rounded-md border-2 border-primary/20 hover:border-primary/40 transition-colors"
         onClick={onClose}
       >
-        Рынок
+        Торги на ММВБ
       </Link>
       <Link
         to="/support"

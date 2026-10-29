@@ -337,7 +337,7 @@ export default function Header({ isAuthenticated, onLogout }: HeaderProps) {
               to="/market"
               className={`text-[11px] xl:text-xs 2xl:text-sm font-medium transition-colors px-1 2xl:px-2 py-1.5 rounded-md border-2 whitespace-nowrap ${location.pathname === '/market' ? 'bg-primary/10 text-primary border-primary/40' : 'text-foreground hover:text-primary hover:bg-primary/5 border-primary/20 hover:border-primary/40'}`}
             >
-              Рынок
+              Торги на ММВБ
             </Link>
             <Link
               to="/support"
