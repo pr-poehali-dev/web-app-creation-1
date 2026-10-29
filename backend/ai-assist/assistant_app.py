@@ -17,6 +17,7 @@ from psycopg2.extras import RealDictCursor
 import bcrypt
 import jwt
 import requests
+from urllib.parse import quote
 
 DATABASE_URL = os.environ.get('DATABASE_URL')
 DB_SCHEMA = os.environ.get('DB_SCHEMA', 't_p42562714_web_app_creation_1')
@@ -40,11 +41,14 @@ MODES = {
 
 SYSTEM_PROMPT = (
     'Ты добрый и спокойный личный ассистент по имени «Ассистент». Говори по-русски, просто и тепло, без сложных слов. '
+    'Ты можешь ответить на любой вопрос по любой теме, как умный поисковик: при необходимости ищи свежую информацию в интернете. '
     'Отвечай по делу, короткими абзацами, шаги нумеруй. Если не хватает данных, задай один уточняющий вопрос. '
-    'Не выдумывай факты, цены, телефоны и адреса. В вопросах здоровья, права и денег напомни, что это совет, '
-    'а не замена специалисту. Если пользователь просит запомнить что-то о себе, согласись и скажи, что запомнил.'
+    'Не выдумывай факты, цены, телефоны, адреса и ссылки. В вопросах здоровья, права и денег коротко напомни, что это совет, '
+    'а не замена специалисту, но всё равно дай полезный ответ. Если пользователь просит запомнить что-то о себе, согласись и скажи, что запомнил. '
+    'Если вопрос про «как сделать», ремонт, настройку, рецепт, упражнение и подобное, где полезна видео или фото инструкция, '
+    'в самом конце ответа добавь отдельную строку строго в формате: ВИДЕО: короткий поисковый запрос на русском. '
+    'Не пиши сам ссылки на видео, их добавит система.'
 )
-
 
 def get_db_connection():
     return psycopg2.connect(DATABASE_URL, cursor_factory=RealDictCursor)
@@ -145,6 +149,66 @@ def call_ai(system: str, messages: List[Dict[str, str]], max_tokens: int = 900, 
     )
     response.raise_for_status()
     return response.json()['result']['alternatives'][0]['message']['text'].strip()
+
+
+def call_gemini(system: str, messages: List[Dict[str, str]], max_tokens: int = 1500) -> Dict[str, Any]:
+    api_key = os.environ['GEMINI_API_KEY']
+    contents = [
+        {'role': 'user' if m['role'] == 'user' else 'model', 'parts': [{'text': m['text']}]}
+        for m in messages
+    ]
+    response = requests.post(
+        'https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent',
+        headers={'Content-Type': 'application/json', 'x-goog-api-key': api_key},
+        json={
+            'system_instruction': {'parts': [{'text': system}]},
+            'contents': contents,
+            'tools': [{'google_search': {}}],
+            'generationConfig': {'temperature': 0.6, 'maxOutputTokens': max_tokens, 'thinkingConfig': {'thinkingBudget': 0}},
+        },
+        timeout=40,
+    )
+    response.raise_for_status()
+    cand = response.json()['candidates'][0]
+    text = ''.join(p.get('text', '') for p in cand['content']['parts']).strip()
+    sources = []
+    for ch in (cand.get('groundingMetadata') or {}).get('groundingChunks', []):
+        web = ch.get('web') or {}
+        if web.get('uri'):
+            sources.append({'title': web.get('title') or '', 'uri': web['uri']})
+    return {'text': text, 'sources': sources}
+
+
+def build_answer(raw: str, sources: List[Dict[str, str]]) -> str:
+    video_query = ''
+    lines = []
+    for line in raw.splitlines():
+        m = re.match(r'^\s*\**ВИДЕО:\**\s*(.+)$', line.strip())
+        if m:
+            video_query = m.group(1).strip(' *')[:120]
+        else:
+            lines.append(line)
+    answer = '\n'.join(lines).strip()
+    if video_query:
+        q = quote(video_query)
+        answer += (
+            '\n\nВидео и фото инструкции:\n'
+            f'https://rutube.ru/search/?query={q}\n'
+            f'https://www.youtube.com/results?search_query={q}\n'
+            f'https://yandex.ru/images/search?text={q}'
+        )
+    seen = set()
+    src_lines = []
+    for src in sources:
+        if src['uri'] in seen:
+            continue
+        seen.add(src['uri'])
+        src_lines.append(f"{src['title'] or 'Источник'}: {src['uri']}")
+        if len(src_lines) >= 3:
+            break
+    if src_lines:
+        answer += '\n\nГде прочитать подробнее:\n' + '\n'.join(src_lines)
+    return answer
 
 
 def extract_fact(message: str) -> Optional[str]:
@@ -307,9 +371,15 @@ def handle_assistant(event: Dict[str, Any], body: Dict[str, Any]) -> Dict[str, A
                 ai_messages.append({'role': 'user', 'text': message})
 
                 try:
-                    answer = call_ai(system, ai_messages)
+                    g = call_gemini(system, ai_messages)
+                    if not g['text']:
+                        raise ValueError('empty')
+                    answer = build_answer(g['text'], g['sources'])
                 except Exception:
-                    return err(502, 'Ассистент сейчас занят, попробуйте через минуту')
+                    try:
+                        answer = build_answer(call_ai(system, ai_messages), [])
+                    except Exception:
+                        return err(502, 'Ассистент сейчас занят, попробуйте через минуту')
 
                 cur.execute(
                     f"INSERT INTO {DB_SCHEMA}.assistant_messages (user_id, role, content) VALUES (%s, 'user', %s)",

@@ -19,13 +19,33 @@ interface ChatPanelProps {
   onMemoryChanged: () => void;
 }
 
+const URL_RE = /(https?:\/\/[^\s)]+)/g;
+
+function renderText(text: string, isUser: boolean) {
+  return text.split(URL_RE).map((part, i) =>
+    /^https?:\/\//.test(part) ? (
+      <a
+        key={i}
+        href={part}
+        target="_blank"
+        rel="noopener noreferrer"
+        className={`break-all underline ${isUser ? 'text-white' : 'text-emerald-700'}`}
+      >
+        {part}
+      </a>
+    ) : (
+      part
+    ),
+  );
+}
+
 export default function ChatPanel({ user, onMemoryChanged }: ChatPanelProps) {
   const { toast } = useToast();
   const [messages, setMessages] = useState<ChatMessage[]>([]);
   const [input, setInput] = useState('');
   const [sending, setSending] = useState(false);
   const [loaded, setLoaded] = useState(false);
-  const bottomRef = useRef<HTMLDivElement>(null);
+  const listRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
     loadHistory()
@@ -35,7 +55,8 @@ export default function ChatPanel({ user, onMemoryChanged }: ChatPanelProps) {
   }, []);
 
   useEffect(() => {
-    bottomRef.current?.scrollIntoView({ behavior: 'smooth', block: 'end' });
+    const el = listRef.current;
+    if (el) el.scrollTo({ top: el.scrollHeight, behavior: 'smooth' });
   }, [messages, sending]);
 
   const send = async (text: string) => {
@@ -76,8 +97,11 @@ export default function ChatPanel({ user, onMemoryChanged }: ChatPanelProps) {
   const scenarios = user.modes.flatMap((m: AssistantMode) => SCENARIOS[m] || []);
 
   return (
-    <div className="flex h-[calc(100vh-9.5rem)] flex-col">
-      <div className="flex-1 space-y-3 overflow-y-auto px-1 py-2">
+    <div className="flex h-[calc(100dvh-10.5rem)] min-h-[320px] flex-col">
+      <div
+        ref={listRef}
+        className="min-h-0 flex-1 space-y-3 overflow-y-auto overscroll-contain px-1 py-2 [-webkit-overflow-scrolling:touch]"
+      >
         {loaded && messages.length === 0 && (
           <div className="py-4">
             <p className="text-lg font-semibold text-slate-800">Здравствуйте, {user.name}!</p>
@@ -113,7 +137,7 @@ export default function ChatPanel({ user, onMemoryChanged }: ChatPanelProps) {
                 m.role === 'user' ? 'bg-emerald-600 text-white' : 'border border-slate-200 bg-white text-slate-800'
               }`}
             >
-              {m.content}
+              {renderText(m.content, m.role === 'user')}
             </div>
           </div>
         ))}
@@ -126,7 +150,6 @@ export default function ChatPanel({ user, onMemoryChanged }: ChatPanelProps) {
             </div>
           </div>
         )}
-        <div ref={bottomRef} />
       </div>
 
       <div className="border-t border-slate-200 bg-white/80 pt-3">
