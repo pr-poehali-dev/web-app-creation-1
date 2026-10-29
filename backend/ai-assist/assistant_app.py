@@ -234,7 +234,7 @@ def extract_fact(message: str) -> Optional[str]:
 ASSISTANT_ACTIONS = {
     'register', 'login', 'me', 'save_profile', 'chat', 'history', 'clear_history',
     'memory_list', 'memory_add', 'memory_delete', 'tasks_list', 'task_add', 'task_toggle',
-    'task_delete', 'delete_account', 'push_subscribe', 'push_unsubscribe',
+    'task_delete', 'delete_account', 'push_subscribe', 'push_unsubscribe', 'popular_list', 'popular_answer',
 }
 
 
@@ -300,6 +300,10 @@ def handle_assistant(event: Dict[str, Any], body: Dict[str, Any]) -> Dict[str, A
                 return reply(200, {'success': True, 'user': public_user(user), 'token': make_token(user['id'], user['name'])})
         finally:
             conn.close()
+
+    if action == 'popular_list':
+        from popular_questions import public_categories
+        return reply(200, {'success': True, 'categories': public_categories()})
 
     user_id = user_from_event(event)
     if not user_id:
@@ -405,6 +409,45 @@ def handle_assistant(event: Dict[str, Any], body: Dict[str, Any]) -> Dict[str, A
                         remembered = fact
 
                 return reply(200, {'success': True, 'answer': answer, 'remembered': remembered})
+
+            if action == 'popular_answer':
+                from popular_questions import QUESTION_TEXT
+                qid = (body.get('id') or '').strip()
+                question = QUESTION_TEXT.get(qid)
+                if not question:
+                    return err(400, 'Такого вопроса нет в списке')
+                cur.execute(
+                    f"SELECT answer FROM {DB_SCHEMA}.assistant_popular_answers WHERE question_id = %s AND created_at > NOW() - INTERVAL '30 days'",
+                    (qid,)
+                )
+                cached = cur.fetchone()
+                if cached:
+                    return reply(200, {'success': True, 'question': question, 'answer': cached['answer']})
+                pop_system = (
+                    'Ты опытный и добрый консультант. Отвечай по-русски, понятно для обычного человека, подробно и по делу. '
+                    'Структура: короткое вступление, затем пошаговая инструкция или список советов с нумерацией, '
+                    'в конце важные предостережения и что делать, если не получилось. Используй актуальную информацию из интернета. '
+                    'Не выдумывай факты, цены и ссылки. По здоровью, праву и деньгам добавь, что это общая информация, а не замена специалисту. '
+                    'Последней строкой добавь: ВИДЕО: короткий поисковый запрос на русском для поиска видео и фото инструкции. '
+                    'Ссылки на видео сам не пиши.'
+                )
+                try:
+                    g = call_gemini(pop_system, [{'role': 'user', 'text': question}], max_tokens=2500)
+                    if not g['text']:
+                        raise ValueError('empty')
+                    answer = build_answer(g['text'], g['sources'])
+                except Exception:
+                    try:
+                        answer = build_answer(call_ai(pop_system, [{'role': 'user', 'text': question}], max_tokens=1500), [])
+                    except Exception:
+                        return err(502, 'Не удалось подготовить ответ, попробуйте через минуту')
+                cur.execute(
+                    f'''INSERT INTO {DB_SCHEMA}.assistant_popular_answers (question_id, answer) VALUES (%s, %s)
+                        ON CONFLICT (question_id) DO UPDATE SET answer = EXCLUDED.answer, created_at = CURRENT_TIMESTAMP''',
+                    (qid, answer)
+                )
+                conn.commit()
+                return reply(200, {'success': True, 'question': question, 'answer': answer})
 
             if action == 'history':
                 cur.execute(

@@ -104,6 +104,17 @@ export const saveProfile = async (modes: AssistantMode[], about: string) => {
 export const sendMessage = (message: string) =>
   call<{ answer: string; remembered: string | null }>('chat', { message });
 
+export interface PopularCategory {
+  id: string;
+  title: string;
+  icon: string;
+  questions: { id: string; text: string }[];
+}
+
+export const loadPopular = async () => (await call<{ categories: PopularCategory[] }>('popular_list')).categories;
+export const loadPopularAnswer = async (id: string) =>
+  (await call<{ question: string; answer: string }>('popular_answer', { id })).answer;
+
 export const loadHistory = async () => (await call<{ messages: ChatMessage[] }>('history')).messages;
 export const clearHistory = () => call('clear_history');
 

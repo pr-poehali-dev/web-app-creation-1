@@ -5,6 +5,7 @@ import { useToast } from '@/hooks/use-toast';
 import ChatPanel from '../components/ChatPanel';
 import TasksPanel from '../components/TasksPanel';
 import MemoryPanel from '../components/MemoryPanel';
+import PopularPanel from '../components/PopularPanel';
 import ModePicker from '../components/ModePicker';
 import {
   AssistantUser,
@@ -14,10 +15,11 @@ import {
   getAssistantToken,
 } from '../utils/assistantApi';
 
-type Tab = 'chat' | 'tasks' | 'memory';
+type Tab = 'chat' | 'popular' | 'tasks' | 'memory';
 
 const TABS: { id: Tab; label: string; icon: string }[] = [
   { id: 'chat', label: 'Чат', icon: 'MessageCircle' },
+  { id: 'popular', label: 'Вопросы', icon: 'Flame' },
   { id: 'tasks', label: 'Мои дела', icon: 'ListChecks' },
   { id: 'memory', label: 'Что я помню', icon: 'Bookmark' },
 ];
@@ -122,13 +124,13 @@ export default function AssistantHome() {
         />
       ) : (
         <main className="mx-auto max-w-3xl px-4 pt-3 pb-4">
-          <nav className="mb-3 grid grid-cols-3 gap-1 rounded-2xl bg-slate-100 p-1">
+          <nav className="mb-3 grid grid-cols-4 gap-1 rounded-2xl bg-slate-100 p-1">
             {TABS.map((t) => (
               <button
                 key={t.id}
                 type="button"
                 onClick={() => setTab(t.id)}
-                className={`flex items-center justify-center gap-1.5 rounded-xl py-2.5 text-sm font-medium transition-colors ${
+                className={`flex items-center justify-center gap-1.5 rounded-xl py-2.5 text-xs sm:text-sm font-medium transition-colors ${
                   tab === t.id ? 'bg-white text-slate-900 shadow-sm' : 'text-slate-500 hover:text-slate-700'
                 }`}
               >
@@ -139,6 +141,7 @@ export default function AssistantHome() {
           </nav>
 
           {tab === 'chat' && <ChatPanel user={user} onMemoryChanged={() => setMemoryKey((k) => k + 1)} />}
+          {tab === 'popular' && <PopularPanel />}
           {tab === 'tasks' && <TasksPanel />}
           {tab === 'memory' && <MemoryPanel refreshKey={memoryKey} onDeleteAccount={handleDeleteAccount} />}
         </main>

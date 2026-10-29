@@ -19,9 +19,9 @@ interface ChatPanelProps {
   onMemoryChanged: () => void;
 }
 
-const URL_RE = /(https?:\/\/[^\s)]+)/g;
+export const URL_RE = /(https?:\/\/[^\s)]+)/g;
 
-function renderText(text: string, isUser: boolean) {
+export function renderText(text: string, isUser: boolean) {
   return text.split(URL_RE).map((part, i) =>
     /^https?:\/\//.test(part) ? (
       <a
