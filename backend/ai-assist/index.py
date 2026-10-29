@@ -635,6 +635,20 @@ def market_review_list(user_id: int, ticker: str) -> dict:
     }
 
 
+POPULAR_TICKERS = ["SBER", "GAZP", "LKOH", "GMKN", "YDEX", "ROSN", "TATN", "SNGS", "NLMK", "MAGN", "ALRS", "MTSS", "MOEX", "VTBR",
+                   "PHOR", "OZON", "CHMF", "PLZL", "NVTK", "SIBN", "AFLT", "TRNFP", "PIKK", "RUAL", "IRAO", "HYDR", "FEES", "CBOM",
+                   "T", "X5", "MGNT", "AFKS", "POLY", "FLOT", "BSPB", "RTKM", "SMLT", "ENPG", "LSRG", "UPRO"]
+
+
+def market_fundamentals_warmup(offset: int, limit: int = 2) -> dict:
+    batch = POPULAR_TICKERS[offset:offset + limit]
+    done = []
+    for t in batch:
+        done.append({"ticker": t, "ok": bool(_smartlab_fundamentals(t))})
+    nxt = offset + limit
+    return {"processed": done, "next": nxt if nxt < len(POPULAR_TICKERS) else None, "total": len(POPULAR_TICKERS)}
+
+
 def handler(event: dict, context) -> dict:
     """
     ИИ-помощник для улучшения текстов (YandexGPT) + раздел "Рынок":
@@ -656,6 +670,14 @@ def handler(event: dict, context) -> dict:
         return run_reminders()
 
     # ── GET: рыночные данные (бесплатно, без GPT) ──────────────────────────
+    if method == "GET" and query_action == "market_fundamentals_warmup":
+        try:
+            off = max(0, int(params.get("offset", "0")))
+        except ValueError:
+            off = 0
+        return {"statusCode": 200, "headers": {**CORS, "Content-Type": "application/json"},
+                "body": json.dumps(market_fundamentals_warmup(off), ensure_ascii=False)}
+
     if method == "GET" and query_action == "market_search":
         result = market_search(params.get("q", ""))
         return {"statusCode": 200, "headers": {**CORS, "Content-Type": "application/json"},
