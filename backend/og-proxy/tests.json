@@ -35,6 +35,12 @@
       "method": "GET",
       "path": "/?type=game&id=club",
       "expectedStatus": 200
+    },
+    {
+      "name": "OG proxy for market ticker",
+      "method": "GET",
+      "path": "/?type=market&id=SBER&m=shares&name=%D0%A1%D0%B1%D0%B5%D1%80",
+      "expectedStatus": 200
     }
   ]
 }

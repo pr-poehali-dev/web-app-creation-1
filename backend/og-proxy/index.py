@@ -2,6 +2,8 @@
 
 import json
 import os
+import urllib.request
+from urllib.parse import quote
 import psycopg2
 from psycopg2.extras import RealDictCursor
 
@@ -109,6 +111,40 @@ def handler(event: dict, context) -> dict:
         p = STATIC_PAGES[item_id]
         page_url = f"{frontend_url}{p['path']}"
         return html_response(p['title'], p['desc'], p['image'], page_url, page_url)
+
+    if item_type == 'market':
+        ticker = ''.join(ch for ch in params.get('id', '') if ch.isalnum())[:20].upper()
+        market = 'futures' if params.get('m') == 'futures' else 'shares'
+        name = (params.get('name') or ticker)[:80]
+        if not ticker:
+            return {'statusCode': 302, 'headers': {'Location': f'{frontend_url}/market', 'Access-Control-Allow-Origin': '*'}, 'body': ''}
+        price_line = ''
+        if market == 'shares':
+            try:
+                req = urllib.request.Request(
+                    f'https://iss.moex.com/iss/engines/stock/markets/shares/boards/TQBR/securities/{ticker}.json?iss.meta=off&iss.only=marketdata,securities',
+                    headers={'User-Agent': 'Mozilla/5.0'})
+                with urllib.request.urlopen(req, timeout=3) as resp:
+                    data = json.loads(resp.read().decode('utf-8'))
+                cols = data['marketdata']['columns']
+                row = data['marketdata']['data'][0]
+                md = dict(zip(cols, row))
+                last = md.get('LAST')
+                pct = md.get('LASTTOPREVPRICE')
+                if last:
+                    price_line = f"{float(last):,.2f} ₽".replace(',', '\u00a0')
+                    if pct is not None:
+                        price_line += f" ({'+' if float(pct) > 0 else ''}{float(pct):.2f}%)"
+                    price_line += '. '
+                sec = dict(zip(data['securities']['columns'], data['securities']['data'][0]))
+                if not params.get('name') and sec.get('SHORTNAME'):
+                    name = sec['SHORTNAME']
+            except Exception:
+                price_line = ''
+        title = f'{name} ({ticker}) — котировка и ИИ-обзор'
+        desc = f'{price_line}График, новости и ИИ-обзор компании: отчётность, риски и перспективы. Откройте на ЕРТТП.'
+        redirect = f'{frontend_url}/market?ticker={quote(ticker)}&name={quote(name)}&tab={market}'
+        return html_response(title, desc, default_image, redirect, redirect, 'ЕРТТП — Рынок', 'website')
 
     if not item_id or item_type not in ('offer', 'request', 'auction'):
         return {

@@ -20,14 +20,14 @@ export default function Market({ isAuthenticated, onLogout }: MarketProps) {
   const [searchParams] = useSearchParams();
   const retTicker = searchParams.get('ticker');
   const retPurchase = parseInt(searchParams.get('purchaseId') || '', 10);
-  const retMarket = searchParams.get('market') === 'futures' ? 'futures' : 'shares';
-  const returned = searchParams.get('payment') === 'success' && retTicker
+  const retMarket = (searchParams.get('market') || searchParams.get('tab')) === 'futures' ? 'futures' : 'shares';
+  const returned = retTicker
     ? { ticker: retTicker, name: searchParams.get('name') || retTicker }
     : null;
   const purchaseId = isNaN(retPurchase) ? null : retPurchase;
   const { toast } = useToast();
   const [tab, setTab] = useState<string>(
-    returned ? retMarket : searchParams.get('tab') === 'futures' ? 'futures' : 'shares',
+    retMarket,
   );
 
   const handleShare = async () => {

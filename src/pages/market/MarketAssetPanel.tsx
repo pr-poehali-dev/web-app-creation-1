@@ -6,6 +6,9 @@ import MarketNewsList from './MarketNewsList';
 import MarketReviewBlock from './MarketReviewBlock';
 import MarketBlueChips, { MarketFuturesList, MarketMyAssets } from './MarketBlueChips';
 import Icon from '@/components/ui/icon';
+import { Button } from '@/components/ui/button';
+import { useToast } from '@/hooks/use-toast';
+import func2url from '../../../backend/func2url.json';
 
 interface MarketAssetPanelProps {
   marketHint: 'shares' | 'futures';
@@ -44,6 +47,30 @@ export default function MarketAssetPanel({ marketHint, placeholder, initialAsset
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [selected?.ticker]);
 
+  const { toast } = useToast();
+
+  const handleShareAsset = async () => {
+    if (!selected) return;
+    const base = (func2url as Record<string, string>)['og-proxy'];
+    const url = `${base}?type=market&id=${encodeURIComponent(selected.ticker)}&m=${marketHint}&name=${encodeURIComponent(selected.name)}&v=1`;
+    const title = `${selected.name} (${selected.ticker}) — котировка и ИИ-обзор`;
+    const text = `${title}. График, новости и ИИ-обзор компании на ЕРТТП`;
+    if (navigator.share) {
+      try {
+        await navigator.share({ title, text, url });
+        return;
+      } catch (e) {
+        if ((e as Error).name === 'AbortError') return;
+      }
+    }
+    try {
+      await navigator.clipboard.writeText(url);
+      toast({ title: 'Ссылка скопирована', description: 'Отправьте её в любой мессенджер' });
+    } catch {
+      toast({ title: 'Не удалось скопировать ссылку', description: url, variant: 'destructive' });
+    }
+  };
+
   const handleSelect = (r: SearchResult) => {
     review.reset();
     setSelected(r);
@@ -72,6 +99,12 @@ export default function MarketAssetPanel({ marketHint, placeholder, initialAsset
       ) : (
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-4">
           <div className="lg:col-span-2 space-y-4">
+            <div className="flex justify-end">
+              <Button variant="outline" size="sm" onClick={handleShareAsset} className="gap-1.5">
+                <Icon name="Share2" size={14} />
+                Поделиться бумагой
+              </Button>
+            </div>
             <MarketQuoteCard quote={quote} isLoading={isLoadingQuote} />
             <MarketReviewBlock
               ticker={selected.ticker}
