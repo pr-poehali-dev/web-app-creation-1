@@ -8,6 +8,7 @@ import bots_abc as abc_bot
 import bots_pullback as pullback
 import bots_elliott as elliott
 import bots_logic as logic
+from bots_channel import chart_data
 import bots_schema as schema
 from bots_common import FMT, occurrences, result, trade_row
 
@@ -110,7 +111,9 @@ def run_backtest(cur, bot, days, proven=False, overrides=None):
     summ["avg_r"] = round(sum(r["r"] for r in done) / len(done), 2) if done else 0
     summ["total_r"] = round(sum(r["r"] for r in done), 2)
     summ["contracts_note"] = "Размер позиции считается по риску на сделку и обеспечению; результат в % к цене входа, с учётом комиссии"
+    chart = chart_data(log, candles) if bot["bot_type"] == "intraday" else []
     return {
+        "chart": chart,
         "title": f"{bot['name']} · {c['secid']}", "ticker": c["secid"], "from": max(cutoff, candles[0]["begin"]) if candles else None,
         "to": candles[-1]["begin"] if candles else None, "trades": rows, "summary": summ,
         "log": [{"t": a, "kind": k, "text": x} for a, k, x in log[-250:]],

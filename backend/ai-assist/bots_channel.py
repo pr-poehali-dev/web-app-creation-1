@@ -1,3 +1,4 @@
+import re
 from datetime import datetime
 
 from bots_common import atr_series, clearing_block, dts, fix, new_state, sign, size
@@ -246,3 +247,38 @@ def sim_intraday(cfg, info, c5):
             cycles += 1
             log.append((stamp, "entry", f"вход {d} {n} шт. по {entry:.2f}: отбой от {'нижней' if d == 'ЛОНГ' else 'верхней'} границы канала {l:.2f}–{u:.2f}; стоп {stop:.2f}, первый тейк {take:.2f} (противоположная линия)"))
     return trades, log
+
+
+_RE_ENTRY = re.compile(r"^(вход|добор) (\S+) (\d+) шт\. по ([\d.]+).*?(?:общий )?стоп ([\d.]+)")
+_RE_FIX = re.compile(r"^зафиксировано .*? по ([\d.]+) у")
+_RE_MOVE = re.compile(r"подтянут.*?: ([\d.]+)$")
+_RE_EXIT = re.compile(r"^выход (\S+): (.+) по ([\d.]+)$")
+
+
+def chart_data(log, c5, max_days=6):
+    marks = []
+    for t, kind, text in log:
+        m = None
+        if kind == "entry":
+            m = _RE_ENTRY.match(text)
+            if m:
+                marks.append({"t": t, "kind": "add" if m.group(1) == "добор" else "entry", "dir": m.group(2), "price": float(m.group(4)), "stop": float(m.group(5)), "text": text})
+        elif kind == "fix":
+            m = _RE_FIX.match(text)
+            if m:
+                marks.append({"t": t, "kind": "fix", "price": float(m.group(1)), "text": text})
+        elif kind == "move":
+            m = _RE_MOVE.search(text)
+            if m:
+                marks.append({"t": t, "kind": "move", "price": float(m.group(1)), "text": text})
+        elif kind == "exit":
+            m = _RE_EXIT.match(text)
+            if m:
+                marks.append({"t": t, "kind": "exit", "price": float(m.group(3)), "text": text})
+    days = sorted({x["t"][:10] for x in marks})[-max_days:]
+    out = []
+    for d in days:
+        bars = [[c["begin"][11:16], c["open"], c["high"], c["low"], c["close"]] for c in c5 if c["begin"][:10] == d]
+        ms = [dict(x, t=x["t"][11:16]) for x in marks if x["t"][:10] == d]
+        out.append({"date": d, "bars": bars, "marks": ms})
+    return out

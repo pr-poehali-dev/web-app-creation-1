@@ -78,7 +78,23 @@ export interface BotEvent {
   repeat_until?: string | null;
 }
 
+export interface ChartMark {
+  t: string;
+  kind: 'entry' | 'add' | 'fix' | 'move' | 'exit';
+  price: number;
+  stop?: number;
+  dir?: string;
+  text: string;
+}
+
+export interface ChartDay {
+  date: string;
+  bars: [string, number, number, number, number][];
+  marks: ChartMark[];
+}
+
 export interface BotBacktest extends BacktestResult {
+  chart?: ChartDay[];
   log?: { t: string; kind: string; text: string }[];
 }
 

@@ -4,6 +4,7 @@ import { Card, CardContent } from '@/components/ui/card';
 import { Label } from '@/components/ui/label';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import Icon from '@/components/ui/icon';
+import TradeChart from './TradeChart';
 import { botsBacktest, type Bot, type BotBacktest as Result } from './botsApi';
 
 const pct = (v: number) => `${v > 0 ? '+' : ''}${v.toFixed(2)}%`;
@@ -101,6 +102,7 @@ export default function BotBacktest({ bot }: { bot: Bot }) {
               </CardContent>
             </Card>
           )}
+          {mine?.chart && mine.chart.length > 0 && <TradeChart days={mine.chart} />}
           {mine && mine.trades.length === 0 && <p className="text-sm text-muted-foreground">За этот период условия не сложились ни разу.</p>}
           <div className="space-y-2">
             {[...(mine?.trades || [])].reverse().slice(0, 40).map((t, i) => (
