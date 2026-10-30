@@ -1,7 +1,7 @@
 import re
 from datetime import datetime
 
-from bots_common import atr_series, clearing_block, dts, fix, new_state, sign, size
+from bots_common import atr_series, clearing_block, dts, ema_series, fix, new_state, sign, size
 
 PIV = 2
 
@@ -112,6 +112,7 @@ def sim_intraday(cfg, info, c5):
         return trades, log
     dt = dts(c5)
     atr = atr_series(c5, 14)
+    ema = ema_series([c["close"] for c in c5], int(cfg["trend_ema"]))
     c10, end_to = _bars10(c5, dt) if cfg["trail_tf"] == "10" else (None, None)
     days = {}
     for i, d in enumerate(dt):
@@ -213,6 +214,13 @@ def sim_intraday(cfg, info, c5):
             tag = (day, d, i)
             if d == "ШОРТ" and not cfg["allow_short"]:
                 continue
+            if cfg["use_trend"]:
+                up = bar["close"] > ema[i]
+                if (d == "ЛОНГ") != up:
+                    if tag[:2] not in warned:
+                        warned.add(tag[:2])
+                        log.append((bar["begin"], "skip", f"отбой {d} пропущен: против тренда (цена {'выше' if up else 'ниже'} EMA-{int(cfg['trend_ema'])} {ema[i]:.2f})"))
+                    continue
             entry = bar["close"]
             buf = cfg["stop_buf_atr"] * atr[i - 1]
             stop = min(bar["low"], l) - buf if d == "ЛОНГ" else max(bar["high"], u) + buf
@@ -238,7 +246,7 @@ def sim_intraday(cfg, info, c5):
                 log.append((stamp, "skip", f"отбой {d} пропущен: даже 1 контракт не укладывается в риск или обеспечение ({note})"))
                 continue
             st = new_state({"dir": d, "entry": entry, "stop": stop, "take": take,
-                            "scenario": f"отбой от {'нижней' if d == 'ЛОНГ' else 'верхней'} границы узкого канала шириной {ch['wpct']:.2f}%"}, stamp)
+                            "scenario": f"отбой от {'нижней' if d == 'ЛОНГ' else 'верхней'} границы узкого канала шириной {ch['wpct']:.2f}%, по тренду (EMA-{int(cfg['trend_ema'])})"}, stamp)
             st["init_stop"] = stop
             st["tline"] = tline
             legs = [{"st": st, "n": n}]
