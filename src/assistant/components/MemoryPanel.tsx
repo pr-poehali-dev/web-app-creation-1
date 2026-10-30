@@ -57,7 +57,7 @@ export default function MemoryPanel({ refreshKey, onDeleteAccount }: MemoryPanel
       <div className="rounded-2xl border border-emerald-200 bg-emerald-50 p-4 text-slate-700">
         <p className="font-semibold text-slate-800">Что я помню о вас</p>
         <p className="mt-1 text-sm">
-          Только то, что вы сами рассказали. Это помогает давать точные советы. Любую запись можно удалить.
+          Здесь хранятся факты о вас: что вы любите, чего избегаете, о здоровье и семье. Помощник учитывает их в ответах, чтобы советы подходили именно вам. Запишите факт в строке ниже или просто расскажите о себе в чате. Любую запись можно удалить.
         </p>
       </div>
 
