@@ -111,7 +111,7 @@ def run_backtest(cur, bot, days, proven=False, overrides=None):
     summ["avg_r"] = round(sum(r["r"] for r in done) / len(done), 2) if done else 0
     summ["total_r"] = round(sum(r["r"] for r in done), 2)
     summ["contracts_note"] = "Размер позиции считается по риску на сделку и обеспечению; результат в % к цене входа, с учётом комиссии"
-    chart = chart_data(log, candles, cfg.get("trend_ema", 200)) if bot["bot_type"] == "intraday" else []
+    chart = chart_data(log, candles, cfg.get("trend_ema", 200), trades=trades) if bot["bot_type"] == "intraday" else []
     return {
         "chart": chart,
         "title": f"{bot['name']} · {c['secid']}", "ticker": c["secid"], "from": max(cutoff, candles[0]["begin"]) if candles else None,

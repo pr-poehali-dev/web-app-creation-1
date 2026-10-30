@@ -56,7 +56,7 @@ def find_channel(c, day0, i, cfg, tol, strict=True):
     for k in range(first, i):
         if c[k]["close"] > up(k) + tol or c[k]["close"] < lo(k) - tol:
             return None
-    return {"up": (ua, ub), "lo": (la, lb), "wpct": wpct}
+    return {"up": (ua, ub), "lo": (la, lb), "wpct": wpct, "first": first}
 
 
 def _line(p, k):
@@ -249,6 +249,7 @@ def sim_intraday(cfg, info, c5):
                             "scenario": f"отбой от {'нижней' if d == 'ЛОНГ' else 'верхней'} границы узкого канала шириной {ch['wpct']:.2f}%, по тренду (EMA-{int(cfg['trend_ema'])})"}, stamp)
             st["init_stop"] = stop
             st["tline"] = tline
+            st["chan"] = {"first": ch["first"], "up": ch["up"], "lo": ch["lo"]}
             legs = [{"st": st, "n": n}]
             trades.append({"st": st, "n": n, "note": note})
             base_n, dirn, add_done, staged = n, d, False, False
@@ -284,7 +285,7 @@ def _ema_lines(c5, n):
     return e5, e60
 
 
-def chart_data(log, c5, ema_n=200, max_days=6):
+def chart_data(log, c5, ema_n=200, max_days=6, trades=None):
     e5, e60 = _ema_lines(c5, int(ema_n))
     pos = {c["begin"]: i for i, c in enumerate(c5)}
     marks = []
@@ -306,10 +307,23 @@ def chart_data(log, c5, ema_n=200, max_days=6):
             m = _RE_EXIT.match(text)
             if m:
                 marks.append({"t": t, "kind": "exit", "price": float(m.group(3)), "text": text})
+    chans = {}
+    for tt in trades or []:
+        st = tt["st"]
+        ch = st.get("chan")
+        if not ch or st["open_time"] not in pos:
+            continue
+        end = pos.get(st.get("exit_time") or "", None)
+        if end is None:
+            end = len(c5) - 1
+        for k in range(ch["first"], end + 1):
+            if c5[k]["begin"][:10] != st["open_time"][:10]:
+                break
+            chans[k] = (round(_line(ch["up"], k), 2), round(_line(ch["lo"], k), 2))
     days = sorted({x["t"][:10] for x in marks})[-max_days:]
     out = []
     for d in days:
-        bars = [[c["begin"][11:16], c["open"], c["high"], c["low"], c["close"], round(e5[pos[c["begin"]]], 2), round(e60[pos[c["begin"]]], 2) if e60[pos[c["begin"]]] is not None else None] for c in c5 if c["begin"][:10] == d]
+        bars = [[c["begin"][11:16], c["open"], c["high"], c["low"], c["close"], round(e5[pos[c["begin"]]], 2), round(e60[pos[c["begin"]]], 2) if e60[pos[c["begin"]]] is not None else None, chans.get(pos[c["begin"]], (None, None))[0], chans.get(pos[c["begin"]], (None, None))[1]] for c in c5 if c["begin"][:10] == d]
         ms = [dict(x, t=x["t"][11:16]) for x in marks if x["t"][:10] == d]
         out.append({"date": d, "bars": bars, "marks": ms})
     return out

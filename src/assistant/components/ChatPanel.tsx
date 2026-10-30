@@ -19,24 +19,35 @@ interface ChatPanelProps {
   onMemoryChanged: () => void;
 }
 
-export const URL_RE = /(https?:\/\/[^\s)]+)/g;
+export const URL_RE = /(\[[^\]]+\]\(https?:\/\/[^)\s]+\)|https?:\/\/[^\s)]+)/g;
+const LINK_MD = /^\[([^\]]+)\]\((https?:\/\/[^)\s]+)\)$/;
 
 export function renderText(text: string, isUser: boolean) {
-  return text.split(URL_RE).map((part, i) =>
-    /^https?:\/\//.test(part) ? (
-      <a
-        key={i}
-        href={part}
-        target="_blank"
-        rel="noopener noreferrer"
-        className={`break-all underline ${isUser ? 'text-white' : 'text-emerald-700'}`}
-      >
-        {part}
-      </a>
-    ) : (
-      part
-    ),
-  );
+  const cls = `underline ${isUser ? 'text-white' : 'text-emerald-700'}`;
+  return text.split(URL_RE).map((part, i) => {
+    const md = part.match(LINK_MD);
+    if (md) {
+      return (
+        <a key={i} href={md[2]} target="_blank" rel="noopener noreferrer" className={cls}>
+          {md[1]}
+        </a>
+      );
+    }
+    if (/^https?:\/\//.test(part)) {
+      let label = part;
+      try {
+        label = new URL(part).hostname.replace(/^www\./, '');
+      } catch {
+        label = part.slice(0, 40);
+      }
+      return (
+        <a key={i} href={part} target="_blank" rel="noopener noreferrer" className={cls}>
+          {label}
+        </a>
+      );
+    }
+    return part;
+  });
 }
 
 export default function ChatPanel({ user, onMemoryChanged }: ChatPanelProps) {

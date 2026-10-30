@@ -151,26 +151,47 @@ def call_ai(system: str, messages: List[Dict[str, str]], max_tokens: int = 900, 
     return response.json()['result']['alternatives'][0]['message']['text'].strip()
 
 
+GEMINI_MODELS = ['gemini-2.5-flash', 'gemini-2.0-flash', 'gemini-2.5-flash-lite']
+
+
 def call_gemini(system: str, messages: List[Dict[str, str]], max_tokens: int = 1500) -> Dict[str, Any]:
+    last = None
+    for model in GEMINI_MODELS:
+        try:
+            res = _call_gemini_model(model, system, messages, max_tokens)
+            if res['text']:
+                return res
+            last = ValueError(f'{model}: empty answer')
+        except Exception as e:
+            last = e
+            print(f'[gemini] {model} failed: {e}')
+    raise last or ValueError('gemini failed')
+
+
+def _call_gemini_model(model: str, system: str, messages: List[Dict[str, str]], max_tokens: int) -> Dict[str, Any]:
     api_key = os.environ['GEMINI_API_KEY']
     contents = [
         {'role': 'user' if m['role'] == 'user' else 'model', 'parts': [{'text': m['text']}]}
         for m in messages
     ]
     response = requests.post(
-        'https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent',
+        f'https://generativelanguage.googleapis.com/v1beta/models/{model}:generateContent',
         headers={'Content-Type': 'application/json', 'x-goog-api-key': api_key},
         json={
             'system_instruction': {'parts': [{'text': system}]},
             'contents': contents,
             'tools': [{'google_search': {}}],
-            'generationConfig': {'temperature': 0.6, 'maxOutputTokens': max_tokens, 'thinkingConfig': {'thinkingBudget': 0}},
+            'generationConfig': dict(
+                {'temperature': 0.6, 'maxOutputTokens': max_tokens},
+                **({'thinkingConfig': {'thinkingBudget': 0}} if '2.5' in model else {}),
+            ),
         },
         timeout=40,
     )
-    response.raise_for_status()
+    if response.status_code >= 400:
+        raise RuntimeError(f'HTTP {response.status_code}: {response.text[:300]}')
     cand = response.json()['candidates'][0]
-    text = ''.join(p.get('text', '') for p in cand['content']['parts']).strip()
+    text = ''.join(p.get('text', '') for p in (cand.get('content') or {}).get('parts', [])).strip()
     sources = []
     for ch in (cand.get('groundingMetadata') or {}).get('groundingChunks', []):
         web = ch.get('web') or {}
@@ -193,9 +214,9 @@ def build_answer(raw: str, sources: List[Dict[str, str]]) -> str:
         q = quote(video_query)
         answer += (
             '\n\nВидео и фото инструкции:\n'
-            f'https://rutube.ru/search/?query={q}\n'
-            f'https://www.youtube.com/results?search_query={q}\n'
-            f'https://yandex.ru/images/search?text={q}'
+            f'[Видео на Rutube](https://rutube.ru/search/?query={q})\n'
+            f'[Видео на YouTube](https://www.youtube.com/results?search_query={q})\n'
+            f'[Фото в Яндекс Картинках](https://yandex.ru/images/search?text={q})'
         )
     seen = set()
     src_lines = []
@@ -203,7 +224,7 @@ def build_answer(raw: str, sources: List[Dict[str, str]]) -> str:
         if src['uri'] in seen:
             continue
         seen.add(src['uri'])
-        src_lines.append(f"{src['title'] or 'Источник'}: {src['uri']}")
+        src_lines.append(f"[{(src['title'] or 'Источник')[:60]}]({src['uri']})")
         if len(src_lines) >= 3:
             break
     if src_lines:
@@ -418,9 +439,11 @@ def handle_assistant(event: Dict[str, Any], body: Dict[str, Any]) -> Dict[str, A
                     if not g['text']:
                         raise ValueError('empty')
                     answer = build_answer(g['text'], g['sources'])
-                except Exception:
+                except Exception as e:
+                    print(f'[assistant] gemini error: {e}')
                     try:
-                        answer = build_answer(call_ai(system, ai_messages), [])
+                        print('[assistant] fallback to yandex')
+                        answer = build_answer(call_ai(system + '\nНе говори, что у тебя нет информации: отвечай на основе своих знаний, а если не уверен в свежих данных, скажи об этом и дай общий ответ.', ai_messages), [])
                     except Exception:
                         return err(502, 'Ассистент сейчас занят, попробуйте через минуту')
 
