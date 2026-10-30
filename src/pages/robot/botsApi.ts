@@ -89,7 +89,7 @@ export interface ChartMark {
 
 export interface ChartDay {
   date: string;
-  bars: [string, number, number, number, number][];
+  bars: [string, number, number, number, number, number | null, number | null][];
   marks: ChartMark[];
 }
 

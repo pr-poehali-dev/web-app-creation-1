@@ -263,7 +263,30 @@ _RE_MOVE = re.compile(r"подтянут.*?: ([\d.]+)$")
 _RE_EXIT = re.compile(r"^выход (\S+): (.+) по ([\d.]+)$")
 
 
-def chart_data(log, c5, max_days=6):
+def _ema_lines(c5, n):
+    dt = dts(c5)
+    e5 = ema_series([c["close"] for c in c5], n)
+    hours, hk = [], None
+    for i, d in enumerate(dt):
+        k = (d.date(), d.hour)
+        if k != hk:
+            hours.append({"k": k, "close": c5[i]["close"], "first": i})
+            hk = k
+        else:
+            hours[-1]["close"] = c5[i]["close"]
+    eh = ema_series([h["close"] for h in hours], n)
+    e60, hi = [None] * len(c5), -1
+    for i in range(len(c5)):
+        while hi + 1 < len(hours) and hours[hi + 1]["first"] <= i:
+            hi += 1
+        if hi >= 1 and len(hours) > 0:
+            e60[i] = eh[hi - 1]
+    return e5, e60
+
+
+def chart_data(log, c5, ema_n=200, max_days=6):
+    e5, e60 = _ema_lines(c5, int(ema_n))
+    pos = {c["begin"]: i for i, c in enumerate(c5)}
     marks = []
     for t, kind, text in log:
         m = None
@@ -286,7 +309,7 @@ def chart_data(log, c5, max_days=6):
     days = sorted({x["t"][:10] for x in marks})[-max_days:]
     out = []
     for d in days:
-        bars = [[c["begin"][11:16], c["open"], c["high"], c["low"], c["close"]] for c in c5 if c["begin"][:10] == d]
+        bars = [[c["begin"][11:16], c["open"], c["high"], c["low"], c["close"], round(e5[pos[c["begin"]]], 2), round(e60[pos[c["begin"]]], 2) if e60[pos[c["begin"]]] is not None else None] for c in c5 if c["begin"][:10] == d]
         ms = [dict(x, t=x["t"][11:16]) for x in marks if x["t"][:10] == d]
         out.append({"date": d, "bars": bars, "marks": ms})
     return out

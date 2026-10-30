@@ -27,7 +27,7 @@ from psycopg2.extras import RealDictCursor
 CORS = {
     "Access-Control-Allow-Origin": "*",
     "Access-Control-Allow-Methods": "GET, POST, OPTIONS",
-    "Access-Control-Allow-Headers": "Content-Type, X-User-Id, X-Assistant-Token",
+    "Access-Control-Allow-Headers": "Content-Type, X-User-Id, X-Assistant-Token, Authorization, X-Authorization",
 }
 
 MOEX_BASE = "https://iss.moex.com/iss"

@@ -14,13 +14,13 @@ function build(day: ChartDay) {
   const marksByTime = new Map<string, ChartMark[]>();
   day.marks.forEach((m) => marksByTime.set(m.t, [...(marksByTime.get(m.t) || []), m]));
   let stop: number | null = null;
-  const rows = day.bars.map(([t, , , , close]) => {
+  const rows = day.bars.map(([t, , , , close, ema5, ema60]) => {
     const ms = marksByTime.get(t) || [];
     ms.forEach((m) => {
       if (m.kind === 'entry' || m.kind === 'add') stop = m.stop ?? stop;
       if (m.kind === 'move') stop = m.price;
     });
-    const row: Record<string, number | string | null> = { t, close, stop };
+    const row: Record<string, number | string | null> = { t, close, stop, ema5, ema60 };
     if (ms.some((m) => m.kind === 'exit')) stop = null;
     return row;
   });
@@ -40,7 +40,7 @@ export default function TradeChart({ days }: { days: ChartDay[] }) {
   const [idx, setIdx] = useState(days.length - 1);
   const day = days[Math.min(idx, days.length - 1)];
   const { rows, points } = build(day);
-  const prices = rows.flatMap((r) => [r.close as number, r.stop as number | null]).concat(points.map((p) => p.price)).filter((v): v is number => v !== null);
+  const prices = rows.flatMap((r) => [r.close as number, r.stop as number | null, r.ema5 as number | null, r.ema60 as number | null]).concat(points.map((p) => p.price)).filter((v): v is number => v !== null);
   const lo = Math.min(...prices);
   const hi = Math.max(...prices);
   const pad = (hi - lo) * 0.08 || 1;
@@ -67,10 +67,12 @@ export default function TradeChart({ days }: { days: ChartDay[] }) {
             <XAxis dataKey="t" tick={{ fontSize: 10 }} minTickGap={24} />
             <YAxis domain={[lo - pad, hi + pad]} tick={{ fontSize: 10 }} width={52} tickFormatter={(v: number) => v.toFixed(0)} />
             <Tooltip
-              formatter={(v: number, n: string) => [typeof v === 'number' ? v.toFixed(2) : v, n === 'close' ? 'Цена' : n === 'stop' ? 'Стоп' : n]}
+              formatter={(v: number, n: string) => [typeof v === 'number' ? v.toFixed(2) : v, n === 'close' ? 'Цена' : n === 'stop' ? 'Стоп' : n === 'ema5' ? 'EMA-200 (5 мин)' : n === 'ema60' ? 'EMA-200 (час)' : n]}
               labelFormatter={(l: string) => `${day.date} ${l}`}
             />
             <Line type="monotone" dataKey="close" stroke="#64748b" dot={false} strokeWidth={1.5} isAnimationActive={false} />
+            <Line type="monotone" dataKey="ema5" stroke="#9333ea" dot={false} strokeWidth={1.5} isAnimationActive={false} connectNulls />
+            <Line type="stepAfter" dataKey="ema60" stroke="#0891b2" dot={false} strokeWidth={1.5} isAnimationActive={false} connectNulls />
             <Line type="stepAfter" dataKey="stop" stroke="#f59e0b" dot={false} strokeWidth={2} strokeDasharray="5 3" connectNulls={false} isAnimationActive={false} />
             <Scatter data={points} dataKey="price" shape={<Dot />} isAnimationActive={false} />
           </ComposedChart>
@@ -83,6 +85,14 @@ export default function TradeChart({ days }: { days: ChartDay[] }) {
             {KIND[k].label}
           </span>
         ))}
+        <span className="flex items-center gap-1">
+          <span className="inline-block h-0.5 w-4" style={{ background: '#9333ea' }} />
+          EMA-200 (5 мин), по ней выбирается сторона
+        </span>
+        <span className="flex items-center gap-1">
+          <span className="inline-block h-0.5 w-4" style={{ background: '#0891b2' }} />
+          EMA-200 (час)
+        </span>
         <span className="flex items-center gap-1">
           <span className="inline-block h-0 w-4 border-t-2 border-dashed" style={{ borderColor: '#f59e0b' }} />
           Линия стопа
