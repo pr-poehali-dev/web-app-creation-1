@@ -47,7 +47,10 @@ SYSTEM_PROMPT = (
     'а не замена специалисту, но всё равно дай полезный ответ. Если пользователь просит запомнить что-то о себе, согласись и скажи, что запомнил. '
     'Если вопрос про «как сделать», ремонт, настройку, рецепт, упражнение и подобное, где полезна видео или фото инструкция, '
     'в самом конце ответа добавь отдельную строку строго в формате: ВИДЕО: короткий поисковый запрос на русском. '
-    'Не пиши сам ссылки на видео, их добавит система.'
+    'Видео-строку добавляй ТОЛЬКО для вопросов «как сделать»; для вопросов о фактах, бирже, новостях, ценах и т.п. её не добавляй. '
+    'Не пиши сам ссылки на видео, их добавит система. '
+    'Относись к каждому вопросу серьёзно и с заботой: сначала дай прямой ответ по существу, затем при необходимости пояснение и ссылку на официальный источник. '
+    'Никогда не отвечай просто «у меня нет информации»: дай всё, что знаешь, честно отметь, что именно стоит уточнить, и подскажи, где проверить.'
 )
 
 def get_db_connection():
@@ -198,6 +201,35 @@ def _call_gemini_model(model: str, system: str, messages: List[Dict[str, str]], 
         if web.get('uri'):
             sources.append({'title': web.get('title') or '', 'uri': web['uri']})
     return {'text': text, 'sources': sources}
+
+
+def call_openai_search(system: str, messages: List[Dict[str, str]]) -> Dict[str, Any]:
+    api_key = os.environ['OPENAI_API_KEY']
+    response = requests.post(
+        'https://api.openai.com/v1/responses',
+        headers={'Content-Type': 'application/json', 'Authorization': f'Bearer {api_key}'},
+        json={
+            'model': 'gpt-4o-mini',
+            'instructions': system,
+            'input': [{'role': m['role'], 'content': m['text']} for m in messages],
+            'tools': [{'type': 'web_search_preview'}],
+            'max_output_tokens': 1500,
+        },
+        timeout=40,
+    )
+    if response.status_code >= 400:
+        raise RuntimeError(f'OpenAI HTTP {response.status_code}: {response.text[:300]}')
+    text, sources = '', []
+    for item in response.json().get('output', []):
+        if item.get('type') != 'message':
+            continue
+        for c in item.get('content', []):
+            if c.get('type') == 'output_text':
+                text += c.get('text', '')
+                for a in c.get('annotations', []):
+                    if a.get('type') == 'url_citation' and a.get('url'):
+                        sources.append({'title': a.get('title') or '', 'uri': a['url']})
+    return {'text': text.strip(), 'sources': sources}
 
 
 def build_answer(raw: str, sources: List[Dict[str, str]]) -> str:
@@ -441,11 +473,21 @@ def handle_assistant(event: Dict[str, Any], body: Dict[str, Any]) -> Dict[str, A
                     answer = build_answer(g['text'], g['sources'])
                 except Exception as e:
                     print(f'[assistant] gemini error: {e}')
+                    answer = None
                     try:
-                        print('[assistant] fallback to yandex')
-                        answer = build_answer(call_ai(system + '\nНе говори, что у тебя нет информации: отвечай на основе своих знаний, а если не уверен в свежих данных, скажи об этом и дай общий ответ.', ai_messages), [])
-                    except Exception:
-                        return err(502, 'Ассистент сейчас занят, попробуйте через минуту')
+                        o = call_openai_search(system, ai_messages)
+                        if o['text']:
+                            answer = build_answer(o['text'], o['sources'])
+                    except Exception as e2:
+                        print(f'[assistant] openai error: {e2}')
+                    if not answer:
+                        try:
+                            print('[assistant] fallback to yandex')
+                            raw = call_ai(system + '\nУ тебя сейчас нет доступа к интернету. Ответь по своим знаниям как можно полезнее, уверенно и по существу. Если вопрос про сайт или сервис, назови его официальный адрес, если он тебе точно известен. Коротко предупреди, что свежие данные лучше сверить по ссылке ниже. Не пиши фразу «у меня нет информации».', ai_messages, max_tokens=900)
+                            answer = build_answer(raw, [])
+                            answer += '\n\nПроверить в интернете:\n' + f'[Найти в Яндексе: {message[:50]}](https://yandex.ru/search/?text={quote(message[:150])})'
+                        except Exception:
+                            return err(502, 'Ассистент сейчас занят, попробуйте через минуту')
 
                 cur.execute(
                     f"INSERT INTO {DB_SCHEMA}.assistant_messages (user_id, role, content) VALUES (%s, 'user', %s)",
