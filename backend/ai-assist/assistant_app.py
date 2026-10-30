@@ -151,7 +151,7 @@ def call_ai(system: str, messages: List[Dict[str, str]], max_tokens: int = 900, 
     return response.json()['result']['alternatives'][0]['message']['text'].strip()
 
 
-GEMINI_MODELS = ['gemini-2.5-flash', 'gemini-2.0-flash', 'gemini-2.5-flash-lite']
+GEMINI_MODELS = ['gemini-3.8-flash', 'gemini-3.5-flash-lite', 'gemini-2.5-flash']
 
 
 def call_gemini(system: str, messages: List[Dict[str, str]], max_tokens: int = 1500) -> Dict[str, Any]:
