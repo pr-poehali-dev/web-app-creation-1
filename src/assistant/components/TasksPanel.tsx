@@ -80,11 +80,21 @@ export default function TasksPanel() {
 
   return (
     <div className="space-y-4">
+      <div className="rounded-2xl border border-emerald-200 bg-emerald-50 p-4 text-slate-700">
+        <p className="font-semibold text-slate-800">Мои дела</p>
+        <p className="mt-1 text-sm">Ваш список дел и напоминаний, чтобы ничего не забыть: визит к врачу, оплата счетов, звонок родным.</p>
+        <ol className="mt-2 list-decimal space-y-0.5 pl-5 text-sm">
+          <li>Напишите, что нужно сделать.</li>
+          <li>При желании укажите, когда напомнить.</li>
+          <li>Нажмите «Добавить». Сделанное отметьте галочкой.</li>
+        </ol>
+      </div>
+
       <form onSubmit={handleAdd} className="space-y-3 rounded-2xl border border-slate-200 bg-white p-4">
         <Input
           value={title}
           onChange={(e) => setTitle(e.target.value)}
-          placeholder="Что нужно сделать?"
+          placeholder="Что нужно сделать? Например: купить лекарства"
           maxLength={200}
           className="h-12 text-base"
         />
@@ -105,11 +115,11 @@ export default function TasksPanel() {
             Добавить
           </Button>
         </div>
-        <p className="text-xs text-slate-500">Если указать время, напомню, пока приложение открыто.</p>
+        <p className="text-xs text-slate-500">Время можно не указывать. Если указать, напомню, пока страница открыта.</p>
       </form>
 
       {loaded && tasks.length === 0 && (
-        <p className="py-6 text-center text-slate-500">Пока дел нет. Добавьте первое выше.</p>
+        <p className="py-6 text-center text-slate-500">Пока дел нет. Напишите первое в строке выше и нажмите «Добавить».</p>
       )}
 
       <ul className="space-y-2">

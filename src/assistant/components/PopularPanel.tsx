@@ -81,7 +81,11 @@ export default function PopularPanel() {
 
   return (
     <div className="pb-6">
-      <p className="mb-4 text-slate-600">Что чаще всего спрашивают в интернете. Нажмите на вопрос, чтобы получить подробный ответ.</p>
+      <div className="mb-4 rounded-2xl border border-emerald-200 bg-emerald-50 p-4 text-slate-700">
+        <p className="font-semibold text-slate-800">Частые вопросы</p>
+        <p className="mt-1 text-sm">Готовые ответы на то, что люди чаще всего ищут в интернете: от Госуслуг до ремонта и рецептов.</p>
+        <p className="mt-2 text-sm">Нажмите на вопрос, и помощник подготовит подробный ответ с пошаговой инструкцией. Ответ можно прочитать и вернуться к списку кнопкой «Все вопросы». Своего вопроса нет? Задайте его во вкладке «Чат».</p>
+      </div>
       {loaded && categories.length === 0 && <p className="text-slate-500">Не удалось загрузить список, попробуйте позже.</p>}
       <div className="space-y-5">
         {categories.map((c) => (
