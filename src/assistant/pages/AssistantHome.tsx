@@ -19,7 +19,7 @@ type Tab = 'chat' | 'popular' | 'tasks' | 'memory';
 
 const TABS: { id: Tab; label: string; icon: string }[] = [
   { id: 'chat', label: 'Чат', icon: 'MessageCircle' },
-  { id: 'popular', label: 'Вопросы', icon: 'Flame' },
+  { id: 'popular', label: 'Частые вопросы', icon: 'Flame' },
   { id: 'tasks', label: 'Мои дела', icon: 'ListChecks' },
   { id: 'memory', label: 'Что я помню', icon: 'Bookmark' },
 ];
@@ -124,17 +124,19 @@ export default function AssistantHome() {
         />
       ) : (
         <main className="mx-auto max-w-3xl px-4 pt-3 pb-4">
-          <nav className="mb-3 grid grid-cols-4 gap-1 rounded-2xl bg-slate-100 p-1">
+          <nav className="mb-3 flex flex-wrap gap-2">
             {TABS.map((t) => (
               <button
                 key={t.id}
                 type="button"
                 onClick={() => setTab(t.id)}
-                className={`flex items-center justify-center gap-1.5 rounded-xl py-2.5 text-xs sm:text-sm font-medium transition-colors ${
-                  tab === t.id ? 'bg-white text-slate-900 shadow-sm' : 'text-slate-500 hover:text-slate-700'
+                className={`flex items-center gap-1.5 rounded-full border px-3 py-1.5 text-sm font-medium transition-colors ${
+                  tab === t.id
+                    ? 'border-emerald-600 bg-emerald-600 text-white'
+                    : 'border-slate-300 bg-white text-slate-700 hover:border-emerald-500 hover:text-emerald-700'
                 }`}
               >
-                <Icon name={t.icon} size={16} />
+                <Icon name={t.icon} size={15} />
                 <span>{t.label}</span>
               </button>
             ))}

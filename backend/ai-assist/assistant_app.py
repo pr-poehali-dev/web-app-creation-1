@@ -245,10 +245,10 @@ def build_answer(raw: str, sources: List[Dict[str, str]]) -> str:
     if video_query:
         q = quote(video_query)
         answer += (
-            '\n\nВидео и фото инструкции:\n'
-            f'[Видео на Rutube](https://rutube.ru/search/?query={q})\n'
-            f'[Видео на YouTube](https://www.youtube.com/results?search_query={q})\n'
-            f'[Фото в Яндекс Картинках](https://yandex.ru/images/search?text={q})'
+            '\n\nСмотреть: '
+            f'[Rutube](https://rutube.ru/search/?query={q}) · '
+            f'[YouTube](https://www.youtube.com/results?search_query={q}) · '
+            f'[Фото](https://yandex.ru/images/search?text={q})'
         )
     seen = set()
     src_lines = []
