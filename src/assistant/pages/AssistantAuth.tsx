@@ -1,11 +1,12 @@
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
+import { getJwtToken } from '@/utils/auth';
 import { useNavigate } from 'react-router-dom';
 import Icon from '@/components/ui/icon';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { useToast } from '@/hooks/use-toast';
-import { getAssistantUser, login, register } from '../utils/assistantApi';
+import { getAssistantUser, login, register, siteLogin } from '../utils/assistantApi';
 
 export default function AssistantAuth() {
   const navigate = useNavigate();
@@ -15,9 +16,27 @@ export default function AssistantAuth() {
   const [pin, setPin] = useState('');
   const [loading, setLoading] = useState(false);
 
+  const siteToken = getJwtToken();
+  const [checking, setChecking] = useState(Boolean(siteToken) && !getAssistantUser());
+
+  useEffect(() => {
+    if (!siteToken || getAssistantUser()) return;
+    siteLogin(siteToken)
+      .then(() => navigate('/assistant', { replace: true }))
+      .catch(() => setChecking(false));
+  }, [siteToken, navigate]);
+
   if (getAssistantUser()) {
     navigate('/assistant', { replace: true });
     return null;
+  }
+
+  if (checking) {
+    return (
+      <div className="flex min-h-screen items-center justify-center bg-gradient-to-b from-sky-50 via-white to-emerald-50">
+        <Icon name="Loader2" size={32} className="animate-spin text-emerald-600" />
+      </div>
+    );
   }
 
   const handleSubmit = async (e: React.FormEvent) => {

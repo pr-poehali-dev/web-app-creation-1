@@ -1,0 +1,2 @@
+ALTER TABLE t_p42562714_web_app_creation_1.assistant_users ADD COLUMN IF NOT EXISTS site_user_id INTEGER;
+CREATE UNIQUE INDEX IF NOT EXISTS assistant_users_site_user_idx ON t_p42562714_web_app_creation_1.assistant_users (site_user_id) WHERE site_user_id IS NOT NULL;

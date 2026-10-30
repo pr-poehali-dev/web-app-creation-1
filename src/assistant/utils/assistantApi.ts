@@ -83,6 +83,21 @@ const call = async <T,>(action: string, payload: Record<string, unknown> = {}): 
   return data as T;
 };
 
+export const siteLogin = async (siteToken: string) => {
+  if (!API) throw new AssistantApiError('Ассистент временно недоступен', 0);
+  const response = await fetch(API, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${siteToken}` },
+    body: JSON.stringify({ action: 'site_login' }),
+  });
+  const data = await response.json().catch(() => ({}));
+  if (!response.ok || data.success === false) {
+    throw new AssistantApiError(data.error || 'Не удалось войти', response.status);
+  }
+  saveAssistantSession(data.user as AssistantUser, data.token as string);
+  return data.user as AssistantUser;
+};
+
 export const register = async (name: string, pin: string) => {
   const data = await call<{ user: AssistantUser; token: string }>('register', { name, pin });
   saveAssistantSession(data.user, data.token);

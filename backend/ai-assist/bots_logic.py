@@ -1,6 +1,7 @@
 from datetime import datetime, timedelta
 
 import indicators
+from bots_channel import sim_intraday
 from bots_common import (FMT, atr_series, clearing_block, dts, ema_series, fix, new_state, occurrences, sign, size, stochrsi_k, vwap_series)
 
 BAR = timedelta(minutes=5)
@@ -20,119 +21,6 @@ def _finish(st, price, why, when):
 
 def _mk(st, n, note):
     return {"st": st, "n": n, "note": note}
-
-
-def sim_intraday(cfg, info, c5):
-    trades, log = [], []
-    if len(c5) < 40:
-        return trades, log
-    dt = dts(c5)
-    closes = [c["close"] for c in c5]
-    atr = atr_series(c5, 14)
-    ema20 = ema_series(closes, 20)
-    days = {}
-    for i, d in enumerate(dt):
-        days.setdefault(d.date(), []).append(i)
-    ws = cfg["or_start_hour"] * 60
-    we = ws + cfg["or_minutes"]
-    close_m = cfg["close_hour"] * 60 + cfg["close_min"]
-    for day in sorted(days):
-        idx = days[day]
-        if day.weekday() >= 5:
-            continue
-        mins = lambda i: dt[i].hour * 60 + dt[i].minute
-        or_idx = [i for i in idx if ws <= mins(i) < we]
-        after = [i for i in idx if mins(i) >= we]
-        if not after:
-            continue
-        stamp = c5[after[0]]["begin"]
-        if len(or_idx) < max(2, int(cfg["or_minutes"] / 5 * 0.7)):
-            log.append((stamp, "skip", f"{day}: нет данных по диапазону открытия, день пропущен"))
-            continue
-        hi = max(c5[i]["high"] for i in or_idx)
-        lo = min(c5[i]["low"] for i in or_idx)
-        width = (hi - lo) / ((hi + lo) / 2) * 100
-        if width < cfg["min_range_pct"]:
-            log.append((stamp, "skip", f"{day}: диапазон открытия {width:.2f}% уже порога {cfg['min_range_pct']}%, день пропущен"))
-            continue
-        log.append((stamp, "info", f"{day}: диапазон {lo:.2f}–{hi:.2f} (ширина {width:.2f}%)"))
-        st, entry_i, traded, warned = None, None, False, set()
-        for i in after:
-            bar, m = c5[i], mins(i)
-            if st and i > entry_i:
-                s = sign(st["dir"])
-                if (bar["low"] <= st["stop"]) if s > 0 else (bar["high"] >= st["stop"]):
-                    _finish(st, st["stop"], "безубыток" if st["be"] else "стоп", bar["begin"])
-                elif (bar["high"] >= st["take"]) if s > 0 else (bar["low"] <= st["take"]):
-                    _finish(st, st["take"], "тейк-профит", bar["begin"])
-                elif m + 5 >= close_m:
-                    _finish(st, bar["close"], "закрытие дня", bar["begin"])
-                else:
-                    if cfg["be_r"] > 0 and not st["be"] and ((bar["high"] - st["entry"]) * s if s > 0 else (st["entry"] - bar["low"])) >= cfg["be_r"] * st["risk"]:
-                        st["be"] = True
-                        st["stop"] = st["entry"]
-                        log.append((bar["begin"], "move", f"стоп перенесён в безубыток ({st['entry']:.2f})"))
-                if st["closed"]:
-                    log.append((bar["begin"], "exit", f"выход {st['dir']}: {st['fixes'][-1][2]} по {st['fixes'][-1][1]:.2f}"))
-                    st = None
-                continue
-            if st or traded or m >= cfg["last_entry_hour"] * 60 or i == 0:
-                continue
-            d = "ЛОНГ" if bar["close"] > hi else ("ШОРТ" if bar["close"] < lo else "")
-            if not d:
-                continue
-            tag = (day, d)
-            if d == "ШОРТ" and not cfg["allow_short"]:
-                if tag not in warned:
-                    warned.add(tag)
-                    log.append((bar["begin"], "skip", "пробой вниз пропущен: шорты выключены"))
-                continue
-            if _days_left(info, dt[i]) <= cfg["expiry_days"]:
-                log.append((bar["begin"], "skip", f"пробой пропущен: до экспирации {_days_left(info, dt[i])} дн., нужен переход на следующий контракт"))
-                traded = True
-                continue
-            if clearing_block(cfg, dt[i]):
-                if tag not in warned:
-                    warned.add(tag)
-                    log.append((bar["begin"], "skip", "пробой рядом с клирингом, вход отложен"))
-                continue
-            why = []
-            if cfg["use_volume"]:
-                prev = [c5[j]["volume"] for j in range(max(0, i - cfg["vol_period"]), i)]
-                avg = sum(prev) / len(prev) if prev else 0
-                if avg > 0 and bar["volume"] < avg * cfg["vol_mult"]:
-                    why.append(f"объём {bar['volume'] / avg:.1f}× от среднего, нужно {cfg['vol_mult']}×")
-            if cfg["use_keltner"] and atr[i]:
-                edge = ema20[i] + cfg["keltner_k"] * atr[i] if d == "ЛОНГ" else ema20[i] - cfg["keltner_k"] * atr[i]
-                if (d == "ЛОНГ" and bar["close"] <= edge) or (d == "ШОРТ" and bar["close"] >= edge):
-                    why.append("цена не вышла за канал Кельтнера")
-            if why:
-                if tag not in warned:
-                    warned.add(tag)
-                    log.append((bar["begin"], "skip", f"пробой {d} без подтверждения: " + "; ".join(why)))
-                continue
-            entry = bar["close"]
-            if cfg["stop_mode"] == "atr" and atr[i]:
-                stop = entry - cfg["stop_atr"] * atr[i] if d == "ЛОНГ" else entry + cfg["stop_atr"] * atr[i]
-            else:
-                stop = lo if d == "ЛОНГ" else hi
-            risk = abs(entry - stop)
-            if risk <= 0 or (d == "ЛОНГ" and stop >= entry) or (d == "ШОРТ" and stop <= entry):
-                log.append((bar["begin"], "skip", "пробой пропущен: стоп некорректен"))
-                traded = True
-                continue
-            n, note = size(cfg, info, entry, stop)
-            if n < 1:
-                log.append((bar["begin"], "skip", f"пробой {d} пропущен: даже 1 контракт не укладывается в риск или обеспечение ({note})"))
-                traded = True
-                continue
-            take = entry + cfg["rr"] * risk * sign(d)
-            st = new_state({"dir": d, "entry": entry, "stop": stop, "take": take}, bar["begin"])
-            st["init_stop"] = stop
-            entry_i, traded = i, True
-            trades.append(_mk(st, n, note))
-            log.append((bar["begin"], "entry", f"вход {d} {n} шт. по {entry:.2f}: закрытие 5-мин бара за границей диапазона {lo:.2f}–{hi:.2f}; стоп {stop:.2f}, тейк {take:.2f} ({cfg['rr']}R)"))
-    return trades, log
 
 
 def _candle_ok(c, p, d):

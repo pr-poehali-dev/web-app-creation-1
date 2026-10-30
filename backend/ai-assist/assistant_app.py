@@ -59,7 +59,7 @@ def cors_headers() -> Dict[str, str]:
         'Content-Type': 'application/json',
         'Access-Control-Allow-Origin': '*',
         'Access-Control-Allow-Methods': 'POST, OPTIONS',
-        'Access-Control-Allow-Headers': 'Content-Type, X-Assistant-Token, X-User-Id',
+        'Access-Control-Allow-Headers': 'Content-Type, X-Assistant-Token, X-User-Id, Authorization, X-Authorization',
         'Access-Control-Max-Age': '86400'
     }
 
@@ -234,13 +234,52 @@ def extract_fact(message: str) -> Optional[str]:
 ASSISTANT_ACTIONS = {
     'register', 'login', 'me', 'save_profile', 'chat', 'history', 'clear_history',
     'memory_list', 'memory_add', 'memory_delete', 'tasks_list', 'task_add', 'task_toggle',
-    'task_delete', 'delete_account', 'push_subscribe', 'push_unsubscribe', 'popular_list', 'popular_answer',
+    'task_delete', 'delete_account', 'push_subscribe', 'push_unsubscribe', 'popular_list', 'popular_answer', 'site_login',
 }
 
 
 def handle_assistant(event: Dict[str, Any], body: Dict[str, Any]) -> Dict[str, Any]:
     '''Обработка действий ассистента (вызывается из ai-assist по action).'''
     action = body.get('action')
+
+    if action == 'site_login':
+        headers = event.get('headers', {}) or {}
+        auth = headers.get('X-Authorization') or headers.get('x-authorization') or headers.get('Authorization') or ''
+        raw = auth[7:] if auth.startswith('Bearer ') else auth
+        try:
+            payload = jwt.decode(raw, JWT_SECRET, algorithms=[JWT_ALGORITHM])
+            site_id = int(payload['user_id'])
+        except Exception:
+            return err(401, 'Войдите в профиль на сайте')
+        conn = get_db_connection()
+        try:
+            with conn.cursor() as cur:
+                cur.execute(f'SELECT id, name, modes, about FROM {DB_SCHEMA}.assistant_users WHERE site_user_id = %s', (site_id,))
+                row = cur.fetchone()
+                if not row:
+                    cur.execute(f'SELECT first_name FROM {DB_SCHEMA}.users WHERE id = %s', (site_id,))
+                    u = cur.fetchone()
+                    if not u:
+                        return err(401, 'Войдите в профиль на сайте')
+                    base = re.sub(r'[^A-Za-zА-Яа-яЁё0-9 _-]', '', u['first_name'] or '').strip()[:24]
+                    if len(base) < 2:
+                        base = 'Друг'
+                    name = base
+                    cur.execute(f'SELECT 1 FROM {DB_SCHEMA}.assistant_users WHERE name_lower = %s', (name.lower(),))
+                    if cur.fetchone():
+                        name = f'{base}-{site_id}'[:30]
+                    cur.execute(
+                        f'''INSERT INTO {DB_SCHEMA}.assistant_users (name, name_lower, pin_hash, site_user_id, last_login_at)
+                            VALUES (%s, %s, %s, %s, CURRENT_TIMESTAMP) RETURNING id, name, modes, about''',
+                        (name, name.lower(), hash_pin(os.urandom(12).hex()), site_id)
+                    )
+                    row = cur.fetchone()
+                else:
+                    cur.execute(f'UPDATE {DB_SCHEMA}.assistant_users SET last_login_at = CURRENT_TIMESTAMP WHERE id = %s', (row['id'],))
+                conn.commit()
+                return reply(200, {'success': True, 'user': public_user(row), 'token': make_token(row['id'], row['name'])})
+        finally:
+            conn.close()
 
     if action == 'register':
         name = (body.get('name') or '').strip()
