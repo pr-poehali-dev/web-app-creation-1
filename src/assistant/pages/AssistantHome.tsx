@@ -123,8 +123,8 @@ export default function AssistantHome() {
           onCancel={user.modes.length > 0 ? () => setEditingModes(false) : undefined}
         />
       ) : (
-        <main className="mx-auto max-w-3xl px-4 pt-3 pb-4">
-          <nav className="mb-3 flex flex-wrap gap-2">
+        <main className="mx-auto max-w-3xl px-4 pb-4">
+          <nav className="sticky top-14 z-20 -mx-4 mb-3 flex flex-wrap gap-2 border-b border-slate-200 bg-sky-50/95 px-4 pb-2 pt-3 backdrop-blur">
             {TABS.map((t) => (
               <button
                 key={t.id}

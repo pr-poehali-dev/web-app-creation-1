@@ -17,6 +17,7 @@ export default function PopularPanel() {
   const [answer, setAnswer] = useState('');
   const [loading, setLoading] = useState(false);
   const [failed, setFailed] = useState(false);
+  const [expanded, setExpanded] = useState<string | null>(null);
 
   useEffect(() => {
     loadPopular()
@@ -84,30 +85,44 @@ export default function PopularPanel() {
       <div className="mb-4 rounded-2xl border border-emerald-200 bg-emerald-50 p-4 text-slate-700">
         <p className="font-semibold text-slate-800">Частые вопросы</p>
         <p className="mt-1 text-sm">Готовые ответы на то, что люди чаще всего ищут в интернете: от Госуслуг до ремонта и рецептов.</p>
-        <p className="mt-2 text-sm">Нажмите на вопрос, и помощник подготовит подробный ответ с пошаговой инструкцией. Ответ можно прочитать и вернуться к списку кнопкой «Все вопросы». Своего вопроса нет? Задайте его во вкладке «Чат».</p>
+        <p className="mt-2 text-sm">Выберите тему, затем вопрос, и помощник подготовит подробный ответ с пошаговой инструкцией. Ответ можно прочитать и вернуться к списку кнопкой «Все вопросы». Своего вопроса нет? Задайте его во вкладке «Чат».</p>
       </div>
       {loaded && categories.length === 0 && <p className="text-slate-500">Не удалось загрузить список, попробуйте позже.</p>}
-      <div className="space-y-5">
-        {categories.map((c) => (
-          <section key={c.id}>
-            <h3 className="mb-2 flex items-center gap-2 text-base font-semibold text-slate-800">
-              <Icon name={c.icon} size={18} className="text-emerald-600" />
-              {c.title}
-            </h3>
-            <div className="grid gap-2">
-              {c.questions.map((q) => (
-                <button
-                  key={q.id}
-                  type="button"
-                  onClick={() => open(q)}
-                  className="rounded-2xl border-2 border-emerald-200 bg-white p-3 text-left text-base text-slate-800 transition-colors hover:border-emerald-500 hover:bg-emerald-50"
-                >
-                  {q.text}
-                </button>
-              ))}
-            </div>
-          </section>
-        ))}
+      <div className="space-y-2">
+        {categories.map((c) => {
+          const isOpen = expanded === c.id;
+          return (
+            <section key={c.id} className="overflow-hidden rounded-2xl border-2 border-emerald-200 bg-white">
+              <button
+                type="button"
+                onClick={() => setExpanded(isOpen ? null : c.id)}
+                aria-expanded={isOpen}
+                className={`flex w-full items-center gap-3 p-4 text-left text-base font-semibold text-slate-800 transition-colors hover:bg-emerald-50 ${
+                  isOpen ? 'bg-emerald-50' : ''
+                }`}
+              >
+                <Icon name={c.icon} size={20} className="shrink-0 text-emerald-600" />
+                <span className="flex-1">{c.title}</span>
+                <span className="text-sm font-normal text-slate-500">{c.questions.length}</span>
+                <Icon name="ChevronDown" size={20} className={`shrink-0 text-slate-500 transition-transform ${isOpen ? 'rotate-180' : ''}`} />
+              </button>
+              {isOpen && (
+                <div className="grid gap-2 border-t border-emerald-100 p-3">
+                  {c.questions.map((q) => (
+                    <button
+                      key={q.id}
+                      type="button"
+                      onClick={() => open(q)}
+                      className="rounded-xl border border-emerald-200 bg-white p-3 text-left text-base text-slate-800 transition-colors hover:border-emerald-500 hover:bg-emerald-50"
+                    >
+                      {q.text}
+                    </button>
+                  ))}
+                </div>
+              )}
+            </section>
+          );
+        })}
       </div>
     </div>
   );
