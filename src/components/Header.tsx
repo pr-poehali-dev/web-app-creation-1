@@ -247,7 +247,7 @@ export default function Header({ isAuthenticated, onLogout }: HeaderProps) {
   return (
     <header className="sticky top-0 z-50 w-full border-b bg-gradient-to-br from-white via-blue-100/60 to-purple-100/50 dark:from-gray-900 dark:via-blue-900/40 dark:to-purple-900/30 shadow-lg backdrop-blur-sm">
       <div className="container mx-auto px-2 md:px-4">
-        <div className="flex h-14 md:h-auto md:py-2 items-center justify-between gap-1 md:gap-3">
+        <div className="flex h-14 md:h-auto md:py-2.5 items-center md:items-start justify-between gap-1 md:gap-3">
           <Link 
             to="/home" 
             onClick={() => window.scrollTo({ top: 0, behavior: 'smooth' })}
@@ -367,7 +367,7 @@ export default function Header({ isAuthenticated, onLogout }: HeaderProps) {
 
           <div className="flex shrink-0 items-center space-x-1 md:space-x-2">
             <div className="hidden md:block w-32 xl:w-40 2xl:w-52 shrink-0">
-              <RegionDistrictSelector showBadges={false} />
+              <RegionDistrictSelector showBadges={false} className="[&_button:first-child]:min-h-10" />
             </div>
             
             <HeaderUserMenu
