@@ -40,7 +40,7 @@ MODES = {
 }
 
 SYSTEM_PROMPT = (
-    'Ты добрый и спокойный личный ассистент по имени «Ассистент». Говори по-русски, просто и тепло, без сложных слов. '
+    'Ты — «Мой помощник», интеллектуальный ИИ-ассистент торговой площадки ЕРТТП. Говори по-русски, уверенно, вежливо и по-деловому, понятным языком. '
     'Ты можешь ответить на любой вопрос по любой теме, как умный поисковик: при необходимости ищи свежую информацию в интернете. '
     'Отвечай по делу, короткими абзацами, шаги нумеруй. Если не хватает данных, задай один уточняющий вопрос. '
     'Не выдумывай факты, цены, телефоны, адреса и ссылки. В вопросах здоровья, права и денег коротко напомни, что это совет, '
@@ -131,7 +131,7 @@ def public_user(row: Dict[str, Any]) -> Dict[str, Any]:
     return {'id': row['id'], 'name': row['name'], 'modes': modes, 'about': row.get('about') or ''}
 
 
-def call_ai(system: str, messages: List[Dict[str, str]], max_tokens: int = 900, temperature: float = 0.6) -> str:
+def call_ai(system: str, messages: List[Dict[str, str]], max_tokens: int = 900, temperature: float = 0.6, model: str = 'yandexgpt-lite', timeout: int = 40) -> str:
     api_key = os.environ['YANDEX_API_KEY']
     folder_id = os.environ['YANDEX_FOLDER_ID']
     response = requests.post(
@@ -142,13 +142,13 @@ def call_ai(system: str, messages: List[Dict[str, str]], max_tokens: int = 900, 
             'x-folder-id': folder_id,
         },
         json={
-            'modelUri': f'gpt://{folder_id}/yandexgpt-lite',
+            'modelUri': f'gpt://{folder_id}/{model}',
             'completionOptions': {'stream': False, 'temperature': temperature, 'maxTokens': max_tokens},
             'messages': [{'role': 'system', 'text': system}] + [
                 {'role': m['role'], 'text': m['text']} for m in messages
             ],
         },
-        timeout=40,
+        timeout=timeout,
     )
     response.raise_for_status()
     return response.json()['result']['alternatives'][0]['message']['text'].strip()
@@ -260,7 +260,7 @@ def build_answer(raw: str, sources: List[Dict[str, str]]) -> str:
         if len(src_lines) >= 3:
             break
     if src_lines:
-        answer += '\n\nГде прочитать подробнее:\n' + '\n'.join(src_lines)
+        answer += '\n\nИсточники:\n' + '\n'.join(src_lines)
     return answer
 
 
@@ -282,6 +282,69 @@ def extract_fact(message: str) -> Optional[str]:
     if re.search(r'\d{9,}', text):
         return None
     return text[:MAX_FACT_LEN]
+
+
+GROUNDED_RULES = (
+    '\n\nНиже даны свежие результаты поиска. Это твой главный источник: прочитай их, сопоставь и сам сформулируй '
+    'готовый, конкретный ответ с цифрами, датами, названиями и фактами из них. '
+    'Первой фразой дай прямой ответ на вопрос (например, точное число, дату, название). '
+    'Запрещены фразы вида «вы можете узнать на сайте», «посетите», «рекомендую проверить», «поищите»: '
+    'ты уже всё нашёл и прочитал, поэтому сообщи сам результат. Ответ должен быть исчерпывающим прямо в чате. '
+    'Ссылки на источники в тексте не пиши, их добавит система. Номера источников в квадратных скобках не ставь. '
+    'Если источники противоречат друг другу, укажи наиболее надёжное и коротко отметь расхождение. '
+    'Если в результатах нет нужного факта, ответь по своим знаниям и честно, одной фразой, отметь, что именно может быть неактуально.'
+)
+
+SITE_RULES = (
+    '\n\nТы — интеллектуальный помощник торговой площадки ЕРТТП (erttp.ru). '
+    'Если ниже есть подходящие объявления площадки, в начале ответа коротко предложи их списком: название, цена и ссылка как есть. '
+    'Объявления ЕРТТП всегда ставь на первое место; сторонние площадки-конкуренты по имени не рекламируй, а используй их данные только как справку о ценах на рынке. '
+    'Если пользователь ищет товар или услугу, а подходящих объявлений нет, предложи разместить запрос на ЕРТТП: {site}/zaprosy.'
+)
+
+
+def answer_with_search(cur, system: str, ai_messages: List[Dict[str, str]], message: str, use_site: bool = True) -> Optional[str]:
+    '''Ищет в интернете (Яндекс) и по площадке, затем YandexGPT Pro собирает готовый ответ.'''
+    from assistant_search import needs_search, yandex_web_search, enrich_with_pages, make_search_query, site_listings, listings_context, web_context
+
+    web, listings = [], []
+    if needs_search(message):
+        try:
+            query = make_search_query(message, ai_messages[:-1])
+            web = yandex_web_search(query)
+            enrich_with_pages(web, query)
+        except Exception as e:
+            print(f'[assistant] yandex search error: {e}')
+        if use_site:
+            try:
+                listings = site_listings(cur, DB_SCHEMA, message)
+            except Exception as e:
+                print(f'[assistant] site search error: {e}')
+
+    full_system = system
+    if use_site:
+        full_system += SITE_RULES.replace('{site}', 'https://erttp.ru')
+    if listings:
+        full_system += '\n\nОбъявления на площадке ЕРТТП по теме:\n' + listings_context(listings)
+    if web:
+        full_system += GROUNDED_RULES + '\n\nРезультаты поиска:\n' + web_context(web)
+
+    sources = [{'title': r['title'], 'uri': r['url']} for r in web]
+    for model in ('yandexgpt', 'yandexgpt-lite'):
+        try:
+            raw = call_ai(full_system, ai_messages, max_tokens=1500, temperature=0.3, model=model, timeout=25)
+            if raw:
+                return build_answer(raw, sources)
+        except Exception as e:
+            print(f'[assistant] {model} error: {e}')
+    if not web:
+        try:
+            g = call_gemini(full_system, ai_messages)
+            if g['text']:
+                return build_answer(g['text'], g['sources'])
+        except Exception as e:
+            print(f'[assistant] gemini error: {e}')
+    return None
 
 
 ASSISTANT_ACTIONS = {
@@ -466,28 +529,9 @@ def handle_assistant(event: Dict[str, Any], body: Dict[str, Any]) -> Dict[str, A
                 ai_messages = [{'role': h['role'], 'text': h['content']} for h in history]
                 ai_messages.append({'role': 'user', 'text': message})
 
-                answer = None
-                try:
-                    o = call_openai_search(system, ai_messages)
-                    if o['text']:
-                        answer = build_answer(o['text'], o['sources'])
-                except Exception as e:
-                    print(f'[assistant] openai error: {e}')
+                answer = answer_with_search(cur, system, ai_messages, message)
                 if not answer:
-                    try:
-                        g = call_gemini(system, ai_messages)
-                        if g['text']:
-                            answer = build_answer(g['text'], g['sources'])
-                    except Exception as e2:
-                        print(f'[assistant] gemini error: {e2}')
-                if not answer:
-                    try:
-                        print('[assistant] fallback to yandex')
-                        raw = call_ai(system + '\nУ тебя сейчас нет доступа к интернету. Ответь по своим знаниям как можно полезнее, уверенно и по существу. Если вопрос про сайт или сервис, назови его официальный адрес, если он тебе точно известен. Коротко предупреди, что свежие данные лучше сверить по ссылке ниже. Не пиши фразу «у меня нет информации».', ai_messages, max_tokens=900)
-                        answer = build_answer(raw, [])
-                        answer += '\n\nПроверить в интернете:\n' + f'[Найти в Яндексе: {message[:50]}](https://yandex.ru/search/?text={quote(message[:150])})'
-                    except Exception:
-                        return err(502, 'Ассистент сейчас занят, попробуйте через минуту')
+                    return err(502, 'Ассистент сейчас занят, попробуйте через минуту')
 
                 cur.execute(
                     f"INSERT INTO {DB_SCHEMA}.assistant_messages (user_id, role, content) VALUES (%s, 'user', %s)",
@@ -535,16 +579,9 @@ def handle_assistant(event: Dict[str, Any], body: Dict[str, Any]) -> Dict[str, A
                     'Последней строкой добавь: ВИДЕО: короткий поисковый запрос на русском для поиска видео и фото инструкции. '
                     'Ссылки на видео сам не пиши.'
                 )
-                try:
-                    o = call_openai_search(pop_system, [{'role': 'user', 'text': question}])
-                    if not o['text']:
-                        raise ValueError('empty')
-                    answer = build_answer(o['text'], o['sources'])
-                except Exception:
-                    try:
-                        answer = build_answer(call_ai(pop_system, [{'role': 'user', 'text': question}], max_tokens=1500), [])
-                    except Exception:
-                        return err(502, 'Не удалось подготовить ответ, попробуйте через минуту')
+                answer = answer_with_search(cur, pop_system, [{'role': 'user', 'text': question}], question, use_site=False)
+                if not answer:
+                    return err(502, 'Не удалось подготовить ответ, попробуйте через минуту')
                 cur.execute(
                     f'''INSERT INTO {DB_SCHEMA}.assistant_popular_answers (question_id, answer) VALUES (%s, %s)
                         ON CONFLICT (question_id) DO UPDATE SET answer = EXCLUDED.answer, created_at = CURRENT_TIMESTAMP''',

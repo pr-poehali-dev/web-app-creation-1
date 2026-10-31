@@ -247,7 +247,7 @@ export default function Header({ isAuthenticated, onLogout }: HeaderProps) {
   return (
     <header className="sticky top-0 z-50 w-full border-b bg-gradient-to-br from-white via-blue-100/60 to-purple-100/50 dark:from-gray-900 dark:via-blue-900/40 dark:to-purple-900/30 shadow-lg backdrop-blur-sm">
       <div className="container mx-auto px-2 md:px-4">
-        <div className="flex h-14 md:h-18 items-center justify-between gap-1">
+        <div className="flex h-14 md:h-auto md:min-h-[4.5rem] md:py-1.5 items-center justify-between gap-1 md:gap-2">
           <Link 
             to="/home" 
             onClick={() => window.scrollTo({ top: 0, behavior: 'smooth' })}
@@ -305,7 +305,7 @@ export default function Header({ isAuthenticated, onLogout }: HeaderProps) {
             )}
           </div>
 
-          <nav className="hidden md:flex min-w-0 items-center space-x-0.5 2xl:space-x-1 mr-1 2xl:mr-2">
+          <nav className="hidden md:flex flex-1 min-w-0 flex-wrap items-center gap-x-0.5 gap-y-1 2xl:gap-x-1">
             <Link
               to="/predlozheniya"
               className={`text-[11px] xl:text-xs 2xl:text-sm font-medium transition-colors px-1 2xl:px-2 py-1.5 rounded-md border-2 whitespace-nowrap ${location.pathname === '/predlozheniya' || location.pathname === '/' ? 'bg-primary/10 text-primary border-primary/40' : 'text-foreground hover:text-primary hover:bg-primary/5 border-primary/20 hover:border-primary/40'}`}
@@ -347,7 +347,7 @@ export default function Header({ isAuthenticated, onLogout }: HeaderProps) {
             </Link>
             <Link
               to="/games"
-              className={`text-[11px] lg:text-sm font-medium transition-colors px-1.5 lg:px-2 py-1.5 rounded-md border-2 whitespace-nowrap ${location.pathname.startsWith('/games') ? 'bg-primary/10 text-primary border-primary/40' : 'text-foreground hover:text-primary hover:bg-primary/5 border-primary/20 hover:border-primary/40'}`}
+              className={`text-[11px] xl:text-xs 2xl:text-sm font-medium transition-colors px-1 2xl:px-2 py-1.5 rounded-md border-2 whitespace-nowrap ${location.pathname.startsWith('/games') ? 'bg-primary/10 text-primary border-primary/40' : 'text-foreground hover:text-primary hover:bg-primary/5 border-primary/20 hover:border-primary/40'}`}
             >
               <span className="flex items-center gap-1">
                 <Icon name="Spade" className="h-3.5 w-3.5" />
@@ -356,7 +356,7 @@ export default function Header({ isAuthenticated, onLogout }: HeaderProps) {
             </Link>
             <Link
               to="/assistant"
-              className={`hidden min-[1700px]:block text-[11px] xl:text-xs 2xl:text-sm font-medium transition-colors px-1 2xl:px-2 py-1.5 rounded-md border-2 whitespace-nowrap ${location.pathname.startsWith('/assistant') ? 'bg-primary/10 text-primary border-primary/40' : 'text-foreground hover:text-primary hover:bg-primary/5 border-primary/20 hover:border-primary/40'}`}
+              className={`text-[11px] xl:text-xs 2xl:text-sm font-medium transition-colors px-1 2xl:px-2 py-1.5 rounded-md border-2 whitespace-nowrap ${location.pathname.startsWith('/assistant') ? 'bg-primary/10 text-primary border-primary/40' : 'text-foreground hover:text-primary hover:bg-primary/5 border-primary/20 hover:border-primary/40'}`}
             >
               <span className="flex items-center gap-1">
                 <Icon name="Sparkles" className="h-3.5 w-3.5" />
@@ -365,7 +365,7 @@ export default function Header({ isAuthenticated, onLogout }: HeaderProps) {
             </Link>
           </nav>
 
-          <div className="flex min-w-0 shrink items-center space-x-1 md:space-x-1.5">
+          <div className="flex shrink-0 items-center space-x-1 md:space-x-1.5">
             <div className="hidden md:block w-32 xl:w-40 2xl:w-52 shrink-0">
               <RegionDistrictSelector showBadges={false} />
             </div>
@@ -378,18 +378,6 @@ export default function Header({ isAuthenticated, onLogout }: HeaderProps) {
               getUserDisplayName={getUserDisplayName}
             />
           </div>
-        </div>
-
-        <div className="hidden md:flex min-[1700px]:hidden justify-end pb-1.5">
-          <Link
-            to="/assistant"
-            className={`text-xs font-medium transition-colors px-2 py-1 rounded-md border-2 whitespace-nowrap ${location.pathname.startsWith('/assistant') ? 'bg-primary/10 text-primary border-primary/40' : 'text-foreground hover:text-primary hover:bg-primary/5 border-primary/20 hover:border-primary/40'}`}
-          >
-            <span className="flex items-center gap-1">
-              <Icon name="Sparkles" className="h-3.5 w-3.5" />
-              Мой помощник
-            </span>
-          </Link>
         </div>
 
         <HeaderMobileMenu
