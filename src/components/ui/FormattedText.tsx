@@ -1,6 +1,11 @@
-import { Fragment, type ReactNode } from 'react';
+import type { ReactNode } from 'react';
 
 const COLOR_OPEN = /^\{(#[0-9a-fA-F]{6})\|/;
+
+export type FormatNode =
+  | { type: 'text'; text: string }
+  | { type: 'bold' | 'large'; children: FormatNode[] }
+  | { type: 'color'; color: string; children: FormatNode[] };
 
 export function stripFormatting(text: string): string {
   return (text || '')
@@ -10,15 +15,14 @@ export function stripFormatting(text: string): string {
     .replace(/\+\+/g, '');
 }
 
-function parseInline(s: string, keyPrefix: string): ReactNode[] {
-  const nodes: ReactNode[] = [];
+export function parseFormatting(s: string): FormatNode[] {
+  const nodes: FormatNode[] = [];
   let buf = '';
   let i = 0;
-  let n = 0;
 
   const flush = () => {
     if (buf) {
-      nodes.push(<Fragment key={`${keyPrefix}t${n++}`}>{buf}</Fragment>);
+      nodes.push({ type: 'text', text: buf });
       buf = '';
     }
   };
@@ -28,11 +32,7 @@ function parseInline(s: string, keyPrefix: string): ReactNode[] {
       const end = s.indexOf('**', i + 2);
       if (end > i + 2) {
         flush();
-        nodes.push(
-          <strong key={`${keyPrefix}b${n++}`} className="font-bold">
-            {parseInline(s.slice(i + 2, end), `${keyPrefix}b${n}-`)}
-          </strong>
-        );
+        nodes.push({ type: 'bold', children: parseFormatting(s.slice(i + 2, end)) });
         i = end + 2;
         continue;
       }
@@ -41,26 +41,18 @@ function parseInline(s: string, keyPrefix: string): ReactNode[] {
       const end = s.indexOf('++', i + 2);
       if (end > i + 2) {
         flush();
-        nodes.push(
-          <span key={`${keyPrefix}l${n++}`} className="text-[1.25em] font-semibold leading-snug">
-            {parseInline(s.slice(i + 2, end), `${keyPrefix}l${n}-`)}
-          </span>
-        );
+        nodes.push({ type: 'large', children: parseFormatting(s.slice(i + 2, end)) });
         i = end + 2;
         continue;
       }
     }
     if (s[i] === '{') {
-      const m = COLOR_OPEN.exec(s.slice(i, i + 12));
+      const m = COLOR_OPEN.exec(s.slice(i, i + 9));
       if (m) {
         const end = s.indexOf('}', i + m[0].length);
         if (end > i + m[0].length) {
           flush();
-          nodes.push(
-            <span key={`${keyPrefix}c${n++}`} style={{ color: m[1] }}>
-              {parseInline(s.slice(i + m[0].length, end), `${keyPrefix}c${n}-`)}
-            </span>
-          );
+          nodes.push({ type: 'color', color: m[1], children: parseFormatting(s.slice(i + m[0].length, end)) });
           i = end + 1;
           continue;
         }
@@ -73,11 +65,23 @@ function parseInline(s: string, keyPrefix: string): ReactNode[] {
   return nodes;
 }
 
+function renderNodes(nodes: FormatNode[], key: string): ReactNode[] {
+  return nodes.map((n, idx) => {
+    const k = `${key}-${idx}`;
+    if (n.type === 'text') return <span key={k}>{n.text}</span>;
+    if (n.type === 'bold') return <strong key={k} className="font-bold">{renderNodes(n.children, k)}</strong>;
+    if (n.type === 'large') {
+      return <span key={k} className="text-[1.25em] font-semibold leading-snug">{renderNodes(n.children, k)}</span>;
+    }
+    return <span key={k} style={{ color: n.type === 'color' ? n.color : undefined }}>{renderNodes(n.children, k)}</span>;
+  });
+}
+
 interface FormattedTextProps {
   text: string;
   className?: string;
 }
 
 export default function FormattedText({ text, className }: FormattedTextProps) {
-  return <span className={className}>{parseInline(text || '', 'f')}</span>;
+  return <span className={className}>{renderNodes(parseFormatting(text || ''), 'f')}</span>;
 }
