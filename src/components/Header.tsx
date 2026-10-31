@@ -247,7 +247,7 @@ export default function Header({ isAuthenticated, onLogout }: HeaderProps) {
   return (
     <header className="sticky top-0 z-50 w-full border-b bg-gradient-to-br from-white via-blue-100/60 to-purple-100/50 dark:from-gray-900 dark:via-blue-900/40 dark:to-purple-900/30 shadow-lg backdrop-blur-sm">
       <div className="container mx-auto px-2 md:px-4">
-        <div className="flex h-14 md:h-auto md:min-h-[4.5rem] md:py-1.5 items-center justify-between gap-1 md:gap-2">
+        <div className="flex h-14 md:h-auto md:flex-wrap min-[1700px]:flex-nowrap md:py-2 items-center justify-between gap-1 md:gap-x-3 md:gap-y-2">
           <Link 
             to="/home" 
             onClick={() => window.scrollTo({ top: 0, behavior: 'smooth' })}
@@ -305,67 +305,67 @@ export default function Header({ isAuthenticated, onLogout }: HeaderProps) {
             )}
           </div>
 
-          <nav className="hidden md:flex flex-1 min-w-0 flex-wrap items-center gap-x-0.5 gap-y-1 2xl:gap-x-1">
+          <nav className="hidden md:flex md:order-last md:basis-full min-[1700px]:order-none min-[1700px]:basis-auto min-[1700px]:flex-1 min-w-0 flex-wrap items-center gap-1">
             <Link
               to="/predlozheniya"
-              className={`text-[11px] xl:text-xs 2xl:text-sm font-medium transition-colors px-1 2xl:px-2 py-1.5 rounded-md border-2 whitespace-nowrap ${location.pathname === '/predlozheniya' || location.pathname === '/' ? 'bg-primary/10 text-primary border-primary/40' : 'text-foreground hover:text-primary hover:bg-primary/5 border-primary/20 hover:border-primary/40'}`}
+              className={`text-[11px] xl:text-xs 2xl:text-sm font-medium transition-colors px-1 2xl:px-2 py-1.5 rounded-md border-2 whitespace-nowrap grow min-[1700px]:grow-0 text-center ${location.pathname === '/predlozheniya' || location.pathname === '/' ? 'bg-primary/10 text-primary border-primary/40' : 'text-foreground hover:text-primary hover:bg-primary/5 border-primary/20 hover:border-primary/40'}`}
             >
               Предложения
             </Link>
             <Link
               to="/zaprosy"
-              className={`text-[11px] xl:text-xs 2xl:text-sm font-medium transition-colors px-1 2xl:px-2 py-1.5 rounded-md border-2 whitespace-nowrap ${location.pathname === '/zaprosy' ? 'bg-primary/10 text-primary border-primary/40' : 'text-foreground hover:text-primary hover:bg-primary/5 border-primary/20 hover:border-primary/40'}`}
+              className={`text-[11px] xl:text-xs 2xl:text-sm font-medium transition-colors px-1 2xl:px-2 py-1.5 rounded-md border-2 whitespace-nowrap grow min-[1700px]:grow-0 text-center ${location.pathname === '/zaprosy' ? 'bg-primary/10 text-primary border-primary/40' : 'text-foreground hover:text-primary hover:bg-primary/5 border-primary/20 hover:border-primary/40'}`}
             >
               Запросы
             </Link>
             <Link
               to="/auction"
-              className={`text-[11px] xl:text-xs 2xl:text-sm font-medium transition-colors px-1 2xl:px-2 py-1.5 rounded-md border-2 whitespace-nowrap ${location.pathname === '/auction' ? 'bg-primary/10 text-primary border-primary/40' : 'text-foreground hover:text-primary hover:bg-primary/5 border-primary/20 hover:border-primary/40'}`}
+              className={`text-[11px] xl:text-xs 2xl:text-sm font-medium transition-colors px-1 2xl:px-2 py-1.5 rounded-md border-2 whitespace-nowrap grow min-[1700px]:grow-0 text-center ${location.pathname === '/auction' ? 'bg-primary/10 text-primary border-primary/40' : 'text-foreground hover:text-primary hover:bg-primary/5 border-primary/20 hover:border-primary/40'}`}
             >
               Аукционы
             </Link>
             <Link
               to="/trading"
-              className={`text-[11px] xl:text-xs 2xl:text-sm font-medium transition-colors px-1 2xl:px-2 py-1.5 rounded-md border-2 whitespace-nowrap ${location.pathname === '/trading' ? 'bg-primary/10 text-primary border-primary/40' : 'text-foreground hover:text-primary hover:bg-primary/5 border-primary/20 hover:border-primary/40'}`}
+              className={`text-[11px] xl:text-xs 2xl:text-sm font-medium transition-colors px-1 2xl:px-2 py-1.5 rounded-md border-2 whitespace-nowrap grow min-[1700px]:grow-0 text-center ${location.pathname === '/trading' ? 'bg-primary/10 text-primary border-primary/40' : 'text-foreground hover:text-primary hover:bg-primary/5 border-primary/20 hover:border-primary/40'}`}
             >
-              <span className="flex items-center gap-1">
+              <span className="flex items-center justify-center gap-1">
                 Контракты
                 <Badge variant="secondary" className="text-[9px] lg:text-xs px-1 lg:px-1 py-0.5">Новое</Badge>
               </span>
             </Link>
             <Link
               to="/market"
-              className={`text-[11px] xl:text-xs 2xl:text-sm font-medium transition-colors px-1 2xl:px-2 py-1.5 rounded-md border-2 whitespace-nowrap ${location.pathname === '/market' ? 'bg-primary/10 text-primary border-primary/40' : 'text-foreground hover:text-primary hover:bg-primary/5 border-primary/20 hover:border-primary/40'}`}
+              className={`text-[11px] xl:text-xs 2xl:text-sm font-medium transition-colors px-1 2xl:px-2 py-1.5 rounded-md border-2 whitespace-nowrap grow min-[1700px]:grow-0 text-center ${location.pathname === '/market' ? 'bg-primary/10 text-primary border-primary/40' : 'text-foreground hover:text-primary hover:bg-primary/5 border-primary/20 hover:border-primary/40'}`}
             >
               Торги на ММВБ
             </Link>
             <Link
               to="/support"
-              className={`text-[11px] xl:text-xs 2xl:text-sm font-medium transition-colors px-1 2xl:px-2 py-1.5 rounded-md border-2 whitespace-nowrap ${location.pathname === '/support' ? 'bg-primary/10 text-primary border-primary/40' : 'text-foreground hover:text-primary hover:bg-primary/5 border-primary/20 hover:border-primary/40'}`}
+              className={`text-[11px] xl:text-xs 2xl:text-sm font-medium transition-colors px-1 2xl:px-2 py-1.5 rounded-md border-2 whitespace-nowrap grow min-[1700px]:grow-0 text-center ${location.pathname === '/support' ? 'bg-primary/10 text-primary border-primary/40' : 'text-foreground hover:text-primary hover:bg-primary/5 border-primary/20 hover:border-primary/40'}`}
             >
               Поддержка
             </Link>
             <Link
               to="/games"
-              className={`text-[11px] xl:text-xs 2xl:text-sm font-medium transition-colors px-1 2xl:px-2 py-1.5 rounded-md border-2 whitespace-nowrap ${location.pathname.startsWith('/games') ? 'bg-primary/10 text-primary border-primary/40' : 'text-foreground hover:text-primary hover:bg-primary/5 border-primary/20 hover:border-primary/40'}`}
+              className={`text-[11px] xl:text-xs 2xl:text-sm font-medium transition-colors px-1 2xl:px-2 py-1.5 rounded-md border-2 whitespace-nowrap grow min-[1700px]:grow-0 text-center ${location.pathname.startsWith('/games') ? 'bg-primary/10 text-primary border-primary/40' : 'text-foreground hover:text-primary hover:bg-primary/5 border-primary/20 hover:border-primary/40'}`}
             >
-              <span className="flex items-center gap-1">
+              <span className="flex items-center justify-center gap-1">
                 <Icon name="Spade" className="h-3.5 w-3.5" />
                 Игровой клуб
               </span>
             </Link>
             <Link
               to="/assistant"
-              className={`text-[11px] xl:text-xs 2xl:text-sm font-medium transition-colors px-1 2xl:px-2 py-1.5 rounded-md border-2 whitespace-nowrap ${location.pathname.startsWith('/assistant') ? 'bg-primary/10 text-primary border-primary/40' : 'text-foreground hover:text-primary hover:bg-primary/5 border-primary/20 hover:border-primary/40'}`}
+              className={`text-[11px] xl:text-xs 2xl:text-sm font-medium transition-colors px-1 2xl:px-2 py-1.5 rounded-md border-2 whitespace-nowrap grow min-[1700px]:grow-0 text-center ${location.pathname.startsWith('/assistant') ? 'bg-primary/10 text-primary border-primary/40' : 'text-foreground hover:text-primary hover:bg-primary/5 border-primary/20 hover:border-primary/40'}`}
             >
-              <span className="flex items-center gap-1">
+              <span className="flex items-center justify-center gap-1">
                 <Icon name="Sparkles" className="h-3.5 w-3.5" />
                 Мой помощник
               </span>
             </Link>
           </nav>
 
-          <div className="flex shrink-0 items-center space-x-1 md:space-x-1.5">
+          <div className="flex shrink-0 items-center space-x-1 md:space-x-2 md:ml-auto">
             <div className="hidden md:block w-32 xl:w-40 2xl:w-52 shrink-0">
               <RegionDistrictSelector showBadges={false} />
             </div>
