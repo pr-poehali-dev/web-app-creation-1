@@ -154,7 +154,7 @@ def call_ai(system: str, messages: List[Dict[str, str]], max_tokens: int = 900, 
     return response.json()['result']['alternatives'][0]['message']['text'].strip()
 
 
-GEMINI_MODELS = ['gemini-3.8-flash', 'gemini-3.5-flash-lite', 'gemini-2.5-flash']
+GEMINI_MODELS = ['gemini-3.8-flash', 'gemini-3.5-flash-lite']
 
 
 def call_gemini(system: str, messages: List[Dict[str, str]], max_tokens: int = 1500) -> Dict[str, Any]:
@@ -466,28 +466,28 @@ def handle_assistant(event: Dict[str, Any], body: Dict[str, Any]) -> Dict[str, A
                 ai_messages = [{'role': h['role'], 'text': h['content']} for h in history]
                 ai_messages.append({'role': 'user', 'text': message})
 
+                answer = None
                 try:
-                    g = call_gemini(system, ai_messages)
-                    if not g['text']:
-                        raise ValueError('empty')
-                    answer = build_answer(g['text'], g['sources'])
+                    o = call_openai_search(system, ai_messages)
+                    if o['text']:
+                        answer = build_answer(o['text'], o['sources'])
                 except Exception as e:
-                    print(f'[assistant] gemini error: {e}')
-                    answer = None
+                    print(f'[assistant] openai error: {e}')
+                if not answer:
                     try:
-                        o = call_openai_search(system, ai_messages)
-                        if o['text']:
-                            answer = build_answer(o['text'], o['sources'])
+                        g = call_gemini(system, ai_messages)
+                        if g['text']:
+                            answer = build_answer(g['text'], g['sources'])
                     except Exception as e2:
-                        print(f'[assistant] openai error: {e2}')
-                    if not answer:
-                        try:
-                            print('[assistant] fallback to yandex')
-                            raw = call_ai(system + '\nУ тебя сейчас нет доступа к интернету. Ответь по своим знаниям как можно полезнее, уверенно и по существу. Если вопрос про сайт или сервис, назови его официальный адрес, если он тебе точно известен. Коротко предупреди, что свежие данные лучше сверить по ссылке ниже. Не пиши фразу «у меня нет информации».', ai_messages, max_tokens=900)
-                            answer = build_answer(raw, [])
-                            answer += '\n\nПроверить в интернете:\n' + f'[Найти в Яндексе: {message[:50]}](https://yandex.ru/search/?text={quote(message[:150])})'
-                        except Exception:
-                            return err(502, 'Ассистент сейчас занят, попробуйте через минуту')
+                        print(f'[assistant] gemini error: {e2}')
+                if not answer:
+                    try:
+                        print('[assistant] fallback to yandex')
+                        raw = call_ai(system + '\nУ тебя сейчас нет доступа к интернету. Ответь по своим знаниям как можно полезнее, уверенно и по существу. Если вопрос про сайт или сервис, назови его официальный адрес, если он тебе точно известен. Коротко предупреди, что свежие данные лучше сверить по ссылке ниже. Не пиши фразу «у меня нет информации».', ai_messages, max_tokens=900)
+                        answer = build_answer(raw, [])
+                        answer += '\n\nПроверить в интернете:\n' + f'[Найти в Яндексе: {message[:50]}](https://yandex.ru/search/?text={quote(message[:150])})'
+                    except Exception:
+                        return err(502, 'Ассистент сейчас занят, попробуйте через минуту')
 
                 cur.execute(
                     f"INSERT INTO {DB_SCHEMA}.assistant_messages (user_id, role, content) VALUES (%s, 'user', %s)",
@@ -536,10 +536,10 @@ def handle_assistant(event: Dict[str, Any], body: Dict[str, Any]) -> Dict[str, A
                     'Ссылки на видео сам не пиши.'
                 )
                 try:
-                    g = call_gemini(pop_system, [{'role': 'user', 'text': question}], max_tokens=2500)
-                    if not g['text']:
+                    o = call_openai_search(pop_system, [{'role': 'user', 'text': question}])
+                    if not o['text']:
                         raise ValueError('empty')
-                    answer = build_answer(g['text'], g['sources'])
+                    answer = build_answer(o['text'], o['sources'])
                 except Exception:
                     try:
                         answer = build_answer(call_ai(pop_system, [{'role': 'user', 'text': question}], max_tokens=1500), [])
