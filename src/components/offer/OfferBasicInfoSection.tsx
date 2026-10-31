@@ -2,8 +2,8 @@ import { useState } from 'react';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
-import { Textarea } from '@/components/ui/textarea';
 import Icon from '@/components/ui/icon';
+import FormattedTextarea from '@/components/ui/FormattedTextarea';
 import { CATEGORIES } from '@/data/categories';
 import AIAssistButton from './AIAssistButton';
 
@@ -228,18 +228,15 @@ export default function OfferBasicInfoSection({ formData, onInputChange }: Offer
                   )}
                 </div>
               </div>
-              <Textarea
+              <FormattedTextarea
                 id="description"
                 value={formData.description}
-                onChange={(e) => onInputChange('description', e.target.value)}
+                onChange={(v) => onInputChange('description', v)}
                 placeholder="Подробное описание товара или услуги..."
                 required
                 rows={6}
                 maxLength={1000}
               />
-              <p className="text-xs text-muted-foreground mt-1">
-                {formData.description.length}/1000 символов
-              </p>
             </div>
           </>
         )}

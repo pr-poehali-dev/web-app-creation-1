@@ -21,6 +21,7 @@ import { useDistrict } from '@/contexts/DistrictContext';
 import { useOffers } from '@/contexts/OffersContext';
 import type { Request as RequestType } from '@/types/offer';
 import { requestsAPI } from '@/services/api';
+import { stripFormatting } from '@/components/ui/FormattedText';
 
 
 interface MyRequestsProps {
@@ -178,7 +179,7 @@ export default function MyRequests({ isAuthenticated, onLogout }: MyRequestsProp
 
         <CardContent className="space-y-3">
           <p className="text-sm text-muted-foreground line-clamp-2">
-            {request.description}
+            {stripFormatting(request.description)}
           </p>
 
           {category && (

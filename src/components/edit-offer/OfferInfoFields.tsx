@@ -7,6 +7,7 @@ import OfferEditFormRegular from './OfferEditFormRegular';
 import OfferEditFormTransport from './OfferEditFormTransport';
 import OfferEditFormAutoSale from './OfferEditFormAutoSale';
 import OfferViewInfo from './OfferViewInfo';
+import FormattedText, { stripFormatting } from '@/components/ui/FormattedText';
 
 interface EditData {
   title: string;
@@ -107,7 +108,7 @@ export default function OfferInfoFields({
         dateStr ? `📅 ${dateStr}` : null,
         seats ? `💺 ${seats} мест` : null,
         waypointLines.length > 0 ? `\nПункты посадки:\n${waypointLines.join('\n')}` : null,
-        offer.description ? `\n📝 ${offer.description}` : null,
+        offer.description ? `\n📝 ${stripFormatting(offer.description)}` : null,
       ].filter(Boolean);
 
       shareText = lines.join('\n');
@@ -121,14 +122,14 @@ export default function OfferInfoFields({
         `🛠 ${offer.title}`,
         serviceType,
         price,
-        offer.description ? `\n📋 ${offer.description}` : null,
+        offer.description ? `\n📋 ${stripFormatting(offer.description)}` : null,
       ].filter(Boolean);
       shareText = lines.join('\n');
     } else {
       const price = offer.pricePerUnit != null
         ? `${Number(offer.pricePerUnit).toLocaleString('ru-RU')} ₽/${offer.unit}`
         : '—';
-      shareText = `📦 ${offer.title}\n\n💰 Цена: ${price}${offer.description ? `\n\n📝 ${offer.description}` : ''}`;
+      shareText = `📦 ${offer.title}\n\n💰 Цена: ${price}${offer.description ? `\n\n📝 ${stripFormatting(offer.description)}` : ''}`;
     }
 
     await shareContent({
@@ -144,7 +145,7 @@ export default function OfferInfoFields({
       <div>
         <h3 className="text-2xl font-bold">{offer.title}</h3>
         {!isEditing ? (
-          <p className="text-muted-foreground mt-2">{offer.description}</p>
+          <p className="text-muted-foreground mt-2 whitespace-pre-line"><FormattedText text={offer.description} /></p>
         ) : null}
       </div>
 

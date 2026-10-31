@@ -5,6 +5,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { Switch } from '@/components/ui/switch';
 import { Textarea } from '@/components/ui/textarea';
 import Icon from '@/components/ui/icon';
+import FormattedTextarea from '@/components/ui/FormattedTextarea';
 import ProductMediaUpload from '@/components/ProductMediaUpload';
 import AIAssistButton from '@/components/offer/AIAssistButton';
 import { SERVICE_TYPES, TRANSPORT_TYPES, CARGO_TRANSPORT_TYPES, formatRoute } from '@/components/offer/transportConstants';
@@ -126,10 +127,11 @@ export default function RequestEditForm({
             />
           )}
         </div>
-        <Textarea
+        <FormattedTextarea
           value={description}
-          onChange={(e) => onDescriptionChange(e.target.value)}
+          onChange={onDescriptionChange}
           rows={4}
+          maxLength={1000}
           placeholder="Опишите, что вам нужно..."
         />
       </div>

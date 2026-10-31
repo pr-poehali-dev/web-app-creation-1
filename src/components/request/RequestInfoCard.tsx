@@ -9,6 +9,7 @@ import { safeToLocaleDateString } from '@/utils/dateUtils';
 import type { Request as RequestType } from '@/pages/RequestDetail/useRequestData';
 import { DISTRICTS } from '@/data/districts';
 import { CATEGORIES } from '@/data/categories';
+import FormattedText from '@/components/ui/FormattedText';
 
 interface RequestInfoCardProps {
   request: RequestType;
@@ -258,7 +259,7 @@ export default function RequestInfoCard({ request }: RequestInfoCardProps) {
               {!isTransport && (
                 <div>
                   <p className="text-sm font-medium mb-1">Описание запроса</p>
-                  <p className="text-sm text-muted-foreground whitespace-pre-line">{description}</p>
+                  <p className="text-sm text-muted-foreground whitespace-pre-line"><FormattedText text={description} /></p>
                 </div>
               )}
 

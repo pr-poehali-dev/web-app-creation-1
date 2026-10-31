@@ -1,6 +1,6 @@
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
-import { Textarea } from '@/components/ui/textarea';
+import FormattedTextarea from '@/components/ui/FormattedTextarea';
 import { Checkbox } from '@/components/ui/checkbox';
 import type { Offer } from '@/types/offer';
 import AIAssistButton from '@/components/offer/AIAssistButton';
@@ -88,12 +88,13 @@ export default function OfferEditFormRegular({ offer, editData, isSaving, isWork
             />
           )}
         </div>
-        <Textarea
+        <FormattedTextarea
           id="description"
           value={editData.description}
-          onChange={(e) => onEditDataChange({ ...editData, description: e.target.value })}
+          onChange={(v) => onEditDataChange({ ...editData, description: v })}
           disabled={isSaving}
           rows={3}
+          maxLength={1000}
           placeholder="Опишите ваше предложение"
         />
       </div>

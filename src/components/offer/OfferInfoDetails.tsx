@@ -5,6 +5,7 @@ import { formatDateWithTimezone } from '@/utils/dateUtils';
 import { DISTRICTS } from '@/data/districts';
 import type { TransportWaypoint } from '@/types/offer';
 import OfferInfoTransportDetails from './OfferInfoTransportDetails';
+import FormattedText from '@/components/ui/FormattedText';
 
 interface OfferInfoDetailsProps {
   category: string;
@@ -150,7 +151,7 @@ export default function OfferInfoDetails({
           <Separator />
           <div>
             <p className="text-sm font-medium mb-1">Описание</p>
-            <p className="text-xs text-muted-foreground whitespace-pre-line line-clamp-3">{description}</p>
+            <p className="text-xs text-muted-foreground whitespace-pre-line line-clamp-3"><FormattedText text={description} /></p>
           </div>
         </>
       )}

@@ -6,6 +6,7 @@ import OfferDetailSkeleton from '@/components/offer-detail/OfferDetailSkeleton';
 import OfferDetailNotFound from '@/components/offer-detail/OfferDetailNotFound';
 import OfferDetailContent from '@/components/offer-detail/OfferDetailContent';
 import SEO from '@/components/SEO';
+import { stripFormatting } from '@/components/ui/FormattedText';
 
 export default function OfferDetail() {
   useScrollToTop();
@@ -66,7 +67,7 @@ export default function OfferDetail() {
     <>
       <SEO
         title={offer.title}
-        description={`${offer.description ? offer.description.slice(0, 150) : ''} — ${offer.pricePerUnit != null ? Number(offer.pricePerUnit).toLocaleString('ru-RU') : '—'} ₽/${offer.unit}. ${offer.category}, ${offer.district}.`}
+        description={`${offer.description ? stripFormatting(offer.description).slice(0, 150) : ''} — ${offer.pricePerUnit != null ? Number(offer.pricePerUnit).toLocaleString('ru-RU') : '—'} ₽/${offer.unit}. ${offer.category}, ${offer.district}.`}
         keywords={`${offer.title}, ${offer.category}, купить, ЕРТТП`}
         canonical={`/offer/${offer.id}`}
         image={offer.images?.[0]?.url}

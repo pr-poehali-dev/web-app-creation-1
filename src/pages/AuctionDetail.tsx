@@ -16,6 +16,7 @@ import AuctionInfoPanel from '@/components/auction/AuctionInfoPanel';
 import AuctionBidForm from '@/components/auction/AuctionBidForm';
 import BidHistoryTabs from '@/components/auction/BidHistoryTabs';
 import AuctionCompletionForm from '@/components/auction/AuctionCompletionForm';
+import FormattedText, { stripFormatting } from '@/components/ui/FormattedText';
 
 interface AuctionDetailProps {
   isAuthenticated: boolean;
@@ -66,7 +67,7 @@ export default function AuctionDetail({ isAuthenticated, onLogout }: AuctionDeta
     <div className="min-h-screen bg-background flex flex-col">
       <SEO
         title={auction.title}
-        description={`${auction.description ? auction.description.slice(0, 150) : ''} — стартовая цена ${(auction.startingPrice || auction.currentPrice || 0).toLocaleString('ru-RU')} ₽. ${auction.category}, ${districtName || auction.district}.`}
+        description={`${auction.description ? stripFormatting(auction.description).slice(0, 150) : ''} — стартовая цена ${(auction.startingPrice || auction.currentPrice || 0).toLocaleString('ru-RU')} ₽. ${auction.category}, ${districtName || auction.district}.`}
         keywords={`${auction.title}, аукцион ${auction.category}, торги онлайн, ЕРТТП`}
         canonical={`/auction/${auction.id}`}
         image={auction.images?.[0]?.url}
@@ -100,7 +101,7 @@ export default function AuctionDetail({ isAuthenticated, onLogout }: AuctionDeta
           </CardHeader>
           <CardContent className="py-2 md:py-3" data-readable={readableLevel}>
             <p className="text-xs md:text-sm text-muted-foreground whitespace-pre-line line-clamp-2">
-              {auction.description}
+              <FormattedText text={auction.description} />
             </p>
           </CardContent>
         </Card>

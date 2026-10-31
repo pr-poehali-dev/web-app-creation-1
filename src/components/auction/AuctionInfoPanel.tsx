@@ -6,6 +6,7 @@ import type { Auction } from '@/types/auction';
 import { getTimeUntilStart } from './AuctionHelpers';
 import { useDateFormat } from '@/hooks/useDateFormat';
 import { shareContent } from '@/utils/shareUtils';
+import { stripFormatting } from '@/components/ui/FormattedText';
 
 interface AuctionInfoPanelProps {
   auction: Auction;
@@ -58,7 +59,7 @@ export default function AuctionInfoPanel({
   const handleShare = async () => {
     await shareContent({
       title: auction.title,
-      text: `🔨 ${auction.title}\n\n💰 Текущая ставка: ${auction.currentBid.toLocaleString('ru-RU')} ₽${auction.description ? `\n\n📝 ${auction.description}` : ''}`,
+      text: `🔨 ${auction.title}\n\n💰 Текущая ставка: ${auction.currentBid.toLocaleString('ru-RU')} ₽${auction.description ? `\n\n📝 ${stripFormatting(auction.description)}` : ''}`,
       url: window.location.href,
       imageUrl: auction.images?.[0]?.url,
 

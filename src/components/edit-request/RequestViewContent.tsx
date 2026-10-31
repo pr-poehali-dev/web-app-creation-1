@@ -1,5 +1,6 @@
 import Icon from '@/components/ui/icon';
 import type { Request } from '@/types/offer';
+import FormattedText from '@/components/ui/FormattedText';
 
 interface RequestViewContentProps {
   request: Request;
@@ -12,7 +13,7 @@ export default function RequestViewContent({ request, isTransport }: RequestView
 
   return (
     <>
-      <p className="text-muted-foreground">{request.description}</p>
+      <p className="text-muted-foreground whitespace-pre-line"><FormattedText text={request.description} /></p>
 
       {currentImages.length > 0 && (
         <div className="grid grid-cols-2 md:grid-cols-3 gap-3">

@@ -3,8 +3,8 @@ import { Card, CardContent } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import AIAssistButton from '@/components/offer/AIAssistButton';
-import { Textarea } from '@/components/ui/textarea';
 import Icon from '@/components/ui/icon';
+import FormattedTextarea from '@/components/ui/FormattedTextarea';
 import { CATEGORIES } from '@/data/categories';
 
 interface RequestBasicInfoSectionProps {
@@ -225,18 +225,15 @@ export default function RequestBasicInfoSection({
                 )}
               </div>
             </div>
-            <Textarea
+            <FormattedTextarea
               id="description"
               value={formData.description}
-              onChange={(e) => onInputChange('description', e.target.value)}
+              onChange={(v) => onInputChange('description', v)}
               placeholder="Подробно опишите ваши требования к товару или услуге..."
               required={isDescriptionRequired}
               rows={6}
               maxLength={1000}
             />
-            <p className="text-xs text-muted-foreground mt-1">
-              {formData.description.length}/1000 символов
-            </p>
           </div>
         )}
       </CardContent>

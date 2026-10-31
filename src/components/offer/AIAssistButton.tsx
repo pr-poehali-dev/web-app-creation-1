@@ -1,3 +1,4 @@
+import { stripFormatting } from '@/components/ui/FormattedText';
 import { useState } from 'react';
 import { Button } from '@/components/ui/button';
 import Icon from '@/components/ui/icon';
@@ -35,7 +36,7 @@ export default function AIAssistButton({
       const res = await fetch(AI_ASSIST_URL, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ action, title, description, category, entity, ...extra }),
+        body: JSON.stringify({ action, title, description: description ? stripFormatting(description) : description, category, entity, ...extra }),
       });
       const data = await res.json();
       if (!res.ok) throw new Error(data.error || 'Ошибка');

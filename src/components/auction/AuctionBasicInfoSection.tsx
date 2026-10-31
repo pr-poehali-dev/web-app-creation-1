@@ -3,8 +3,8 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import AIAssistButton from '@/components/offer/AIAssistButton';
-import { Textarea } from '@/components/ui/textarea';
 import Icon from '@/components/ui/icon';
+import FormattedTextarea from '@/components/ui/FormattedTextarea';
 import { CATEGORIES } from '@/data/categories';
 
 interface AuctionBasicInfoSectionProps {
@@ -213,10 +213,10 @@ export default function AuctionBasicInfoSection({ formData, onInputChange }: Auc
               )}
             </div>
           </div>
-          <Textarea
+          <FormattedTextarea
             id="description"
             value={formData.description}
-            onChange={(e) => onInputChange('description', e.target.value)}
+            onChange={(v) => onInputChange('description', v)}
             placeholder="Подробное описание лота, его характеристики и условия"
             rows={5}
             maxLength={2000}

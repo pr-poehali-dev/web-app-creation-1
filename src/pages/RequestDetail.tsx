@@ -20,6 +20,7 @@ import { useRequestData } from './RequestDetail/useRequestData';
 import { useRequestGallery } from './RequestDetail/useRequestGallery';
 import { useRequestResponse } from './RequestDetail/useRequestResponse';
 import SEO from '@/components/SEO';
+import { stripFormatting } from '@/components/ui/FormattedText';
 
 interface RequestDetailProps {
   isAuthenticated: boolean;
@@ -119,7 +120,7 @@ export default function RequestDetail({ isAuthenticated, onLogout }: RequestDeta
     <div className="min-h-screen bg-background flex flex-col overflow-x-hidden">
       <SEO
         title={request.title}
-        description={`${request.description ? request.description.slice(0, 150) : ''} — бюджет ${request.pricePerUnit != null ? Number(request.pricePerUnit).toLocaleString('ru-RU') : '—'} ₽/${request.unit}. ${request.category}, ${request.district}.`}
+        description={`${request.description ? stripFormatting(request.description).slice(0, 150) : ''} — бюджет ${request.pricePerUnit != null ? Number(request.pricePerUnit).toLocaleString('ru-RU') : '—'} ₽/${request.unit}. ${request.category}, ${request.district}.`}
         keywords={`${request.title}, ${request.category}, запрос на поставку, ЕРТТП`}
         canonical={`/request/${request.id}`}
         image={request.images?.[0]?.url}
