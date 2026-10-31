@@ -1,6 +1,12 @@
 {
   "tests": [
     {
+      "name": "Sitemap XML",
+      "method": "GET",
+      "path": "/?type=sitemap",
+      "expectedStatus": 200
+    },
+    {
       "name": "OG proxy for offer",
       "method": "GET",
       "path": "/?type=offer&id=136c413c-b2d6-4373-a570-438f7a351d88",

@@ -20,7 +20,8 @@ import { useRequestData } from './RequestDetail/useRequestData';
 import { useRequestGallery } from './RequestDetail/useRequestGallery';
 import { useRequestResponse } from './RequestDetail/useRequestResponse';
 import SEO from '@/components/SEO';
-import { stripFormatting } from '@/components/ui/FormattedText';
+import { categoryName, districtName, rub, shortText, joinParts } from '@/utils/seoText';
+import { requestSchema } from '@/utils/structuredData';
 
 interface RequestDetailProps {
   isAuthenticated: boolean;
@@ -119,11 +120,17 @@ export default function RequestDetail({ isAuthenticated, onLogout }: RequestDeta
   return (
     <div className="min-h-screen bg-background flex flex-col overflow-x-hidden">
       <SEO
-        title={request.title}
-        description={`${request.description ? stripFormatting(request.description).slice(0, 150) : ''} — бюджет ${request.pricePerUnit != null ? Number(request.pricePerUnit).toLocaleString('ru-RU') : '—'} ₽/${request.unit}. ${request.category}, ${request.district}.`}
-        keywords={`${request.title}, ${request.category}, запрос на поставку, ЕРТТП`}
+        title={`Запрос: ${request.title}`}
+        description={joinParts(
+          `Ищем поставщика: ${request.title}${request.quantity ? `, ${request.quantity} ${request.unit}` : ''}${rub(request.pricePerUnit) ? `, бюджет ${rub(request.pricePerUnit)} за ${request.unit}` : ''}`,
+          shortText(request.description),
+          [categoryName(request.category), districtName(request.district)].filter(Boolean).join(', '),
+        )}
+        keywords={`${request.title}, ${categoryName(request.category)}, запрос на поставку, закупка, ${districtName(request.district)}, ЕРТТП`}
         canonical={`/request/${request.id}`}
         image={request.images?.[0]?.url}
+        noindex={['closed', 'archived', 'completed'].includes((request as { status?: string }).status || '')}
+        jsonLd={requestSchema(request, categoryName(request.category))}
       />
       <Header isAuthenticated={isAuthenticated} onLogout={onLogout} />
 

@@ -1,4 +1,5 @@
 import { useState } from 'react';
+import SEO from '@/components/SEO';
 import { useNavigate, useSearchParams } from 'react-router-dom';
 import { useToast } from '@/hooks/use-toast';
 import { Button } from '@/components/ui/button';
@@ -51,6 +52,7 @@ export default function Market({ isAuthenticated, onLogout }: MarketProps) {
 
   return (
     <div className="min-h-screen flex flex-col bg-background">
+      <SEO title="Торги на ММВБ — котировки и сделки" description="Котировки и биржевые торги на ММВБ: следите за ценами и рынком в одном окне на торговой площадке ЕРТТП." canonical="/market" />
       <Header isAuthenticated={isAuthenticated} onLogout={onLogout} />
       <main className="flex-1 container mx-auto px-4 py-6 max-w-5xl">
         <div className="flex items-center gap-3 mb-2">

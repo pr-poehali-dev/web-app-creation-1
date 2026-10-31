@@ -4,6 +4,7 @@ import json
 import os
 import urllib.request
 from urllib.parse import quote
+from xml.sax.saxutils import escape
 import psycopg2
 from psycopg2.extras import RealDictCursor
 
@@ -55,6 +56,65 @@ def html_response(title: str, description: str, image_url: str, page_url: str, r
     }
 
 
+SITEMAP_SITE = 'https://erttp.ru'
+SITEMAP_SCHEMA = os.environ.get('DB_SCHEMA', 't_p42562714_web_app_creation_1')
+
+SITEMAP_STATIC = [
+    ('/', 'hourly', '1.0'),
+    ('/zaprosy', 'hourly', '0.9'),
+    ('/auction', 'hourly', '0.9'),
+    ('/home', 'weekly', '0.7'),
+    ('/trading', 'daily', '0.7'),
+    ('/market', 'daily', '0.6'),
+    ('/support', 'monthly', '0.5'),
+    ('/games', 'weekly', '0.4'),
+    ('/terms', 'yearly', '0.3'),
+    ('/privacy', 'yearly', '0.3'),
+    ('/offer-agreement', 'yearly', '0.3'),
+]
+
+
+
+def sitemap_response() -> dict:
+    '''XML-карта сайта с активными объявлениями'''
+    conn = psycopg2.connect(os.environ['DATABASE_URL'])
+    cur = conn.cursor()
+    cur.execute(f"""
+        SELECT 'offer', id::text, to_char(COALESCE(updated_at, created_at), 'YYYY-MM-DD')
+          FROM {SITEMAP_SCHEMA}.offers WHERE status = 'active'
+        UNION ALL
+        SELECT 'request', id::text, to_char(COALESCE(updated_at, created_at), 'YYYY-MM-DD')
+          FROM {SITEMAP_SCHEMA}.requests WHERE status = 'active'
+        UNION ALL
+        SELECT 'auction', id::text, to_char(COALESCE(updated_at, created_at), 'YYYY-MM-DD')
+          FROM {SITEMAP_SCHEMA}.auctions WHERE status IN ('active', 'ending-soon', 'upcoming')
+        LIMIT 45000
+    """)
+    rows = cur.fetchall()
+    cur.close()
+    conn.close()
+
+    parts = ['<?xml version="1.0" encoding="UTF-8"?>', '<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">']
+    for path, freq, prio in SITEMAP_STATIC:
+        parts.append(f'<url><loc>{SITEMAP_SITE}{path}</loc><changefreq>{freq}</changefreq><priority>{prio}</priority></url>')
+    for kind, item_id, lastmod in rows:
+        loc = escape(f'{SITEMAP_SITE}/{kind}/{item_id}')
+        mod = f'<lastmod>{lastmod}</lastmod>' if lastmod else ''
+        parts.append(f'<url><loc>{loc}</loc>{mod}<changefreq>daily</changefreq><priority>0.8</priority></url>')
+    parts.append('</urlset>')
+
+    return {
+        'statusCode': 200,
+        'headers': {
+            'Content-Type': 'application/xml; charset=utf-8',
+            'Cache-Control': 'public, max-age=3600',
+            'Access-Control-Allow-Origin': '*',
+        },
+        'body': '\n'.join(parts),
+        'isBase64Encoded': False,
+    }
+
+
 def handler(event: dict, context) -> dict:
     '''OG-прокси для ботов мессенджеров. GET /?type=offer&id=... | ?type=request&id=... | ?type=auction&id=...'''
 
@@ -67,6 +127,9 @@ def handler(event: dict, context) -> dict:
 
     params = event.get('queryStringParameters') or {}
     item_type = params.get('type', '')
+
+    if item_type == 'sitemap':
+        return sitemap_response()
     item_id = params.get('id', '').replace("'", "")
 
     # Статичные страницы сайта

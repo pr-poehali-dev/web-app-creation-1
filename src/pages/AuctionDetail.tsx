@@ -11,12 +11,14 @@ import { useAuctionData } from '@/hooks/useAuctionData';
 import ReadableTextButton from '@/components/ReadableTextButton';
 import { useReadableText } from '@/hooks/useReadableText';
 import SEO from '@/components/SEO';
+import { rub, shortText, joinParts } from '@/utils/seoText';
+import { auctionSchema } from '@/utils/structuredData';
 import AuctionImageGallery from '@/components/auction/AuctionImageGallery';
 import AuctionInfoPanel from '@/components/auction/AuctionInfoPanel';
 import AuctionBidForm from '@/components/auction/AuctionBidForm';
 import BidHistoryTabs from '@/components/auction/BidHistoryTabs';
 import AuctionCompletionForm from '@/components/auction/AuctionCompletionForm';
-import FormattedText, { stripFormatting } from '@/components/ui/FormattedText';
+import FormattedText from '@/components/ui/FormattedText';
 
 interface AuctionDetailProps {
   isAuthenticated: boolean;
@@ -66,11 +68,18 @@ export default function AuctionDetail({ isAuthenticated, onLogout }: AuctionDeta
   return (
     <div className="min-h-screen bg-background flex flex-col">
       <SEO
-        title={auction.title}
-        description={`${auction.description ? stripFormatting(auction.description).slice(0, 150) : ''} — стартовая цена ${(auction.startingPrice || auction.currentPrice || 0).toLocaleString('ru-RU')} ₽. ${auction.category}, ${districtName || auction.district}.`}
-        keywords={`${auction.title}, аукцион ${auction.category}, торги онлайн, ЕРТТП`}
+        title={`Аукцион: ${auction.title}`}
+        description={joinParts(
+          `Онлайн-аукцион: ${auction.title}${rub(auction.startingPrice || auction.currentPrice) ? `, стартовая цена ${rub(auction.startingPrice || auction.currentPrice)}` : ''}`,
+          shortText(auction.description),
+          [category?.name || auction.category, districtName || auction.district].filter(Boolean).join(', '),
+        )}
+        keywords={`${auction.title}, аукцион ${category?.name || auction.category}, торги онлайн, ЕРТТП`}
         canonical={`/auction/${auction.id}`}
         image={auction.images?.[0]?.url}
+        type="product"
+        noindex={auction.status === 'archived'}
+        jsonLd={auctionSchema(auction, category?.name)}
       />
       <Header isAuthenticated={isAuthenticated} onLogout={onLogout} />
 

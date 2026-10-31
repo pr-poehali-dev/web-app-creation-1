@@ -1,4 +1,5 @@
 import { useState, useEffect } from 'react';
+import SEO from '@/components/SEO';
 import { useNavigate } from 'react-router-dom';
 import Header from '@/components/Header';
 import Footer from '@/components/Footer';
@@ -202,6 +203,7 @@ export default function TradingPlatform({ isAuthenticated, onLogout }: TradingPl
 
   return (
     <div className="min-h-screen bg-background flex flex-col">
+      <SEO title="Контракты на поставку товаров" description="Заключайте контракты на поставку товаров с фиксированной ценой и сроками. Форвардные и бартерные сделки между компаниями на ЕРТТП." canonical="/trading" />
       <Header isAuthenticated={isAuthenticated} onLogout={onLogout} />
 
       <PullToRefresh onRefresh={loadContracts}>

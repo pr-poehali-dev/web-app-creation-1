@@ -13,7 +13,7 @@ export default function PrivacyPolicy({ isAuthenticated, onLogout }: PrivacyPoli
       <SEO 
         title="Политика конфиденциальности"
         description="Политика конфиденциальности ЕРТТП — как мы обрабатываем и защищаем персональные данные пользователей."
-        canonical="/privacy-policy"
+        canonical="/privacy"
       />
       <header className="border-b sticky top-0 bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60 z-50">
         <div className="container mx-auto px-4 py-4">

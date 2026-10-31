@@ -6,7 +6,8 @@ import OfferDetailSkeleton from '@/components/offer-detail/OfferDetailSkeleton';
 import OfferDetailNotFound from '@/components/offer-detail/OfferDetailNotFound';
 import OfferDetailContent from '@/components/offer-detail/OfferDetailContent';
 import SEO from '@/components/SEO';
-import { stripFormatting } from '@/components/ui/FormattedText';
+import { categoryName, districtName, rub, shortText, joinParts } from '@/utils/seoText';
+import { offerSchema } from '@/utils/structuredData';
 
 export default function OfferDetail() {
   useScrollToTop();
@@ -66,11 +67,18 @@ export default function OfferDetail() {
   return (
     <>
       <SEO
-        title={offer.title}
-        description={`${offer.description ? stripFormatting(offer.description).slice(0, 150) : ''} — ${offer.pricePerUnit != null ? Number(offer.pricePerUnit).toLocaleString('ru-RU') : '—'} ₽/${offer.unit}. ${offer.category}, ${offer.district}.`}
-        keywords={`${offer.title}, ${offer.category}, купить, ЕРТТП`}
+        title={`${offer.title}${rub(offer.pricePerUnit) ? ` — ${rub(offer.pricePerUnit)}/${offer.unit}` : ''}`}
+        description={joinParts(
+          `Купить ${offer.title}${rub(offer.pricePerUnit) ? ` по цене ${rub(offer.pricePerUnit)} за ${offer.unit}` : ''}`,
+          shortText(offer.description),
+          [categoryName(offer.category), districtName(offer.district)].filter(Boolean).join(', '),
+        )}
+        keywords={`${offer.title}, ${categoryName(offer.category)}, купить, ${districtName(offer.district)}, ЕРТТП`}
         canonical={`/offer/${offer.id}`}
         image={offer.images?.[0]?.url}
+        type="product"
+        noindex={!!offer.status && offer.status !== 'active'}
+        jsonLd={offerSchema(offer, categoryName(offer.category))}
       />
       <OfferDetailContent
         isAuthenticated={isAuthenticated}

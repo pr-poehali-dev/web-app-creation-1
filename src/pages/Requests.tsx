@@ -12,6 +12,7 @@ import { triggerArchiveExpired } from '@/services/api';
 import { safeGetTime } from '@/utils/dateUtils';
 import { filterActiveRequests } from '@/utils/expirationFilter';
 import SEO from '@/components/SEO';
+import { collectionSchema } from '@/utils/structuredData';
 import { useRequestsData } from '@/hooks/useRequestsData';
 import RequestsToolbar from '@/components/requests/RequestsToolbar';
 import RequestsFiltersBar from '@/components/requests/RequestsFiltersBar';
@@ -144,10 +145,11 @@ export default function Requests({ isAuthenticated, onLogout }: RequestsProps) {
   return (
     <div className="min-h-screen bg-background flex flex-col">
       <SEO
-        title="Запросы на товары и услуги"
-        description="Запросы на поставку товаров и услуг. Откликайтесь на запросы покупателей и находите новых клиентов на ЕРТТП."
-        keywords="запросы на поставку, закупки товаров, заявки на услуги, найти поставщика, ЕРТТП"
+        title="Запросы на закупку товаров и услуг"
+        description="Актуальные заявки покупателей на поставку товаров и услуг. Откликайтесь на запросы, предлагайте свою цену и находите новых клиентов на ЕРТТП."
+        keywords="запросы на поставку, закупки, заявки покупателей, найти клиентов, ЕРТТП"
         canonical="/zaprosy"
+        jsonLd={collectionSchema('Запросы на закупку товаров и услуг', 'Актуальные заявки покупателей на поставку товаров и услуг. Откликайтесь на запросы, предлагайте свою цену и находите новых клиентов на ЕРТТП.', '/zaprosy')}
       />
       <Header isAuthenticated={isAuthenticated} onLogout={onLogout} />
       <DataSyncIndicator isVisible={isSyncing} />

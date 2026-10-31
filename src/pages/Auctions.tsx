@@ -8,6 +8,7 @@ import Icon from '@/components/ui/icon';
 import { useScrollToTop } from '@/hooks/useScrollToTop';
 import { useAuctionsPageData } from '@/hooks/useAuctionsPageData';
 import SEO from '@/components/SEO';
+import { collectionSchema } from '@/utils/structuredData';
 
 interface AuctionsProps {
   isAuthenticated: boolean;
@@ -40,10 +41,11 @@ export default function Auctions({ isAuthenticated, onLogout }: AuctionsProps) {
   return (
     <div className="min-h-screen bg-background flex flex-col">
       <SEO
-        title="Аукционы и торги"
-        description="Участвуйте в аукционах и электронных торгах. Покупайте товары по лучшим ценам или выставляйте свои лоты на ЕРТТП."
+        title="Онлайн-аукционы и электронные торги"
+        description="Аукционы товаров и услуг онлайн: делайте ставки, покупайте по выгодной цене или выставляйте свои лоты. Прозрачные электронные торги на ЕРТТП."
         keywords="аукционы онлайн, электронные торги, купить на аукционе, выставить лот, ЕРТТП"
-        canonical="/auktsiony"
+        canonical="/auction"
+        jsonLd={collectionSchema('Онлайн-аукционы и электронные торги', 'Аукционы товаров и услуг онлайн: делайте ставки, покупайте по выгодной цене или выставляйте свои лоты. Прозрачные электронные торги на ЕРТТП.', '/auction')}
       />
       <Header isAuthenticated={isAuthenticated} onLogout={onLogout} />
 

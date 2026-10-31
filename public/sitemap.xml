@@ -1,60 +1,25 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">
-
-  <!-- Главная -->
-  <url>
-    <loc>https://erttp.ru/</loc>
-    <changefreq>daily</changefreq>
-    <priority>1.0</priority>
-  </url>
-
-  <!-- Предложения -->
-  <url>
-    <loc>https://erttp.ru/predlozheniya</loc>
-    <changefreq>hourly</changefreq>
-    <priority>0.9</priority>
-  </url>
-
-  <!-- Запросы -->
-  <url>
-    <loc>https://erttp.ru/zaprosy</loc>
-    <changefreq>hourly</changefreq>
-    <priority>0.9</priority>
-  </url>
-
-  <!-- Аукционы -->
-  <url>
-    <loc>https://erttp.ru/auction</loc>
-    <changefreq>hourly</changefreq>
-    <priority>0.8</priority>
-  </url>
-
-  <!-- Поддержка -->
-  <url>
-    <loc>https://erttp.ru/support</loc>
-    <changefreq>monthly</changefreq>
-    <priority>0.5</priority>
-  </url>
-
-  <!-- Пользовательское соглашение -->
-  <url>
-    <loc>https://erttp.ru/terms</loc>
-    <changefreq>yearly</changefreq>
-    <priority>0.3</priority>
-  </url>
-
-  <!-- Политика конфиденциальности -->
-  <url>
-    <loc>https://erttp.ru/privacy</loc>
-    <changefreq>yearly</changefreq>
-    <priority>0.3</priority>
-  </url>
-
-  <!-- Публичная оферта -->
-  <url>
-    <loc>https://erttp.ru/offer-agreement</loc>
-    <changefreq>yearly</changefreq>
-    <priority>0.3</priority>
-  </url>
-
+  <url><loc>https://erttp.ru/</loc><changefreq>hourly</changefreq><priority>1.0</priority></url>
+  <url><loc>https://erttp.ru/zaprosy</loc><changefreq>hourly</changefreq><priority>0.9</priority></url>
+  <url><loc>https://erttp.ru/auction</loc><changefreq>hourly</changefreq><priority>0.9</priority></url>
+  <url><loc>https://erttp.ru/home</loc><changefreq>weekly</changefreq><priority>0.7</priority></url>
+  <url><loc>https://erttp.ru/trading</loc><changefreq>daily</changefreq><priority>0.7</priority></url>
+  <url><loc>https://erttp.ru/market</loc><changefreq>daily</changefreq><priority>0.6</priority></url>
+  <url><loc>https://erttp.ru/support</loc><changefreq>monthly</changefreq><priority>0.5</priority></url>
+  <url><loc>https://erttp.ru/games</loc><changefreq>weekly</changefreq><priority>0.4</priority></url>
+  <url><loc>https://erttp.ru/terms</loc><changefreq>yearly</changefreq><priority>0.3</priority></url>
+  <url><loc>https://erttp.ru/privacy</loc><changefreq>yearly</changefreq><priority>0.3</priority></url>
+  <url><loc>https://erttp.ru/offer-agreement</loc><changefreq>yearly</changefreq><priority>0.3</priority></url>
+  <url><loc>https://erttp.ru/offer/1874e467-a455-47c0-8ef2-8ee9de5b9031</loc><lastmod>2026-04-19</lastmod><changefreq>daily</changefreq><priority>0.8</priority></url>
+  <url><loc>https://erttp.ru/offer/9cd79086-7f29-4e5f-9630-2bf7223774f3</loc><lastmod>2026-06-09</lastmod><changefreq>daily</changefreq><priority>0.8</priority></url>
+  <url><loc>https://erttp.ru/offer/77b97598-4739-43e0-9e88-219bfbf55b36</loc><lastmod>2026-04-14</lastmod><changefreq>daily</changefreq><priority>0.8</priority></url>
+  <url><loc>https://erttp.ru/offer/3ca2b4e0-03fc-4fe4-a19f-472f23148e8a</loc><lastmod>2026-04-22</lastmod><changefreq>daily</changefreq><priority>0.8</priority></url>
+  <url><loc>https://erttp.ru/offer/b5bb3f79-10c5-47ee-a219-aca90519351f</loc><lastmod>2026-05-27</lastmod><changefreq>daily</changefreq><priority>0.8</priority></url>
+  <url><loc>https://erttp.ru/offer/01a117b5-1c27-498f-852a-8059f97bf36f</loc><lastmod>2026-05-03</lastmod><changefreq>daily</changefreq><priority>0.8</priority></url>
+  <url><loc>https://erttp.ru/offer/c379b7e9-0f95-4a73-97fc-d617493f3c64</loc><lastmod>2026-10-31</lastmod><changefreq>daily</changefreq><priority>0.8</priority></url>
+  <url><loc>https://erttp.ru/request/7a643279-14dc-40c7-9b5a-80c01340c130</loc><lastmod>2026-05-14</lastmod><changefreq>daily</changefreq><priority>0.8</priority></url>
+  <url><loc>https://erttp.ru/request/be9be182-84c1-4e62-b600-d6564b33eac0</loc><lastmod>2026-06-04</lastmod><changefreq>daily</changefreq><priority>0.8</priority></url>
+  <url><loc>https://erttp.ru/request/3b553dd1-9c48-4277-8ee9-533f2b120ecc</loc><lastmod>2026-10-23</lastmod><changefreq>daily</changefreq><priority>0.8</priority></url>
+  <url><loc>https://erttp.ru/request/373128f1-c189-4d8b-81fb-82a117c81c4b</loc><lastmod>2026-10-24</lastmod><changefreq>daily</changefreq><priority>0.8</priority></url>
 </urlset>

@@ -16,3 +16,4 @@ Disallow: /admin/
 Disallow: /*?reload*
 
 Sitemap: https://erttp.ru/sitemap.xml
+Sitemap: https://functions.poehali.dev/2a7d2949-7159-4c2e-aeda-5cd18c67e0e7?type=sitemap

@@ -1,4 +1,5 @@
 import { Link } from 'react-router-dom';
+import SEO from '@/components/SEO';
 import Header from '@/components/Header';
 import Footer from '@/components/Footer';
 import BackButton from '@/components/BackButton';
@@ -69,6 +70,7 @@ export default function Home({ isAuthenticated, onLogout }: HomeProps) {
 
   return (
     <div className="min-h-screen bg-background flex flex-col">
+      <SEO title="О площадке — единая региональная торговая площадка" description="ЕРТТП — единая региональная товарно-торговая площадка для бизнеса и частных лиц: предложения, запросы на закупку, аукционы и контракты в одном месте." canonical="/home" />
       <Header isAuthenticated={isAuthenticated} onLogout={onLogout} />
 
       <main className="container mx-auto px-4 py-4 md:py-6 flex-1">

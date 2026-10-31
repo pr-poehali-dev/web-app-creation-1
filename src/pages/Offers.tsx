@@ -20,6 +20,7 @@ import { dataSync } from '@/utils/dataSync';
 import { filterActiveOffers } from '@/utils/expirationFilter';
 import { useOffers } from '@/contexts/OffersContext';
 import SEO from '@/components/SEO';
+import { collectionSchema } from '@/utils/structuredData';
 
 interface OffersProps {
   isAuthenticated: boolean;
@@ -425,11 +426,12 @@ function Offers({ isAuthenticated, onLogout }: OffersProps) {
 
   return (
     <div className="min-h-screen bg-background flex flex-col">
-      <SEO 
-        title="Предложения товаров и услуг"
-        description="Актуальные предложения товаров и услуг от компаний России. Найдите поставщика, сравните цены и оформите сделку на ЕРТТП."
-        keywords="предложения товаров, купить товары оптом, поставщики, услуги, ЕРТТП"
-        canonical="/predlozheniya"
+      <SEO
+        title="Предложения товаров и услуг от поставщиков"
+        description="Каталог актуальных предложений товаров и услуг от компаний и частных лиц. Сравнивайте цены, выбирайте поставщика в своём районе и оформляйте заказ онлайн на ЕРТТП."
+        keywords="предложения товаров, купить оптом, поставщики, услуги, торговая площадка, ЕРТТП"
+        canonical="/"
+        jsonLd={collectionSchema('Предложения товаров и услуг от поставщиков', 'Каталог актуальных предложений товаров и услуг от компаний и частных лиц. Сравнивайте цены, выбирайте поставщика в своём районе и оформляйте заказ онлайн на ЕРТТП.', '/')}
       />
       <Header isAuthenticated={isAuthenticated} onLogout={onLogout} />
       <DataSyncIndicator isVisible={isSyncing} />
