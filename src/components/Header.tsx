@@ -356,7 +356,7 @@ export default function Header({ isAuthenticated, onLogout }: HeaderProps) {
             </Link>
             <Link
               to="/assistant"
-              className={`text-[11px] xl:text-xs 2xl:text-sm font-medium transition-colors px-1 2xl:px-2 py-1.5 rounded-md border-2 whitespace-nowrap ${location.pathname.startsWith('/assistant') ? 'bg-primary/10 text-primary border-primary/40' : 'text-foreground hover:text-primary hover:bg-primary/5 border-primary/20 hover:border-primary/40'}`}
+              className={`hidden min-[1700px]:block text-[11px] xl:text-xs 2xl:text-sm font-medium transition-colors px-1 2xl:px-2 py-1.5 rounded-md border-2 whitespace-nowrap ${location.pathname.startsWith('/assistant') ? 'bg-primary/10 text-primary border-primary/40' : 'text-foreground hover:text-primary hover:bg-primary/5 border-primary/20 hover:border-primary/40'}`}
             >
               <span className="flex items-center gap-1">
                 <Icon name="Sparkles" className="h-3.5 w-3.5" />
@@ -378,6 +378,18 @@ export default function Header({ isAuthenticated, onLogout }: HeaderProps) {
               getUserDisplayName={getUserDisplayName}
             />
           </div>
+        </div>
+
+        <div className="hidden md:flex min-[1700px]:hidden justify-end pb-1.5">
+          <Link
+            to="/assistant"
+            className={`text-xs font-medium transition-colors px-2 py-1 rounded-md border-2 whitespace-nowrap ${location.pathname.startsWith('/assistant') ? 'bg-primary/10 text-primary border-primary/40' : 'text-foreground hover:text-primary hover:bg-primary/5 border-primary/20 hover:border-primary/40'}`}
+          >
+            <span className="flex items-center gap-1">
+              <Icon name="Sparkles" className="h-3.5 w-3.5" />
+              Мой помощник
+            </span>
+          </Link>
         </div>
 
         <HeaderMobileMenu
